@@ -1,6 +1,6 @@
 # Resoconto pre-sviluppo — Timestral Sandbox
 
-Data: 2026-10-27 · Stato: **Fasi 0-3 completate (§12); prossima: Fase 4**. Repository: `tsfm-lab` (privato)
+Data: 2026-10-27 · Stato: **Fasi 0-3 e Showcase completati (§12); prossima: dataset online (resto della Fase 4)**. Repository: `tsfm-lab` (privato)
 
 Questo documento riassume requisiti, ricerca (modello + identità visiva Mistral), architettura proposta, rischi e piano di lavoro. Ogni dato è marcato come **verificato** (letto da fonte primaria o misurato), **dichiarato dal vendor** o **inferenza/proposta**.
 
@@ -333,3 +333,14 @@ Fase 3: pagina di confronto tra run, ulteriori viste e rifiniture di visualizzaz
 - **Pagina Confronto** (`#/compare?runs=A,B,…`, fino a 6 run, selezionabili dall'elenco Runs): tabella **«cosa è cambiato»** che evidenzia solo i campi diversi (modello, dispositivo, dataset, orizzonte, finestre, opzioni…), avvisi se i run non sono confrontabili (dataset, orizzonte o finestre diversi), barre per metrica, tabella con calcolo/avvio a freddo/VRAM e **confronto appaiato previsione per previsione** (dispersione con diagonale, quota di finestre vinte e guadagno tipico come media geometrica): una media può nascondere un modello che perde nella maggior parte delle finestre.
 - **Rilancia con le stesse impostazioni:** ogni run salva la richiesta originale; il dettaglio ha il pulsante per rieseguirla.
 - Provata sul caso CPU contro GPU dello stesso esperimento (28M, `regime_switching`): 36 finestre identiche, appaiate. Test API aggiunto (66 in totale).
+
+### Showcase (2026-10-27)
+**Obiettivo:** mostrare le potenzialità dei modelli con grafici comprensibili anche a non tecnici, come sul sito di Timestral. Ora è la **pagina iniziale**; la parte tecnica resta dietro (Playground, Esperimenti, Runs, Confronto).
+
+- **Tre scenari reali** da `autogluon/fev_datasets` (revisione fissata `d3e7e720f4`, in totale ~10 MB scaricati su richiesta): **vendite di negozi Rossmann** (apertura, promozioni, vacanze scolastiche e festività, 40 negozi), **domanda di elettricità** di 6 paesi (solare, eolico, temperatura, irraggiamento) e **produzione di un impianto solare** (luce, nuvole, temperatura, umidità, vento).
+- **Cosa si vede:** storia in bianco, previsione arancio con fasce al 50% e 80%, un interruttore per ogni fattore noto in anticipo con il suo andamento, scelta di serie e modello, cursore per la data di inizio previsione, «mostra cosa è successo davvero». Le previsioni si ricalcolano a ogni interruttore (frazioni di secondo su GPU).
+- **Il numero «% di errore in meno» è misurato, non scelto:** quality loss ponderata su tutte le previsioni delle ultime finestre di ogni serie (400 per le vendite, 180 elettricità, 40 solare), con e senza fattori, e per ogni fattore da solo; salvata su disco (`runs/showcase/`), quindi la seconda volta è istantanea.
+- **Risultati misurati** (perdita quantilica, meno è meglio): vendite **−29% con il 28M, −41% con il 209M** (apertura, promozioni e festività contano, le vacanze scolastiche no); solare **−45% / −48%** (quasi tutto dalla luce); domanda elettrica **solo −2% / −4%**: con un ritmo giornaliero e settimanale molto regolare i fattori aiutano poco, e l'app lo dice. In elettricità la fascia all'80% conteneva la realtà solo il 63% delle volte: segnalata come troppo stretta.
+- **Errore evitato:** la colonna `target` di `entsoe` sembrava un prezzo ma è la **domanda** (mai negativa, −14/−19% nel weekend): lo scenario è etichettato così, senza unità inventata. Il dataset di Tetuan mostrato da Mistral non è disponibile nelle fonti: sostituito dal solare con meteo.
+- **Avvertenze mostrate all'utente:** per elettricità e solare i fattori sono valori *misurati*, non previsioni, quindi il beneficio è un limite superiore; i dataset sono pubblici e potrebbero essere nei dati di addestramento (non dichiarati); licenza `other` dichiarata sul repository, termini delle fonti originali da verificare.
+- **Provato** nel browser integrato (desktop e 375 px, nessuno scorrimento orizzontale, nessun errore bloccante); 68 test.

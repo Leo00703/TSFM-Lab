@@ -75,6 +75,24 @@ class BenchmarkBody(BaseModel):
     scenarios: list[str] = Field(default_factory=lambda: list(SCENARIOS))
 
 
+class ShowcaseBody(BaseModel):
+    scenario: str
+    series: str
+    offset: int = Field(0, ge=0)
+    model: str
+    device: str = "cpu"
+    covariates: list[str] = Field(default_factory=list)
+    options: dict[str, Any] = Field(default_factory=dict)
+
+
+class ShowcaseImpactBody(BaseModel):
+    scenario: str
+    model: str
+    device: str = "cpu"
+    options: dict[str, Any] = Field(default_factory=dict)
+    refresh: bool = False
+
+
 class RegisterBody(BaseModel):
     file_id: str
     name: str | None = Field(None, max_length=80)
@@ -380,6 +398,59 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
                 for mid in meta["models"]}
         return ok({"scatter": {"actual": actual[sel], "predicted": pred[sel], "n": int(actual.size)},
                    "residual_hist": hist, "distributions": dist})
+
+    # ------------------------------------------------------------------ showcase
+    @app.get("/api/showcase")
+    def showcase_list():
+        from tsfm_lab.data.hub import FEV_REPO, FEV_REVISION
+        from tsfm_lab.showcase import engine
+        from tsfm_lab.showcase.scenarios import SCENARIOS
+
+        return ok([{
+            "id": sc.id, "tab": sc.tab, "title": sc.title, "subtitle": sc.subtitle, "story": sc.story, "unit": sc.unit,
+            "freq": sc.freq, "horizon": sc.horizon, "horizon_label": sc.horizon_label, "view": sc.view,
+            "series_label": sc.series_label, "series": [{"id": k, "label": v} for k, v in sc.series.items()],
+            "default_series": sc.default_series, "max_offset_steps": sc.max_offset_steps,
+            "covariates": [{"key": c.key, "label": c.label, "hint": c.hint, "binary": c.binary} for c in sc.covariates],
+            "caveats": list(sc.caveats), "size_mb": sc.size_mb, "ready": engine.is_ready(sc),
+            "source": {"repo": FEV_REPO, "revision": FEV_REVISION, "name": sc.name, "freq": sc.freq,
+                       "license": "other (declared on the repository card; the original data come from public sources, check their terms)"},
+            "impact_windows": sc.impact_windows, "impact_series": len(sc.impact_series),
+        } for sc in SCENARIOS.values()])
+
+    @app.post("/api/showcase/{scenario_id}/prepare")
+    def showcase_prepare(scenario_id: str):
+        from tsfm_lab.showcase import engine
+
+        sc = engine.scenario(scenario_id)
+        return ok(jobs.submit("download", f"Download {sc.title} data ({sc.size_mb} MB)", lambda j: worker.call(
+            "showcase_prepare", {"scenario": scenario_id}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set)).to_dict(), 202)
+
+    @app.post("/api/showcase/forecast")
+    def showcase_forecast(body: ShowcaseBody):
+        from tsfm_lab.showcase import engine
+
+        engine.scenario(body.scenario)
+        registry.info(body.model)
+        payload = body.model_dump()
+        payload["options"] = clean_options(body.options)
+        if not compute_lock.acquire(blocking=False):
+            raise HTTPException(409, "a job is running on this machine; wait for it to finish")
+        try:
+            return ok(worker.call("showcase_forecast", payload))
+        finally:
+            compute_lock.release()
+
+    @app.post("/api/showcase/impact")
+    def showcase_impact(body: ShowcaseImpactBody):
+        from tsfm_lab.showcase import engine
+
+        sc = engine.scenario(body.scenario)
+        registry.info(body.model)
+        payload = body.model_dump()
+        payload["options"] = clean_options(body.options)
+        return ok(jobs.submit("showcase", f"Measuring the effect of covariates · {sc.title}", lambda j: worker.call(
+            "showcase_impact", payload, lambda d, t, m: j.update(d, t, m), j.cancel.is_set)).to_dict(), 202)
 
     @app.get("/api/compare")
     def compare(runs: str):

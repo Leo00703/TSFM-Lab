@@ -68,7 +68,7 @@ export function parseHash() {
   const raw = location.hash.replace(/^#\/?/, '');
   const [path, query = ''] = raw.split('?');
   const [page = '', ...rest] = path.split('/');
-  return { page: page || 'overview', args: rest, query: Object.fromEntries(new URLSearchParams(query)) };
+  return { page: page || 'showcase', args: rest, query: Object.fromEntries(new URLSearchParams(query)) };
 }
 export function useRoute() {
   const [r, set] = useState(parseHash());

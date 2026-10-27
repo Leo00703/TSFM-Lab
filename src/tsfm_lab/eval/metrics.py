@@ -58,6 +58,14 @@ def _central(levels, c: float) -> tuple[int, int] | None:
 
 def item_metrics(y: np.ndarray, q: np.ndarray, levels, scale: np.ndarray) -> dict[str, np.ndarray]:
     """Per-item metrics, each (N, V)."""
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        return _item_metrics(y, q, levels, scale)
+
+
+def _item_metrics(y, q, levels, scale):
     med_i = _level_index(levels, 0.5)
     if med_i is None:
         raise ValueError("the model must produce the 0.5 quantile")
@@ -141,3 +149,16 @@ def skill_score(model: np.ndarray, baseline: np.ndarray) -> dict[str, float]:
         return {"skill": float("nan"), "n": 0}
     ratio = np.exp(np.mean(np.log(m[ok] / b[ok])))
     return {"skill": float(1 - ratio), "n": int(ok.sum())}
+
+
+def pooled_wql(y: np.ndarray, q: np.ndarray, levels) -> float:
+    """Weighted quantile loss pooled over all items: 2 * mean_tau [sum pinball] / sum |y| (NaN actuals ignored).
+
+    Pooling (instead of averaging per-item ratios) stays well defined when some items are all zeros,
+    e.g. a store that is closed or a solar panel at night.
+    """
+    pin = pinball(y, q, levels)
+    denom = float(np.nansum(np.abs(y)))
+    if denom == 0:
+        return float("nan")
+    return float(2 * np.nanmean(np.nansum(pin, axis=tuple(range(pin.ndim - 1)))) / denom)

@@ -200,3 +200,35 @@ def test_compare_runs_and_paired_comparison_and_stored_request(client) -> None:
     c = wait(client, client.post("/api/jobs/experiment", json={"model": "naive", "dataset": other, "horizon": 24, "windows": 2, "baselines": []}).json()["id"])["result"]["run_id"]
     assert client.get(f"/api/compare?runs={a},{c}").json()["comparable"]["same_items"] is False
     assert client.get(f"/api/compare/paired?a={a}:naive&b={c}:naive").status_code == 422
+
+
+def test_showcase_lists_scenarios_and_runs_a_forecast_with_covariates(client) -> None:
+    items = {s["id"]: s for s in client.get("/api/showcase").json()}
+    assert set(items) == {"electricity", "sales", "solar"}
+    sales = items["sales"]
+    assert [c["key"] for c in sales["covariates"]] == ["open", "promo", "school", "public"] and sales["caveats"]
+    assert sales["source"]["revision"] and "other" in sales["source"]["license"]
+    if not sales["ready"]:
+        pytest.skip("Rossmann data not downloaded")
+    body = {"scenario": "sales", "series": "1", "offset": 0, "model": "naive", "covariates": ["open", "promo"]}
+    out = client.post("/api/showcase/forecast", json=body).json()
+    assert out["horizon"] == 28 and len(out["x_future"]) == 28 and "0.5" in out["bands"] and len(out["bands"]["0.1"]) == 28
+    assert [c["enabled"] for c in out["covariates"]] == [True, True, False, False]
+    assert all(len(c["values"]) == len(out["x_history"]) + 28 for c in out["covariates"])
+    moved = client.post("/api/showcase/forecast", json={**body, "offset": 28}).json()
+    assert moved["origin"] == out["origin"] - 28 and moved["start"] < out["start"]
+    assert client.post("/api/showcase/forecast", json={**body, "scenario": "nope"}).status_code == 404
+
+
+def test_showcase_impact_job_on_baseline_models_is_cached(client) -> None:
+    sales = next(s for s in client.get("/api/showcase").json() if s["id"] == "sales")
+    if not sales["ready"]:
+        pytest.skip("Rossmann data not downloaded")
+    body = {"scenario": "sales", "model": "naive", "device": "cpu"}
+    first = wait(client, client.post("/api/showcase/impact", json=body).json()["id"], timeout=120)
+    assert first["status"] == "done", first
+    r = first["result"]
+    assert r["forecasts"] == 400 and set(r["gain_each"]) == {"open", "promo", "school", "public"} and r["cached"] is False
+    assert abs(r["gain_all"]) < 1e-9  # a baseline ignores covariates: no gain, and the code does not invent one
+    second = wait(client, client.post("/api/showcase/impact", json=body).json()["id"])
+    assert second["result"]["cached"] is True

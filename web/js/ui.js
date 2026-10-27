@@ -30,6 +30,14 @@ export function Field({ label, hint, children, class: c = '' }) {
 
 export { Select } from './select.js';
 
+export function Switch({ checked, onChange, label, hideLabel }) {
+  return html`<button type="button" role="switch" aria-checked=${checked} aria-label=${hideLabel ? label : undefined} onClick=${() => onChange(!checked)}
+    class="group inline-flex min-h-10 cursor-pointer items-center gap-3 text-body-small">
+    ${!hideLabel && html`<span class="text-text-muted group-hover:text-text-primary">${label}</span>`}
+    <span class=${'relative h-5 w-9 shrink-0 rounded-full transition-colors ' + (checked ? 'bg-action-primary' : 'bg-surface-brand-tertiary')}>
+      <span class=${'absolute top-0.5 size-4 rounded-full transition-all ' + (checked ? 'left-[1.1rem] bg-text-invert' : 'left-0.5 bg-text-muted')}></span></span></button>`;
+}
+
 export function NumberInput({ value, onChange, min, max, step = 1, placeholder }) {
   return html`<input class="input num" type="number" inputmode="numeric" value=${value ?? ''} min=${min} max=${max} step=${step} placeholder=${placeholder}
     onInput=${(e) => { const v = e.currentTarget.value; onChange(v === '' ? null : Number(v)); }} />`;

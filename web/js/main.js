@@ -3,6 +3,7 @@ import { api, applyTheme, setState, setDevice, useStore, useRoute } from './core
 import { DeviceSelect } from './ui.js';
 import { Icon, Logo } from './icons.js';
 import { Overview } from './pages/overview.js';
+import { Showcase } from './pages/showcase.js';
 import { Models } from './pages/models.js';
 import { Datasets } from './pages/datasets.js';
 import { Playground } from './pages/playground.js';
@@ -13,7 +14,8 @@ import { About } from './pages/about.js';
 import { Compare } from './pages/compare.js';
 
 const PAGES = [
-  { id: 'overview', label: 'Overview', icon: 'home', C: Overview },
+  { id: 'showcase', label: 'Showcase', icon: 'play', C: Showcase },
+  { id: 'overview', label: 'Overview', icon: 'home', C: Overview, hidden: true },
   { id: 'models', label: 'Models', icon: 'models', C: Models },
   { id: 'datasets', label: 'Datasets', icon: 'data', C: Datasets },
   { id: 'playground', label: 'Playground', icon: 'play', C: Playground },
@@ -40,7 +42,7 @@ function Nav({ page }) {
     class=${`flex h-12 items-center gap-2 px-4 text-button-large font-medium transition-colors hover:bg-action-ghost-1 ${page === p.id ? 'bg-surface-brand-secondary' : ''} ${cls}`}>${p.label}</a>`;
   return html`<nav class="sticky top-0 z-30 border-b border-border-primary bg-surface-brand-primary/95 backdrop-blur" aria-label="Main">
     <div class="mx-auto flex h-12 max-w-6xl items-stretch border-x border-border-primary">
-      <a href="#/overview" class="flex shrink-0 items-center gap-2.5 whitespace-nowrap px-4 font-mistral text-[1.0625rem] font-medium" aria-label="TSFM-Lab home"><${Logo} size=${22} />TSFM-Lab</a>
+      <a href="#/showcase" class="flex shrink-0 items-center gap-2.5 whitespace-nowrap px-4 font-mistral text-[1.0625rem] font-medium" aria-label="TSFM-Lab home"><${Logo} size=${22} />TSFM-Lab</a>
       <div class="hidden items-stretch border-l border-border-primary xl:flex">${PAGES.filter((p) => p.id !== 'about' && !p.hidden).map((p) => html`<div class="border-r border-border-primary">${link(p)}</div>`)}</div>
       <div class="ml-auto flex shrink-0 items-stretch">
         <div class="hidden items-center border-l border-border-primary px-3 sm:flex"><${DeviceSelect} compact /></div>

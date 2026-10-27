@@ -158,7 +158,32 @@ def do_selftest_crash(svc: Services, a: dict[str, Any], progress) -> dict[str, A
     os._exit(13)  # simulates a native crash; only reachable when TSFM_LAB_TEST_OPS=1
 
 
-OPS: dict[str, Callable] = {"forecast": do_forecast, "experiment": do_experiment, "benchmark": do_benchmark,
+def do_showcase_prepare(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
+    from tsfm_lab.data.hub import download
+    from tsfm_lab.showcase import engine
+
+    sc = engine.scenario(a["scenario"])
+    progress(0, 0, f"downloading {sc.name} ({sc.size_mb} MB)…")
+    download(sc.name, sc.freq)
+    engine._CACHE.pop(sc.id, None)
+    return {"ready": True}
+
+
+def do_showcase_forecast(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
+    from tsfm_lab.showcase import engine
+
+    return engine.forecast(svc, a, progress)
+
+
+def do_showcase_impact(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
+    from tsfm_lab.showcase import engine
+
+    svc.drop(a["model"])
+    return engine.impact(svc, a, progress)
+
+
+OPS: dict[str, Callable] = {"showcase_prepare": do_showcase_prepare, "showcase_forecast": do_showcase_forecast,
+                            "showcase_impact": do_showcase_impact,"forecast": do_forecast, "experiment": do_experiment, "benchmark": do_benchmark,
                             "download": do_download, "remove": do_remove}
 if os.environ.get("TSFM_LAB_TEST_OPS") == "1":
     OPS["crash"] = do_selftest_crash

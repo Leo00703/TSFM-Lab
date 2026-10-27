@@ -21,7 +21,7 @@ export function Overview() {
       <div class="flex items-center gap-4"><${Logo} size=${56} /><${Eyebrow}>Local sandbox · time-series foundation models<//></div>
       <h1 class="mt-5 max-w-4xl font-mistral text-h1 font-medium md:text-[3.5rem] md:leading-[3.75rem]">Run Timestral on your machine and judge it with your own data.</h1>
       <p class="mt-5 max-w-2xl text-body-large text-text-muted">Pick a model and a device, forecast any series, and inspect every number behind the result: metrics, calibration, latency, memory, and the exact configuration of each run.</p>
-      <div class="mt-7 flex flex-wrap gap-3"><a href="#/playground" class="btn btn-brand">Open the playground</a><a href="#/experiments" class="btn btn-outline">Run an experiment</a></div>
+      <div class="mt-7 flex flex-wrap gap-3"><a href="#/showcase" class="btn btn-brand">Open the showcase</a><a href="#/playground" class="btn btn-outline">Open the playground</a><a href="#/experiments" class="btn btn-outline">Run an experiment</a></div>
     </header>
 
     <${Section} title="This machine">
