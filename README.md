@@ -1,4 +1,4 @@
-# tsfm-lab
+# TSFM-Lab
 
 A local sandbox to **run, compare and inspect time-series foundation models**, starting with
 Mistral's [Timestral](https://github.com/mistralai/timestral) family (5M / 28M / 123M / 209M).
