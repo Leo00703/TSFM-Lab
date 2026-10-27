@@ -2,32 +2,56 @@
 
 A local sandbox to **run, compare and inspect time-series foundation models**, starting with
 Mistral's [Timestral](https://github.com/mistralai/timestral) family (5M / 28M / 123M / 209M).
-Models run entirely on your machine, on CPU or GPU (CUDA), and every result is shown with the
+Models run entirely on your machine, on the CPU or a GPU (NVIDIA CUDA, Apple Metal), and every result is shown with the
 measurements and configuration needed to judge it honestly.
 
 > **Unofficial.** This is an independent tool, not affiliated with or endorsed by Mistral AI.
 
-**Status:** Phases 0-2 done (isolated environment, model/dataset/metric core, CLI, local web app).
-The full plan, research notes and design decisions are in [`RESOCONTO.md`](RESOCONTO.md) (Italian).
+**Status:** working local web app and command line. The home page is a **Showcase** of real-data forecasts explained in plain
+language (six scenarios, with the measured effect of the factors known in advance); the Playground, Experiments, Runs and
+System pages hold the technical detail. The full plan, research notes and decisions are in [`RESOCONTO.md`](RESOCONTO.md)
+(Italian).
 
 ## Quick start
 
-Requires Python 3.12 or 3.13 and `git`. [`uv`](https://docs.astral.sh/uv/) is used if installed,
-otherwise a private copy is installed inside the project.
+Requires **Python 3.12 or 3.13** (3.14 is not supported yet) and `git`. [`uv`](https://docs.astral.sh/uv/) is used if installed,
+otherwise a private copy is installed inside the project. The first run downloads PyTorch (about 2.5 GB for the NVIDIA CUDA
+build, a few hundred MB otherwise) and a few small tools; model weights are downloaded later, from the app, only when you ask.
+
+**Windows**
 
 ```bash
-python scripts/bootstrap.py            # .venv + PyTorch (CUDA build if an NVIDIA GPU is found) + timestral
-python scripts/bootstrap.py --device cpu   # force the small CPU-only PyTorch instead
+python scripts/bootstrap.py
+.venv\Scripts\python -m tsfm_lab serve
 ```
+
+**macOS** (install a supported Python first if needed: `brew install python@3.13`; the system `python` command does not exist, use `python3.13`)
 
 ```bash
-# Windows                                   # Linux / macOS
-.venv\Scripts\python scripts/doctor.py      .venv/bin/python scripts/doctor.py
-.venv\Scripts\python scripts/smoke_test.py  .venv/bin/python scripts/smoke_test.py
+python3.13 scripts/bootstrap.py
+.venv/bin/python -m tsfm_lab serve
 ```
 
-`smoke_test.py` downloads Timestral-5M (21 MB), checks the forecast shapes and quantile ordering,
-and benchmarks CPU vs GPU with warm-up and proper synchronisation.
+**Linux**
+
+```bash
+python3 scripts/bootstrap.py          # python3.12 or python3.13
+.venv/bin/python -m tsfm_lab serve
+```
+
+`serve` opens `http://127.0.0.1:8765` in your browser (add `--no-browser` to skip that, `--port N` to change the port).
+`bootstrap.py` picks the PyTorch build for you: the CUDA build when an NVIDIA GPU is found, the small CPU build otherwise, the
+standard macOS build on a Mac. Force one with `--device cpu`, `--device cuda` or `--device pypi`.
+
+In every command below, `.venv\Scripts\python` is the Windows interpreter and `.venv/bin/python` the Linux/macOS one.
+
+To check the installation:
+
+```bash
+.venv/bin/python scripts/doctor.py        # Windows: .venv\Scripts\python scripts/doctor.py
+.venv/bin/python scripts/smoke_test.py    # downloads Timestral-5M (21 MB), checks shapes and quantile order,
+                                          # then benchmarks every available device with warm-up and synchronisation
+```
 
 ## Nothing is left behind
 
@@ -38,20 +62,81 @@ before and after an install.
 
 | Script | Purpose |
 |---|---|
-| `scripts/bootstrap.py` | Create the environment, install PyTorch, `timestral` (pinned commit) and the Tailwind CLI |
+| `scripts/bootstrap.py` | Create the environment, install PyTorch, `timestral` (pinned commit) and the Tailwind CLI (pinned checksum) |
 | `scripts/doctor.py` | Versions, GPUs, disk usage, tool status |
 | `scripts/smoke_test.py` | Run Timestral on every available device |
+| `scripts/check_device_parity.py` | Compare a GPU with the CPU: same forecasts? how much faster? (`--device mps`, `--model timestral-28m`) |
 | `scripts/leakcheck.py` | `--mark` before installing, `--report` after: verifies nothing was written elsewhere |
 | `scripts/clean.py` | Remove `.venv` and/or `.cache` |
+| `scripts/download_models.py` | Download Timestral weights without opening the app |
 | `scripts/fetch_brand_assets.py` | Optional: fetch Mistral brand assets for local private use (see below) |
+| `scripts/fetch_vendor.py` | Re-fetch the two vendored JavaScript libraries (integrity-checked) |
 
-## Platforms
+## Platforms and compute devices
 
 | Platform | Compute | Notes |
 |---|---|---|
-| Windows | CPU, CUDA | Developed and tested here |
-| Linux | CPU, CUDA | Same code path; not yet tested |
-| macOS | CPU | Apple GPU (MPS) is not enabled: the upstream package uses float64 on the device ([upstream issue #6](https://github.com/mistralai/timestral/issues/6)); not yet tested |
+| Windows | CPU, NVIDIA CUDA | Developed and tested here, including the GPU |
+| Linux | CPU, NVIDIA CUDA | Installation and tests pass on a hosted Linux runner (CPU); CUDA on Linux is not tested by the author |
+| macOS (Apple Silicon) | CPU, Apple GPU (MPS) | Installation and tests pass on a hosted macOS runner; the Apple GPU was verified on a MacBook Air M5 (see below) |
+
+You choose the device from the selector at the top right of the app, at any time, even when a GPU is present. The default is
+the CPU on every system. **If the chosen GPU is missing, fails to load, or fails while forecasting, the app continues on the
+CPU without an error and says so in the result's warnings.** The CPU-vs-GPU benchmark on the System page is the one exception:
+it fails instead of labelling CPU numbers as GPU numbers.
+
+**Apple GPU.** The official `timestral` package cannot use Apple's GPU because it computes in float64, which Metal lacks
+([upstream issue #6](https://github.com/mistralai/timestral/issues/6)). On macOS only, `pyproject.toml` therefore pins a
+one-commit fork of the very same upstream commit that runs those float64 statistics on the CPU
+([`paschembri/timestral@c49d40f`](https://github.com/paschembri/timestral/commit/c49d40f08dc75c05d7489a3ef26fb3fd565584c7)).
+The change was reviewed before being pinned (3 files, no new dependency, no network, process or file access) and the pin is
+by commit hash, so it cannot change underneath you. Windows and Linux use the official repository. Measured on a MacBook Air M5:
+the GPU gives the same forecasts as the CPU (relative difference below 5e-5) and is about 1.3 times faster on the 209M model,
+so it is an option, not the default. Check your own machine with
+`.venv/bin/python scripts/check_device_parity.py --device mps --model timestral-28m --series 64`.
+
+## Web app
+
+Pages: **Showcase** (home), Models (download weights, specs), Datasets (bundled scenarios, your own files), Playground (one
+forecast, all quantiles), Experiments (rolling-window backtests against baselines), Runs (every metric, calibration, per-step
+error, reproducibility, comparison of runs), System (CPU vs GPU benchmark). Long jobs (experiments, benchmarks, downloads,
+measurements) run in the background, survive navigation and reloads, and can be stopped from the Activity panel.
+
+Dark by default with a light theme switch, responsive down to phone width, English only. Inference runs in a separate worker
+process, so a PyTorch/CUDA/Metal crash cannot take the server down. The UI is built with Tailwind (standalone CLI installed by
+`bootstrap.py`) and plain JavaScript, with Preact and ECharts vendored.
+
+**From your other devices (Tailscale):** `python -m tsfm_lab serve --tailscale` listens on loopback and your tailnet address
+only. There is no login, so anyone on your tailnet can use it.
+
+### Showcase data
+
+The Showcase downloads small public datasets from Hugging Face (`autogluon/fev_datasets`, pinned revision) the first time you
+open a scenario, after asking: electricity demand, store sales, solar power, online grocery sales, supermarket traffic and US
+retail items. The repository card declares the licence as "other" and the data come from public sources: check their terms
+before reusing the data. Nothing from your own files or runs is ever uploaded.
+
+## Command line
+
+```bash
+.venv/bin/python -m tsfm_lab models        # registered models          (Windows: .venv\Scripts\python -m tsfm_lab ...)
+.venv/bin/python -m tsfm_lab devices       # CPU / GPU devices and whether each is usable
+.venv/bin/python -m tsfm_lab datasets      # bundled synthetic scenarios
+.venv/bin/python -m tsfm_lab run --model timestral-5m --dataset multi_seasonality --device cuda --horizon 48
+.venv/bin/python -m tsfm_lab run --model timestral-28m --dataset file:my_data.csv --targets sales
+.venv/bin/python -m tsfm_lab runs          # stored runs
+```
+
+`run` backtests the model and the baselines on identical rolling windows and stores the run under `runs/`.
+To add a model, write one `ModelAdapter` and register it (see `src/tsfm_lab/models/`).
+
+## Continuous integration
+
+`.github/workflows/ci.yml` checks Linux, Windows and macOS. It **never runs by itself**: start it from the Actions tab
+(Run workflow) or with `gh workflow run ci.yml -f systems=all` (or `linux`, `windows`, `macos`). Each system runs the real
+installation (`scripts/bootstrap.py`), the environment report, the tests without model weights, and the tests with the real
+Timestral-5M checkpoint on the CPU. Hosted runners have no GPU, so the GPU paths are checked by hand. On private repositories
+the minutes are multiplied (Linux x1, Windows x2, macOS x10): a full run costs roughly 15 billable minutes.
 
 ## Licences and third-party material
 
@@ -62,35 +147,7 @@ before and after an install.
   at run time and are never part of this repository.
 - Mistral's brand assets (the ALTMistral font and the Timestral logos) belong to Mistral AI.
   They are **not** in this repository; `scripts/fetch_brand_assets.py` downloads them to the
-  git-ignored `web/assets/mistral/` for local private use only. Without them the UI falls back to Inter.
+  git-ignored `web/assets/mistral/` for local private use only (`bootstrap.py` runs it unless you pass
+  `--skip-brand-assets`). Without them the UI falls back to Inter.
 - Inter and Space Mono (`web/fonts/`) are licensed under the SIL Open Font License.
 - Licence for this project's own code: not yet chosen.
-
-## Web app
-
-```bash
-.venv\Scripts\python -m tsfm_lab serve          # http://127.0.0.1:8765 (local only; .venv/bin/python on Linux/macOS)
-```
-
-Dark by default with a light theme switch, responsive down to phone width. Pages: Overview, Models (download weights,
-specs), Datasets (bundled scenarios, your own files), Playground (single forecast), Experiments (backtests),
-Runs (every metric, calibration, per-step error, reproducibility), System (CPU vs GPU benchmark). The compute device
-(CPU or CUDA) is selectable at any time, even when a GPU is present. The UI is built with Tailwind (standalone CLI
-installed by `bootstrap.py`) and plain JavaScript; `scripts/fetch_vendor.py` re-fetches the two vendored libraries.
-
-Inference runs in a separate worker process, so a PyTorch/CUDA crash cannot take the server down. To reach the app from
-your other devices over Tailscale: `python -m tsfm_lab serve --tailscale` (listens on loopback and your tailnet address only;
-there is no login, so anyone on your tailnet can use it).
-
-## Command line
-
-```bash
-.venv\Scripts\python -m tsfm_lab models        # registered models (use .venv/bin/python on Linux/macOS)
-.venv\Scripts\python -m tsfm_lab devices       # CPU / CUDA devices
-.venv\Scripts\python -m tsfm_lab datasets      # bundled synthetic scenarios
-.venv\Scripts\python -m tsfm_lab run --model timestral-5m --dataset multi_seasonality --device cuda --horizon 48
-.venv\Scripts\python -m tsfm_lab run --model timestral-28m --dataset file:my_data.csv --targets sales
-```
-
-`run` backtests the model and the baselines on identical rolling windows and stores the run under `runs/`.
-To add a model, write one `ModelAdapter` and register it (see `src/tsfm_lab/models/`).
