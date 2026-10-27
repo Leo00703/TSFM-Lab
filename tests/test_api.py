@@ -232,3 +232,28 @@ def test_showcase_impact_job_on_baseline_models_is_cached(client) -> None:
     assert abs(r["gain_all"]) < 1e-9  # a baseline ignores covariates: no gain, and the code does not invent one
     second = wait(client, client.post("/api/showcase/impact", json=body).json()["id"])
     assert second["result"]["cached"] is True
+
+
+def test_stop_really_stops_a_long_computation_and_the_worker_recovers(tmp_path, monkeypatch) -> None:
+    from tsfm_lab.api.jobs import JobCancelled
+    from tsfm_lab.api.worker import WorkerClient
+
+    monkeypatch.setenv("TSFM_LAB_TEST_OPS", "1")
+    w = WorkerClient(tmp_path)
+    w.STOP_GRACE_S = 1.0
+    try:
+        t0 = time.time()
+        with pytest.raises(JobCancelled):
+            w.call("sleep", {"seconds": 120}, cancelled=lambda: time.time() - t0 > 1.0)  # never checks the flag itself
+        assert time.time() - t0 < 30, "stopping took too long"
+        assert not w.alive
+        out = w.call("forecast", {"dataset": SPEC, "series": 0, "origin": 200, "horizon": 12, "model": "naive", "baselines": [],
+                                  "device": "cpu", "use_covariates": True, "context_length": None, "options": {}})
+        assert out["horizon"] == 12 and w.alive  # a fresh worker serves the next request
+    finally:
+        w.stop()
+
+
+def test_timestral_models_are_listed_from_largest_to_smallest(client) -> None:
+    ids = [m["id"] for m in client.get("/api/models").json() if m["kind"] == "foundation"]
+    assert ids == ["timestral-209m", "timestral-123m", "timestral-28m", "timestral-5m"]

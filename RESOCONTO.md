@@ -344,3 +344,9 @@ Fase 3: pagina di confronto tra run, ulteriori viste e rifiniture di visualizzaz
 - **Errore evitato:** la colonna `target` di `entsoe` sembrava un prezzo ma è la **domanda** (mai negativa, −14/−19% nel weekend): lo scenario è etichettato così, senza unità inventata. Il dataset di Tetuan mostrato da Mistral non è disponibile nelle fonti: sostituito dal solare con meteo.
 - **Avvertenze mostrate all'utente:** per elettricità e solare i fattori sono valori *misurati*, non previsioni, quindi il beneficio è un limite superiore; i dataset sono pubblici e potrebbero essere nei dati di addestramento (non dichiarati); licenza `other` dichiarata sul repository, termini delle fonti originali da verificare.
 - **Provato** nel browser integrato (desktop e 375 px, nessuno scorrimento orizzontale, nessun errore bloccante); 68 test.
+
+### Lavori in background, ordine dei modelli e header (2026-10-27)
+- **Pannello «Attività» globale:** ogni benchmark, esperimento, download o misura in corso compare in basso a destra **in ogni pagina**, con avanzamento reale, Stop e «Open page»; gli esiti recenti restano 3 minuti con il link al risultato. Lo stato vive sul server: cambiando pagina o **ricaricando** si ritrova tutto, e le pagine System, Experiments e Models ripropongono avanzamento e Stop. I redirect automatici ora scattano solo se la pagina che ha avviato il lavoro è ancora aperta.
+- **Stop vero:** se un calcolo lungo non guarda il segnale di annullamento, dopo 4 s il processo worker viene terminato e riparte alla richiesta successiva (provato dal vivo: benchmark fermato in 7,7 s). Il benchmark ora indica *prima* quale cella sta misurando.
+- **Modelli dal più grande al più piccolo** ovunque (209M, 123M, 28M, 5M): menu, schede, benchmark, CLI.
+- **Header:** link più compatti e selettore del dispositivo più stretto: a 1280 px il selettore del tema sta dentro il bordo.

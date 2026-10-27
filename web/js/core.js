@@ -2,7 +2,7 @@
 import { useState, useEffect } from '/vendor/htm-preact.js';
 
 // ---------------------------------------------------------------- store
-const state = { device: 'cpu', theme: 'dark', devices: [], busy: false };
+const state = { device: 'cpu', theme: 'dark', devices: [], busy: false, jobs: [], jobsLoaded: false };
 const subs = new Set();
 try { state.device = localStorage.getItem('tsfm-device') || 'cpu'; state.theme = localStorage.getItem('tsfm-theme') || 'dark'; } catch (e) {}
 export function setState(patch) { Object.assign(state, patch); subs.forEach((f) => f()); }

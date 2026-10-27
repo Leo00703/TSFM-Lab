@@ -113,5 +113,5 @@ export function DeviceSelect({ class: c = '', compact }) {
     label: (d.id === 'cpu' ? 'CPU' : deviceLabel(d.id) + ' · ' + d.name.replace(/^NVIDIA (GeForce )?/, '')) + (d.supported ? '' : ' (unavailable)'),
   }));
   return html`<div class=${'flex items-center gap-2 ' + c}><span class=${compact ? 'sr-only' : 'label !mb-0 shrink-0'}>Compute device</span>
-    <${Select} compact=${compact} value=${device} onChange=${setDevice} options=${options} aria-label="Compute device" class=${compact ? 'w-44' : 'min-w-0 flex-1'} /></div>`;
+    <${Select} compact=${compact} value=${device} onChange=${setDevice} options=${options} aria-label="Compute device" class=${compact ? 'w-40' : 'min-w-0 flex-1'} /></div>`;
 }

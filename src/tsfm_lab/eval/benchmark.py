@@ -71,6 +71,8 @@ def run_benchmark(model_id: str, devices: list[str], repeats: int = 15, scenario
         entry["cold_first_call_ms"] = cold.timings["forecast_ms"]
         reference[adapter.device] = cold.quantiles
         for cell in grid:
+            if progress:
+                progress(done, total, f"{device}: measuring {cell['label']}…")
             ctx = _series(cell["batch"], cell["context"])
             req = ForecastRequest(ctx, cell["horizon"], seasonal_period=96)
             adapter.forecast(req)  # warm-up for this shape

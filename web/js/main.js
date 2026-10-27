@@ -12,6 +12,7 @@ import { Runs } from './pages/runs.js';
 import { System } from './pages/system.js';
 import { About } from './pages/about.js';
 import { Compare } from './pages/compare.js';
+import { ActivityPanel, useJobPoller } from './activity.js';
 
 const PAGES = [
   { id: 'showcase', label: 'Showcase', icon: 'play', C: Showcase },
@@ -39,11 +40,11 @@ function Nav({ page }) {
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [page]);
   const link = (p, cls = '') => html`<a href=${'#/' + p.id} aria-current=${page === p.id ? 'page' : undefined}
-    class=${`flex h-12 items-center gap-2 px-4 text-button-large font-medium transition-colors hover:bg-action-ghost-1 ${page === p.id ? 'bg-surface-brand-secondary' : ''} ${cls}`}>${p.label}</a>`;
+    class=${`flex h-12 items-center gap-2 px-3 text-button-large font-medium transition-colors hover:bg-action-ghost-1 ${page === p.id ? 'bg-surface-brand-secondary' : ''} ${cls}`}>${p.label}</a>`;
   return html`<nav class="sticky top-0 z-30 border-b border-border-primary bg-surface-brand-primary/95 backdrop-blur" aria-label="Main">
     <div class="mx-auto flex h-12 max-w-6xl items-stretch border-x border-border-primary">
       <a href="#/showcase" class="flex shrink-0 items-center gap-2.5 whitespace-nowrap px-4 font-mistral text-[1.0625rem] font-medium" aria-label="TSFM-Lab home"><${Logo} size=${22} />TSFM-Lab</a>
-      <div class="hidden items-stretch border-l border-border-primary xl:flex">${PAGES.filter((p) => p.id !== 'about' && !p.hidden).map((p) => html`<div class="border-r border-border-primary">${link(p)}</div>`)}</div>
+      <div class="hidden min-w-0 items-stretch overflow-hidden border-l border-border-primary xl:flex">${PAGES.filter((p) => p.id !== 'about' && !p.hidden).map((p) => html`<div class="border-r border-border-primary">${link(p)}</div>`)}</div>
       <div class="ml-auto flex shrink-0 items-stretch">
         <div class="hidden items-center border-l border-border-primary px-3 sm:flex"><${DeviceSelect} compact /></div>
         <div class="hidden items-center border-l border-border-primary px-3 md:flex"><${ThemeSwitch} /></div>
@@ -63,6 +64,7 @@ function Footer() {
 }
 
 function App() {
+  useJobPoller();
   const { page } = useRoute();
   const route = useRoute();
   useEffect(() => {
@@ -77,7 +79,7 @@ function App() {
   return html`<div class="min-h-dvh flex flex-col"><a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-surface-brand-primary focus:p-3">Skip to content</a>
     <${Nav} page=${current.id} />
     <main id="main" class="mx-auto w-full max-w-6xl flex-1 border-x border-border-primary px-4 pb-16 md:px-8"><${current.C} route=${route} key=${current.id + (route.query.ds || '') + (route.query.runs || '')} /></main>
-    <${Footer} /></div>`;
+    <${Footer} /><${ActivityPanel} /></div>`;
 }
 
 applyTheme(localStorage.getItem('tsfm-theme') || 'dark');

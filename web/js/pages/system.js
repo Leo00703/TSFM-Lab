@@ -1,26 +1,24 @@
-import { html, useState } from '/vendor/htm-preact.js';
-import { api, useAsync, waitForJob, ms, num, bytes, when, deviceLabel } from '../core.js';
+import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
+import { api, useAsync, useStore, ms, num, bytes, when, deviceLabel } from '../core.js';
+import { isActive, stopJob } from '../activity.js';
 import { Card, PageHeader, Section, Button, Field, Select, NumberInput, Check, Notice, Spinner, ErrorBox, Table, KV, Progress, Tabs, Tag, Eyebrow } from '../ui.js';
 import { Figure, barOption, linesOption } from '../charts.js';
 
 const SCEN = [['mistral', 'Mistral setup (1 series, 2016 → 96)'], ['batch', 'Batch size (1 – 128)'], ['context', 'Context length (256 – 16,384)'], ['horizon', 'Horizon (24 – 1,024)']];
 const VENDOR_MS = { 'timestral-5m': 17, 'timestral-209m': 113 };
 
-function Benchmark({ sys, models, onSaved }) {
+function Benchmark({ sys, models }) {
+  const { jobs } = useStore();
   const [model, setModel] = useState('timestral-5m');
   const gpus = sys.devices.filter((d) => d.kind === 'cuda' && d.supported);
   const [devs, setDevs] = useState(['cpu', ...gpus.map((g) => g.id)]);
   const [repeats, setRepeats] = useState(15), [scen, setScen] = useState(['mistral', 'batch', 'context', 'horizon']);
-  const [job, setJob] = useState(null), [error, setError] = useState(null);
-  const running = job && ['queued', 'running'].includes(job.status);
+  const [error, setError] = useState(null);
+  const active = jobs.find((j) => j.kind === 'benchmark' && isActive(j));  // survives page changes and reloads
   const start = async () => {
     setError(null);
-    try {
-      const j = await api('/api/jobs/benchmark', { method: 'POST', body: { model, devices: devs, repeats, scenarios: scen } });
-      setJob(j);
-      const done = await waitForJob(j.id, setJob);
-      if (done.status === 'error') setError(new Error(done.error)); else if (done.status === 'done') onSaved(done.result.benchmark_id);
-    } catch (e) { setError(e); }
+    try { await api('/api/jobs/benchmark', { method: 'POST', body: { model, devices: devs, repeats, scenarios: scen } }); }
+    catch (e) { setError(e); }
   };
   const opts = (models || []).filter((m) => m.kind === 'foundation').map((m) => ({ value: m.id, label: `${m.name}${m.cache.downloaded ? '' : ' (download first)'}`, disabled: !m.cache.downloaded }));
   return html`<${Card}><div class="grid gap-5 md:grid-cols-2">
@@ -28,9 +26,10 @@ function Benchmark({ sys, models, onSaved }) {
       <div class="grid grid-cols-2 gap-3"><${Field} label="Timed repeats" hint="per scenario"><${NumberInput} value=${repeats} min=${1} max=${200} onChange=${(v) => setRepeats(v || 1)} /><//></div></div>
     <div><span class="label">Devices to compare</span>${sys.devices.map((d) => html`<${Check} disabled=${!d.supported} checked=${devs.includes(d.id)} onChange=${(c) => setDevs(c ? [...devs, d.id] : devs.filter((x) => x !== d.id))} hint=${d.supported ? null : d.reason}>${d.id === 'cpu' ? 'CPU' : deviceLabel(d.id)} <span class="text-text-muted">· ${d.name.slice(0, 40)}</span><//>`)}
       <span class="label mt-3">Scenarios</span>${SCEN.map(([v, l]) => html`<${Check} checked=${scen.includes(v)} onChange=${(c) => setScen(c ? [...scen, v] : scen.filter((x) => x !== v))}>${l}<//>`)}</div></div>
-    <div class="mt-5 flex flex-wrap items-center gap-4 border-t border-border-primary pt-5"><${Button} kind="brand" disabled=${running || !devs.length || !scen.length} onClick=${start}>${running ? 'Measuring…' : 'Run benchmark'}<//>
-      <p class="max-w-xl text-body-small text-text-muted">Each cell: one untimed warm-up call, then timed repeats with the GPU synchronised. Nothing else should be heavy on this machine while it runs.</p></div>
-    ${job && running && html`<div class="mt-4"><${Progress} done=${job.done} total=${job.total} message=${job.message} /></div>`}${error && html`<div class="mt-4"><${ErrorBox} error=${error} /></div>`}<//>`;
+    <div class="mt-5 flex flex-wrap items-center gap-4 border-t border-border-primary pt-5"><${Button} kind="brand" disabled=${!!active || !devs.length || !scen.length} onClick=${start}>${active ? 'Measuring…' : 'Run benchmark'}<//>
+      ${active && html`<${Button} kind="danger" onClick=${() => stopJob(active.id)}>Stop<//>`}
+      <p class="max-w-xl text-body-small text-text-muted">Each cell: one untimed warm-up call, then timed repeats with the GPU synchronised. Nothing else should be heavy on this machine while it runs. It keeps running if you leave this page.</p></div>
+    ${active && html`<div class="mt-4"><span class="eyebrow">${active.label}</span><div class="mt-2"><${Progress} done=${active.done} total=${active.total} message=${active.status === 'queued' ? 'waiting for the current job…' : active.message} /></div></div>`}${error && html`<div class="mt-4"><${ErrorBox} error=${error} /></div>`}<//>`;
 }
 
 function Results({ id }) {
@@ -69,6 +68,10 @@ export function System() {
   const [models] = useAsync(() => api('/api/models'), []);
   const [list, reload] = useAsync(() => api('/api/benchmarks'), []);
   const [pick, setPick] = useState(null);
+  const { jobs } = useStore();
+  const seen = useRef(null);
+  const doneJob = jobs.find((j) => j.kind === 'benchmark' && j.status === 'done' && j.result);
+  useEffect(() => { if (doneJob && seen.current !== doneJob.id) { const first = seen.current === null; seen.current = doneJob.id; if (!first || !list.data || !list.data.length) { setPick(doneJob.result.benchmark_id); } reload(); } }, [doneJob && doneJob.id]);
   const bid = pick || (list.data && list.data[0] && list.data[0].id);
   if (sys.loading) return html`<${Spinner} />`;
   if (sys.error) return html`<${ErrorBox} error=${sys.error} />`;
@@ -83,7 +86,7 @@ export function System() {
       <${Card} tight>${disk.loading ? html`<${Spinner} label="Measuring disk usage…" />` : disk.error ? html`<${ErrorBox} error=${disk.error} />` : html`<${Table} head=${['Location', 'Files', 'Size']} rows=${disk.data.map((d) => [d.label, d.files.toLocaleString(), bytes(d.bytes)])} />
         <p class="mt-2 text-body-small text-text-muted">The package cache is hard-linked with <span class="font-mono">.venv</span> where the volume allows, so the real total is lower than the sum. Deleting the project folder removes everything.</p>`}<//><//>
     <${Section} title="Benchmark: CPU vs GPU">
-      ${models.data && html`<${Benchmark} sys=${sys.data} models=${models.data} onSaved=${(id) => { setPick(id); reload(); }} />`}
+      ${models.data && html`<${Benchmark} sys=${sys.data} models=${models.data} />`}
       <div class="mt-6">${list.data && list.data.length > 1 && html`<div class="mb-4 w-80 max-w-full"><${Field} label="Stored benchmark"><${Select} value=${bid} onChange=${setPick} options=${list.data.map((b) => ({ value: b.id, label: `${b.name} · ${b.devices.join(' + ')} · ${when(b.created)}` }))} /><//></div>`}
         ${bid ? html`<${Results} id=${bid} key=${bid} />` : html`<${Card}><p class="text-text-muted">No benchmark yet. Run one above to see cold start, warm latency, throughput and memory on this machine.</p><//>`}</div><//>
     <${Section} title="Brand assets"><${Card} tight><p class="text-body-small text-text-muted">${brand.data ? (brand.data.fonts ? `ALTMistral font loaded from this machine (${brand.data.fonts} files, local private use).` : 'ALTMistral font not found: the interface falls back to Inter.') : ''} ${brand.data && brand.data.logo ? 'Timestral logo present locally.' : 'Timestral logo not found: a neutral mark is shown.'}</p><//><//>

@@ -1,5 +1,5 @@
 import { html, useState } from '/vendor/htm-preact.js';
-import { api, useAsync, go, num, pct, pct0, ms, when, waitForJob } from '../core.js';
+import { api, useAsync, go, num, pct, pct0, ms, when } from '../core.js';
 import { Card, PageHeader, Section, Button, Tabs, Select, Field, Spinner, ErrorBox, Notice, Table, KV, Collapse, Tag, Eyebrow, download } from '../ui.js';
 import { Figure, barOption, linesOption, fanOption, baseOption, axisStyle, modelColors, quantileStats, isNarrow } from '../charts.js';
 
@@ -48,7 +48,7 @@ function RunDetail({ id }) {
   const meta = m.data;
   const ids = meta ? Object.keys(meta.models) : [];
   const focus = ids[0];
-  const [rerun, setRerun] = useState(false);
+  const [rerun, setRerun] = useState(null);
   const [metric, setMetric] = useState('mase'), [hm, setHm] = useState('mase'), [dm, setDm] = useState('mase'), [aModel, setAModel] = useState(null);
   const model = aModel || focus;
   const [an] = useAsync(() => (meta ? api(`/api/runs/${id}/analysis?model=${model}`) : Promise.resolve(null)), [id, model, !!meta]);
@@ -83,7 +83,7 @@ function RunDetail({ id }) {
   return html`<div><${PageHeader} eyebrow=${`Run · ${when(meta.created)}`} title=${meta.label || meta.dataset.name}>
       ${meta.dataset.name} · ${meta.dataset.n_series} series · horizon ${horizonLen} · ${meta.config.n_windows} windows · ${meta.items.series.length} forecasts per model<//>
     <div class="mt-5 flex flex-wrap gap-2"><a class="btn btn-outline btn-small" href=${`/api/runs/${id}/export.csv`} download>Export CSV</a><a class="btn btn-outline btn-small" href=${`/api/runs/${id}`} target="_blank" rel="noopener">Raw JSON</a>
-      ${meta.request && html`<${Button} small kind="outline" icon="refresh" disabled=${rerun} onClick=${async () => { setRerun(true); try { const j = await api('/api/jobs/experiment', { method: 'POST', body: { ...meta.request, label: (meta.label || meta.dataset.name) + ' (re-run)' } }); const done = await waitForJob(j.id); if (done.status === 'done') go('runs/' + done.result.run_id); else alert(done.error || done.status); } catch (e) { alert(e.message); } setRerun(false); }}>${rerun ? 'Re-running…' : 'Re-run with the same settings'}<//>`}
+      ${meta.request && html`<${Button} small kind="outline" icon="refresh" disabled=${rerun === 'started'} onClick=${async () => { setRerun(true); try { await api('/api/jobs/experiment', { method: 'POST', body: { ...meta.request, label: (meta.label || meta.dataset.name) + ' (re-run)' } }); setRerun('started'); } catch (e) { setRerun(String(e.message)); } }}>Re-run with the same settings<//>${rerun === 'started' ? html`<span class="text-body-small text-text-muted">Started: follow it in the Activity panel (bottom right) and open the run when it finishes.</span>` : rerun ? html`<span class="text-body-small text-text-destructive">${rerun}</span>` : null}`}
       <${Button} small kind="danger" icon="trash" onClick=${async () => { if (confirm('Delete this run?')) { await api(`/api/runs/${id}`, { method: 'DELETE' }); go('runs'); } }}>Delete<//>
       <${Button} small kind="outline" onClick=${() => go('runs')}>All runs<//></div>
 

@@ -1,20 +1,19 @@
-import { html, useState } from '/vendor/htm-preact.js';
-import { api, useAsync, params, bytes, ms, num, waitForJob } from '../core.js';
+import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
+import { api, useAsync, useStore, params, bytes, ms, num } from '../core.js';
+import { isActive, stopJob } from '../activity.js';
 import { Logo } from '../icons.js';
 import { Card, PageHeader, Section, Tag, Button, Spinner, ErrorBox, Notice, KV, Progress, Collapse } from '../ui.js';
 
 function CacheControls({ model, onChange }) {
-  const [job, setJob] = useState(null);
+  const { jobs } = useStore();
   const [error, setError] = useState(null);
   const c = model.cache;
+  const active = jobs.find((j) => j.kind === 'download' && isActive(j) && j.label.includes(model.name));  // survives page changes
+  const was = useRef(false);
+  useEffect(() => { if (was.current && !active) onChange(); was.current = !!active; }, [!!active]);
   const download = async () => {
     setError(null);
-    try {
-      const j = await api(`/api/models/${model.id}/download`, { method: 'POST' });
-      const done = await waitForJob(j.id, setJob);
-      if (done.status === 'error') throw new Error(done.error);
-      setJob(null); onChange();
-    } catch (e) { setJob(null); setError(e); }
+    try { await api(`/api/models/${model.id}/download`, { method: 'POST' }); } catch (e) { setError(e); }
   };
   const remove = async () => {
     if (!confirm(`Delete the downloaded weights of ${model.name} (${bytes(c.size_bytes)})? You can download them again later.`)) return;
@@ -23,9 +22,9 @@ function CacheControls({ model, onChange }) {
   return html`<div class="mt-4 border-t border-border-primary pt-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="text-body-small"><span class="eyebrow">Weights</span><div class="mt-1">${c.downloaded ? html`<span class="text-text-success">Downloaded</span> · <span class="num">${bytes(c.size_bytes)}</span> · revision <span class="font-mono">${c.revision.slice(0, 8)}</span>` : html`<span class="text-text-muted">Not downloaded (≈ ${model.details.weights_mb_fp32} MB)</span>`}</div></div>
-      ${c.downloaded ? html`<${Button} kind="danger" small icon="trash" onClick=${remove}>Remove<//>` : html`<${Button} kind="primary" small icon="download" disabled=${!!job} onClick=${download}>Download<//>`}
+      ${c.downloaded ? html`<${Button} kind="danger" small icon="trash" onClick=${remove}>Remove<//>` : html`<div class="flex gap-2"><${Button} kind="primary" small icon="download" disabled=${!!active} onClick=${download}>${active ? 'Downloading…' : 'Download'}<//>${active && html`<${Button} kind="danger" small onClick=${() => stopJob(active.id)}>Stop<//>`}</div>`}
     </div>
-    ${job && html`<div class="mt-3"><${Progress} done=${0} total=${0} message=${job.message || 'Downloading from Hugging Face…'} /></div>`}
+    ${active && html`<div class="mt-3"><${Progress} done=${0} total=${0} message=${active.message || 'Downloading from Hugging Face…'} /></div>`}
     ${error && html`<div class="mt-3"><${ErrorBox} error=${error} /></div>`}</div>`;
 }
 

@@ -158,6 +158,11 @@ def do_selftest_crash(svc: Services, a: dict[str, Any], progress) -> dict[str, A
     os._exit(13)  # simulates a native crash; only reachable when TSFM_LAB_TEST_OPS=1
 
 
+def do_selftest_sleep(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
+    time.sleep(a.get("seconds", 60))  # a long, uninterruptible computation; only when TSFM_LAB_TEST_OPS=1
+    return {"slept": True}
+
+
 def do_showcase_prepare(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
     from tsfm_lab.data.hub import download
     from tsfm_lab.showcase import engine
@@ -187,6 +192,7 @@ OPS: dict[str, Callable] = {"showcase_prepare": do_showcase_prepare, "showcase_f
                             "download": do_download, "remove": do_remove}
 if os.environ.get("TSFM_LAB_TEST_OPS") == "1":
     OPS["crash"] = do_selftest_crash
+    OPS["sleep"] = do_selftest_sleep
 
 
 def worker_main(root: str, requests, responses, cancel) -> None:
@@ -217,6 +223,8 @@ def worker_main(root: str, requests, responses, cancel) -> None:
 # ====================================================================== server side
 class WorkerClient:
     """Talks to the worker process; restarts it if it dies. One call at a time (the caller holds a lock)."""
+
+    STOP_GRACE_S = 4.0  # time a computation gets to stop on its own after a cancel request
 
     def __init__(self, root: Path) -> None:
         self.root = Path(root)
@@ -254,9 +262,14 @@ class WorkerClient:
             self._next += 1
             call_id = self._next
             self._req.put((call_id, op, payload))
+            asked_at: float | None = None
             while True:
                 if cancelled and cancelled():
                     self._cancel.set()
+                    asked_at = asked_at or time.time()
+                    if time.time() - asked_at > self.STOP_GRACE_S:  # a long step does not look at the flag: stop the process
+                        self.stop()
+                        raise JobCancelled("stopped")
                 try:
                     kind, rid, data, extra = self._res.get(timeout=0.3)
                 except queue.Empty:

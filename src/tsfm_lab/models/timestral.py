@@ -34,7 +34,7 @@ def load_manifests() -> list[dict[str, Any]]:
     for entry in sorted(resources.files(MANIFEST_PACKAGE).iterdir(), key=lambda p: p.name):
         if entry.name.startswith("timestral-") and entry.name.endswith(".toml"):
             out.append(tomllib.loads(entry.read_text(encoding="utf-8")))
-    return out
+    return sorted(out, key=lambda m: -m["params"])  # 209M, 123M, 28M, 5M (file names sort alphabetically: 123m < 209m < 28m < 5m)
 
 
 def info_from_manifest(manifest: dict[str, Any]) -> ModelInfo:
