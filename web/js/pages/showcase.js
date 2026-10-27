@@ -10,6 +10,9 @@ const num2 = new Intl.NumberFormat('en', { maximumFractionDigits: 1 });
 const fmtV = (v, binary) => (v === null || v === undefined || Number.isNaN(v) ? '–' : binary ? (v >= 0.5 ? 'Yes' : 'No') : Math.abs(v) >= 100 ? compact.format(v) : num2.format(v));
 const dayLabel = (v) => { const d = new Date(v); return Number.isNaN(d) ? String(v) : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); };
 const longDate = (v) => new Date(v).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+/** A number of steps as a plain-language span: hours/days for hourly data, days/weeks for daily, weeks for weekly. */
+const span = (sc, n) => sc.freq.endsWith('H') ? (n >= 48 ? Math.round(n / 24) + ' days' : n + ' hours')
+  : sc.freq.endsWith('W') ? n + ' weeks' : (n >= 14 ? Math.round(n / 7) + ' weeks' : n + ' days');
 const fullDate = (v, hourly) => { const d = new Date(v); return Number.isNaN(d) ? String(v) : d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', ...(hourly ? { hour: '2-digit', minute: '2-digit' } : {}) }); };
 
 // Plot margins shared by the main chart and every factor row, so all time axes line up exactly.
@@ -77,7 +80,7 @@ function Effect({ sc, impact, loading, progress }) {
   const bar = (g) => `width:${Math.max(0, Math.min(100, (g || 0) * 100 * 1.6))}%`;
   const d = impact.detail;
   return html`<div class="grid gap-5">
-    <p class="max-w-3xl text-body-large">Given <b>all</b> the factors, the model's error score drops by <b class="text-surface-brand num">${pct0(impact.gain_all)}</b> compared with using the history alone.
+    <p class="max-w-3xl text-body-large">Given <b>all</b> the factors, the model's error score ${impact.gain_all >= 0 ? 'drops' : 'goes up'} by <b class=${'num ' + (impact.gain_all >= 0 ? 'text-surface-brand' : '')}>${pct0(Math.abs(impact.gain_all))}</b> compared with using the history alone${impact.gain_all < 0 ? ': with this model the factors do more harm than good here' : ''}.
       Measured on <b class="num">${impact.forecasts}</b> past forecasts (${impact.series} series × the ${impact.windows} most recent windows of ${sc.horizon_label}).</p>
     <div class="grid gap-2">${rows.map((r) => html`<div class="grid grid-cols-[8.5rem_1fr_3.5rem] items-center gap-3 text-body-small"><span>${r.label}</span>
       <span class="h-2 rounded-sm bg-surface-brand-tertiary"><span class="block h-full rounded-sm bg-surface-brand" style=${bar(r.gain)}></span></span><span class="num text-right">${r.gain === null ? '–' : (r.gain >= 0 ? '+' : '') + Math.round(r.gain * 100) + '%'}</span></div>`)}
@@ -138,7 +141,7 @@ export function Showcase() {
   // measured effect over many windows (cached on disk after the first run); starts after the first chart is shown
   const firstShown = !!(data && sc && data.scenario === sc.id);
   useEffect(() => {
-    if (!sc || !sc.ready || !model || !firstShown) return;
+    if (!sc || !sc.ready || !model || !firstShown) { setImpact(null); return; }  // never show another scenario's numbers
     let alive = true;
     setImpact(null); setImpLoading(true); setProg({});
     if (impJob.current) api(`/api/jobs/${impJob.current}/cancel`, { method: 'POST' }).catch(() => {});
@@ -160,7 +163,8 @@ export function Showcase() {
   const onMove = (e) => { if (dragging) fromPointer(e); };
   const onUp = () => setDragging(false);
   const onKey = (e) => {
-    const step = hourly ? 6 : 1, big = hourly ? 24 : 7;
+    const weekly = sc.freq.endsWith('W');
+    const step = hourly ? 6 : 1, big = hourly ? 24 : weekly ? 4 : 7;
     const d = { ArrowLeft: -step, ArrowDown: -step, ArrowRight: step, ArrowUp: step, PageDown: -big, PageUp: big }[e.key];
     if (d !== undefined) { e.preventDefault(); setCut(cut + d); } else if (e.key === 'Home') { e.preventDefault(); setCut(sc.k_min); } else if (e.key === 'End') { e.preventDefault(); setCut(sc.k_max); }
   };
@@ -230,7 +234,7 @@ export function Showcase() {
               <span class="pointer-events-none absolute left-4 top-2 whitespace-nowrap text-body-small font-medium text-surface-brand">${dragging && data.x[cut] ? dayLabel(data.x[cut]) : 'Forecast'}</span></div></div>`}
           ${busy && valid && html`<span class="absolute right-2 top-12 rounded-sm bg-surface-brand-tertiary px-2 py-0.5 font-mono text-[0.6875rem] uppercase text-text-muted">updating…</span>`}</div>
         ${wait && html`<p class="mt-2 text-body-small text-text-muted">${wait}</p>`}
-        <div class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-body-small text-text-muted"><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-text-primary"></i>History</span><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-surface-brand"></i>Forecast${valid ? ' · ' + (hourly ? (data.horizon >= 48 ? Math.round(data.horizon / 24) + ' days' : data.horizon + ' hours') : (data.horizon >= 14 ? Math.round(data.horizon / 7) + ' weeks' : data.horizon + ' days')) : ''}</span><span class="inline-flex items-center gap-2"><i class="inline-block h-3 w-5 rounded-sm bg-surface-brand opacity-30"></i>Likely range (50% and 80%)</span></div>
+        <div class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-body-small text-text-muted"><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-text-primary"></i>History</span><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-surface-brand"></i>Forecast${valid ? ' · ' + span(sc, data.horizon) : ''}</span><span class="inline-flex items-center gap-2"><i class="inline-block h-3 w-5 rounded-sm bg-surface-brand opacity-30"></i>Likely range (50% and 80%)</span></div>
 
         <div class="mt-4 grid gap-x-6 gap-y-1 border-t border-border-primary pt-4 md:grid-cols-[11rem_minmax(0,1fr)]">
           <div><div class="font-medium">Forecast starts</div><div class="num text-body-small text-text-muted">${valid ? longDate(data.start) : ''}</div></div>
@@ -242,7 +246,7 @@ export function Showcase() {
 
         <div class="mt-4 border-t border-border-primary">
           <div class="flex flex-wrap items-center justify-between gap-3 py-4"><span class="font-medium">Factors known in advance</span>
-            <div class="flex items-center gap-4">${impact && html`<span class="text-body-small"><b class="text-surface-brand num">${pct0(impact.gain_all)}</b> <span class="text-text-muted">lower error with all of them</span></span>`}
+            <div class="flex items-center gap-4">${impact && html`<span class="text-body-small"><b class=${'num ' + (impact.gain_all >= 0 ? 'text-surface-brand' : '')}>${pct0(Math.abs(impact.gain_all))}</b> <span class="text-text-muted">${impact.gain_all >= 0 ? 'lower' : 'higher'} error with all of them</span></span>`}
               ${impLoading && html`<span class="text-body-small text-text-muted">measuring…</span>`}
               <${Switch} checked=${allOn} onChange=${setAll} label=${allOn ? 'All on' : 'All off'} /></div></div>
           ${sc.covariates.map((c) => { const row = valid ? data.covariates.find((r) => r.key === c.key) : null; const g = impact && impact.gain_each[c.key];

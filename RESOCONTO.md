@@ -360,3 +360,21 @@ Fase 3: pagina di confronto tra run, ulteriori viste e rifiniture di visualizzaz
 - **Correzione di progetto:** prima si muoveva la *finestra dei dati* e la tenda restava ferma; sul sito ufficiale è il contrario. Ora il grafico mostra una **finestra fissa** (gli ultimi dati) e la tenda si muove liberamente sopra: a sinistra ciò che il modello vede, a destra ciò che prevede, **fino al bordo della finestra**. Più la tenda va a sinistra, più lunga è la previsione (da 7 giorni a 10 settimane sulle vendite). Nelle righe dei fattori la parte dopo la tenda è più tenue.
 - **Grafico largo quanto la card**, con righe dei fattori sotto con la stessa scala del tempo; la tenda è posizionata in percentuale dentro l'area del grafico, quindi non può uscire dai bordi (verificato agli estremi con Home/End e su mobile).
 - Il confine `k` e l'orizzonte arrivano dall'API (`window`, `k_default`, `k_min`, `k_max`); la misura «% di errore in meno» resta calcolata sull'orizzonte predefinito.
+
+### Showcase: tre nuovi scenari e correzione del bug #7 (2026-10-27)
+- **Candidati ispezionati prima di aggiungerli** (schema, lunghezze, valori mancanti, variabilità di ogni fattore) da `autogluon/fev_datasets` (revisione fissata). **Esclusi:** `uk_covid_nation` (nessun fattore noto in anticipo, solo storici) e `m5` giornaliero (84 MB, serie intermittenti: usata la versione settimanale da 9,8 MB).
+- **Nuovi scenari:** **Groceries** (`rohlik_sales`, 30,5 MB: vendite giornaliere di 40 prodotti di un negozio online; fattori prezzo, sconto, festività, vacanze invernali), **Store traffic** (`favorita_transactions`, 0,2 MB: acquisti giornalieri di 51 supermercati in Ecuador; fattori festività e prezzo del petrolio) e **US retail** (`m5` settimanale, 9,8 MB: 30 articoli dei negozi della California; prezzo, giorni di pagamento degli aiuti alimentari SNAP, eventi nazionali, religiosi, culturali e sportivi). Sei schede in totale.
+- **Serie scelte con una regola che non guarda i fattori** (i più venduti con storia completa), così il risultato non è «ritagliato» per mostrare un guadagno. Fattori non noti in anticipo esclusi di proposito (disponibilità a magazzino, ordini totali); fattori con valori mancanti per la maggior parte delle serie (negozi chiusi) esclusi.
+- **Risultati misurati** (GPU, perdita quantilica pesata, «% di errore in meno con tutti i fattori», meno errore è meglio):
+
+  | Scenario | 5M | 28M | 123M | 209M | Fattore che conta |
+  |---|---|---|---|---|---|
+  | Store traffic | +0,4% | **−2,5%** | +3,4% | +7,2% | festività (da +2% a +8%); prezzo del petrolio sempre negativo (−0,4% … −6%) |
+  | US retail | +8,9% | +15,4% | +13,3% | +17,0% | il prezzo da solo (+14% … +20%) |
+  | Groceries | +6,7% | +8,3% | +10,9% | +11,4% | lo sconto (+8% … +9%) |
+
+  Le tre schede originali (209M) non cambiano: elettricità +4%, vendite +41%, solare +48%. **Lettura onesta:** il guadagno dipende dal modello (su Store traffic i modelli piccoli non sfruttano le festività e il totale può peggiorare di poco: l'interfaccia ora lo dice a parole, «higher error», e c'è un'avvertenza); il prezzo del petrolio è inutile con ogni modello, ed è lì apposta; con il prezzo da solo US retail migliora più che con tutti i fattori insieme.
+- **Bug upstream #7 incontrato dal vivo:** su Groceries il fattore «sconto» *peggiorava* l'errore del **61%**, perché per alcuni prodotti lo sconto era assente in tutta la storia e compariva nell'orizzonte (un solo prodotto, il panino «Roll 8» nei suoi tre magazzini, causava quasi tutto il danno). Con `mask_flat_covariates` il danno sparisce (−61% diventa +9%). **Ora lo Showcase lo attiva di default** (`model_options`), in previsione e misura, e la cache delle misure ne tiene conto. Verificato che gli altri tre scenari non cambiano di un decimale.
+- **Dati settimanali:** la durata della previsione si legge «12 weeks» (prima avrebbe detto giorni) e i tasti rapidi muovono la tenda di 4 settimane.
+- **Errore corretto:** cambiando scheda restavano visibili, per un attimo, i numeri della scheda precedente (misura vecchia attribuita al nuovo scenario); ora vengono azzerati.
+- **Test:** controllo di coerenza di ogni scenario (serie predefinita presente, limiti della tenda, chiavi dei fattori uniche); 63 test non-modello passano.

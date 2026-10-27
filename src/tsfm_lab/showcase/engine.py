@@ -24,6 +24,15 @@ BANDS = (0.1, 0.25, 0.5, 0.75, 0.9)  # 80% and 50% central intervals + median
 _CACHE: dict[str, Dataset] = {}
 
 
+def model_options(body: dict[str, Any]) -> dict[str, Any]:
+    """Showcase default: set covariates that are flat in the context to missing (upstream issue #7 workaround).
+
+    Without it, a covariate that is constant in the history but changes in the forecast (e.g. a discount that never
+    ran before) can blow up the upper quantiles. The caller may override it explicitly.
+    """
+    return {"mask_flat_covariates": True, **(body.get("options") or {})}
+
+
 def scenario(sid: str) -> Scenario:
     if sid not in SCENARIOS:
         raise KeyError(f"unknown scenario '{sid}'")
@@ -84,7 +93,7 @@ def forecast(svc, body: dict[str, Any], progress=None) -> dict[str, Any]:
 
     adapter, loaded = svc.pooled(body["model"], body["device"])
     res = adapter.forecast(ForecastRequest(ctx, h, known_covariates=known, seasonal_period=ds.seasonal_period,
-                                           options=dict(body.get("options") or {})))
+                                           options=model_options(body)))
     q = res.quantiles[0, 0]  # (H, Q)
     bands = {str(lv): q[:, i] for i, lv in enumerate(res.quantile_levels) if any(abs(lv - b) < 1e-9 for b in BANDS)}
     real = s.target[0, start:]
@@ -117,7 +126,8 @@ def _subset(ds: Dataset, ids: tuple[str, ...], idx: list[int]) -> Dataset:
 def impact(svc, body: dict[str, Any], progress=None) -> dict[str, Any]:
     """Pooled quantile loss without covariates, with all, and with each one alone, on the latest windows."""
     sc = scenario(body["scenario"])
-    key = hashlib.sha1(json.dumps([sc.id, body["model"], body.get("options") or {}, sc.impact_windows, sc.horizon], sort_keys=True).encode()).hexdigest()[:12]
+    options = model_options(body)
+    key = hashlib.sha1(json.dumps([sc.id, body["model"], options, sc.impact_windows, sc.horizon], sort_keys=True).encode()).hexdigest()[:12]
     store = Path(svc.root) / "runs" / "showcase"
     cache_file = store / f"{sc.id}-{key}.json"
     if cache_file.is_file() and not body.get("refresh"):
@@ -128,7 +138,7 @@ def impact(svc, body: dict[str, Any], progress=None) -> dict[str, Any]:
     adapter = svc.registry.create(body["model"])
     adapter.load(body["device"])
     cfg = BacktestConfig(horizon=sc.horizon, n_windows=sc.impact_windows, stride=sc.impact_stride, max_context=sc.context,
-                         use_covariates=True, batch_size=64, options=dict(body.get("options") or {}))
+                         use_covariates=True, batch_size=64, options=options)
     out: dict[str, Any] = {}
     try:
         for n, (name, idx) in enumerate(configs):

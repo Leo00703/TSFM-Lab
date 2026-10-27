@@ -204,7 +204,11 @@ def test_compare_runs_and_paired_comparison_and_stored_request(client) -> None:
 
 def test_showcase_lists_scenarios_and_runs_a_forecast_with_covariates(client) -> None:
     items = {s["id"]: s for s in client.get("/api/showcase").json()}
-    assert set(items) == {"electricity", "sales", "solar"}
+    assert set(items) == {"electricity", "sales", "solar", "grocery", "stores", "retail"}
+    for s in items.values():  # every scenario is internally consistent, whether or not its data is downloaded
+        assert s["default_series"] in {x["id"] for x in s["series"]} and s["covariates"] and s["caveats"] is not None
+        assert s["k_min"] < s["k_default"] < s["k_max"] < s["window"]
+        assert len({c["key"] for c in s["covariates"]}) == len(s["covariates"])
     sales = items["sales"]
     assert [c["key"] for c in sales["covariates"]] == ["open", "promo", "school", "public"] and sales["caveats"]
     assert sales["source"]["revision"] and "other" in sales["source"]["license"]
