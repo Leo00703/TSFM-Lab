@@ -2,6 +2,17 @@ import { html } from '/vendor/htm-preact.js';
 import { Field, Select, NumberInput } from '../ui.js';
 
 export const keyOf = (d) => `${d.source}:${d.id}`;
+
+/** Model families as the interface names them; an unknown family still gets a readable name. */
+const FAMILIES = { timestral: 'Timestral · Mistral AI', chronos: 'Chronos · Amazon' };
+export const familyName = (f) => FAMILIES[f] || f.charAt(0).toUpperCase() + f.slice(1);
+
+/** Options for a model menu: foundation models grouped by family (largest first inside a family, as the server lists them). */
+export const modelOptions = (models, { ready = false } = {}) => (models || []).filter((m) => m.kind === 'foundation' && (!ready || m.cache.downloaded))
+  .map((m) => ({ value: m.id, label: `${m.name}${m.cache.downloaded ? '' : ' (download first)'}`, disabled: !m.cache.downloaded, group: familyName(m.family) }));
+
+/** Downloaded foundation models other than the chosen one: what the chosen model can be compared with. */
+export const comparable = (models, selected) => (models || []).filter((m) => m.kind === 'foundation' && m.cache.downloaded && m.id !== selected).map((m) => [m.id, m.name]);
 export const specOf = (key, params = {}) => {
   const [source, ...rest] = key.split(':');
   return { source, id: rest.join(':'), params: source === 'synthetic' || source === 'hub' ? params : {} };

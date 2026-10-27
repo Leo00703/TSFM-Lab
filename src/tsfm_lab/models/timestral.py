@@ -11,10 +11,9 @@ from typing import Any
 
 import numpy as np
 
-from tsfm_lab.models.base import (Capabilities, DeviceInfo, ForecastRequest, ForecastResult, ModelAdapter,
-                                  ModelInfo)
+from tsfm_lab.models.base import Capabilities, ForecastRequest, ForecastResult, ModelInfo
 from tsfm_lab.models.covariates import inspect_known_covariates, mask_flat_rows
-from tsfm_lab.system.devices import list_devices, pick_device
+from tsfm_lab.models.torch_adapter import TorchAdapter
 
 MANIFEST_PACKAGE = "tsfm_lab.models.manifests"
 DEFAULT_MAX_PACKED_ROWS = 256  # target + covariate rows per forecast() call (memory grows ~quadratically)
@@ -54,97 +53,24 @@ def info_from_manifest(manifest: dict[str, Any]) -> ModelInfo:
         notes=(LICENSE_NOTE, *KNOWN_ISSUES))
 
 
-class TimestralAdapter(ModelAdapter):
+class TimestralAdapter(TorchAdapter):
     def __init__(self, manifest: dict[str, Any]) -> None:
+        super().__init__()
         self.manifest = manifest
         self.info = info_from_manifest(manifest)
-        self._forecaster = None
-        self._device: str | None = None
-        self._load_meta: dict[str, Any] = {}
-        self._fallback_note: str | None = None  # why the model runs on the CPU although a GPU was requested
 
-    # ------------------------------------------------------------------ lifecycle
-    def available_devices(self) -> list[DeviceInfo]:
-        return [d for d in list_devices() if d.kind in self.info.capabilities.device_kinds or not d.supported]
-
-    @property
-    def device(self) -> str | None:
-        return self._device
-
-    def load(self, device: str = "cpu") -> dict[str, Any]:
-        import torch
+    def _load_on(self, device: str) -> dict[str, Any]:
         from timestral import TimestralForecaster
         from timestral.loading import resolve_checkpoint
 
-        requested = device
-        device, note = pick_device(device, self.info.capabilities.device_kinds, self.strict_device)
-        if self._forecaster is not None:
-            self.unload()
-        start = time.perf_counter()
         checkpoint = resolve_checkpoint(self.manifest["repo"])
-        try:
-            self._forecaster = TimestralForecaster.from_pretrained(self.manifest["repo"], device=device)
-            if device.startswith("cuda"):
-                torch.cuda.synchronize()
-            elif device == "mps":
-                torch.mps.synchronize()
-        except Exception as exc:  # noqa: BLE001 - driver, memory or an unsupported operation on the GPU
-            if device == "cpu" or self.strict_device:
-                raise
-            self._forecaster = None
-            self._release(device)
-            note = f"{device} could not load the model ({type(exc).__name__}: {str(exc)[:160]}); it runs on the CPU instead."
-            device = "cpu"
-            self._forecaster = TimestralForecaster.from_pretrained(self.manifest["repo"], device=device)
-        self._fallback_note = note
-        self._device = device
+        self._model = TimestralForecaster.from_pretrained(self.manifest["repo"], device=device)
         config = json.loads((Path(checkpoint) / "config.json").read_text(encoding="utf-8"))
         self.info.details.update({k: config[k] for k in ("num_heads", "mlp_hidden_dim", "d_model", "patch_size")
                                   if k in config})
-        self._load_meta = {
-            "load_s": round(time.perf_counter() - start, 3),
-            "revision": Path(checkpoint).name,  # Hugging Face snapshot = commit sha
-            "device": device,
-            **({"requested_device": requested, "fallback": note} if note else {}),
-        }
-        return dict(self._load_meta)
-
-    def unload(self) -> None:
-        self._forecaster = None
-        if self._device:
-            self._release(self._device)
-        self._device = None
-
-    @staticmethod
-    def _release(device: str) -> None:
-        """Hand cached GPU memory back; a failing driver must not turn a clean unload into an error."""
-        try:
-            import torch
-
-            if device.startswith("cuda"):
-                torch.cuda.empty_cache()
-            elif device == "mps":
-                torch.mps.empty_cache()
-        except Exception:  # noqa: BLE001
-            pass
+        return {"revision": Path(checkpoint).name}  # Hugging Face snapshot = commit sha
 
     # ------------------------------------------------------------------ inference
-    def forecast(self, request: ForecastRequest) -> ForecastResult:
-        if self._forecaster is None or self._device is None:
-            raise RuntimeError("model not loaded: call load(device) first")
-        try:
-            result = self._forecast_once(request)
-        except (RuntimeError, NotImplementedError) as exc:  # includes out-of-memory and unsupported GPU operations
-            if self._device == "cpu" or self.strict_device:
-                raise
-            failed = self._device
-            self.load("cpu")
-            self._fallback_note = f"{failed} failed while forecasting ({type(exc).__name__}: {str(exc)[:160]}); continued on the CPU."
-            result = self._forecast_once(request)
-        if self._fallback_note:
-            result.warnings.insert(0, self._fallback_note)
-        return result
-
     def _forecast_once(self, request: ForecastRequest) -> ForecastResult:
         import torch
 
@@ -154,7 +80,7 @@ class TimestralAdapter(ModelAdapter):
         cap_k = opts.get("quantile_real_cap_k")
         max_rows = int(opts.get("max_packed_rows", MPS_MAX_PACKED_ROWS if self._device == "mps" else DEFAULT_MAX_PACKED_ROWS))
         if cap_k is not None:
-            self._forecaster.quantile_real_cap_k = float(cap_k)
+            self._model.quantile_real_cap_k = float(cap_k)
 
         warnings: list[str] = []
         known = request.known_covariates
@@ -195,7 +121,7 @@ class TimestralAdapter(ModelAdapter):
                               ("categorical_known_covariates", part(request.categorical_known_covariates))):
                 if arr is not None:
                     kwargs[name] = arr
-            out = self._forecaster.forecast(request.context[lo:hi], **kwargs)
+            out = self._model.forecast(request.context[lo:hi], **kwargs)
             pieces.append(out.quantiles.detach().float().cpu().numpy())
             levels = tuple(float(x) for x in out.quantile_levels)
         if is_cuda:

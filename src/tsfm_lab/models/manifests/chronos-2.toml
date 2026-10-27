@@ -1,0 +1,26 @@
+# Numbers under [reported] were computed on 2026-10-27 from the result files published in the autogluon/fev repository
+# (benchmarks/fev_bench/results, commit ceb25ae), with the same method that reproduces Mistral's published Timestral figures.
+# They were submitted by the model vendors and are NOT measured here.
+id = "chronos-2"
+family = "chronos"
+name = "Chronos-2"
+repo = "amazon/chronos-2"
+params = 119477664
+description = "Amazon's time-series foundation model: zero-shot probabilistic forecasts with multivariate targets and past-only or known-future covariates, learned jointly across related series by group attention."
+license = "Apache-2.0"
+license_url = "https://huggingface.co/amazon/chronos-2"
+source_url = "https://github.com/amazon-science/chronos-forecasting"
+max_context = 8192
+max_horizon_per_pass = 1024
+quantile_levels = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
+
+[details]
+layers = 12
+d_model = 768
+patch_size = 16
+weights_mb_fp32 = 478
+
+[reported]
+source = "fev-bench result files (vendor-submitted), computed here"
+fev_bench_sql_skill = 47.28
+fev_bench_mase_skill = 35.50

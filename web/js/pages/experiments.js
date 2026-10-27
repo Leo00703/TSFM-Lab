@@ -2,7 +2,7 @@ import { html, useState, useEffect } from '/vendor/htm-preact.js';
 import { api, useAsync, useStore, go, deviceLabel, when } from '../core.js';
 import { isActive, stopJob } from '../activity.js';
 import { Card, PageHeader, Section, Button, Field, NumberInput, Check, Notice, ErrorBox, Progress, DeviceSelect, Table, Tag } from '../ui.js';
-import { DatasetPicker, specOf } from './shared.js';
+import { DatasetPicker, specOf, comparable } from './shared.js';
 import { ModelChoice, ToggleList } from './playground.js';
 
 const BASELINES = [['naive', 'Naive'], ['seasonal-naive', 'Seasonal naive'], ['drift', 'Drift']];
@@ -44,9 +44,9 @@ export function Experiments({ route }) {
       <${Card} class="!p-5 h-fit"><div class="grid gap-5">
         <${DatasetPicker} datasets=${ds.data || []} value=${pick} onChange=${setPick} />
         <div class="grid gap-4 border-t border-border-primary pt-5">
-          <${Field} label="Model"><${ModelChoice} models=${models.data} value=${c.model} onChange=${(v) => set({ model: v })} /><//>
+          <${Field} label="Model"><${ModelChoice} models=${models.data} value=${c.model} onChange=${(v) => set({ model: v, baselines: c.baselines.filter((b) => b !== v) })} /><//>
           <${DeviceSelect} class="flex-col !items-stretch" />
-          <div><span class="label">Baselines</span><${ToggleList} items=${BASELINES} value=${c.baselines} onChange=${(v) => set({ baselines: v })} /></div></div>
+          <div><span class="label">Compare with</span><${ToggleList} items=${[...BASELINES, ...comparable(models.data, c.model)]} value=${c.baselines} onChange=${(v) => set({ baselines: v })} /></div></div>
         <div class="grid grid-cols-2 gap-3 border-t border-border-primary pt-5">
           <${Field} label="Horizon"><${NumberInput} value=${c.horizon} min=${1} max=${4096} onChange=${(v) => set({ horizon: v || 1 })} /><//>
           <${Field} label="Windows per series"><${NumberInput} value=${c.windows} min=${1} max=${50} onChange=${(v) => set({ windows: v || 1 })} /><//>

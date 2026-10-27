@@ -1,6 +1,7 @@
 import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
 import { api, useAsync, useStore, useFocus, ms, num, bytes, when, deviceLabel } from '../core.js';
 import { isActive, stopJob } from '../activity.js';
+import { modelOptions } from './shared.js';
 import { Card, PageHeader, Section, Button, Field, Select, NumberInput, Check, Notice, Spinner, ErrorBox, Table, KV, Progress, Tabs, Tag, Eyebrow } from '../ui.js';
 import { Figure, barOption, linesOption } from '../charts.js';
 
@@ -20,7 +21,7 @@ function Benchmark({ sys, models }) {
     try { await api('/api/jobs/benchmark', { method: 'POST', body: { model, devices: devs, repeats, scenarios: scen } }); }
     catch (e) { setError(e); }
   };
-  const opts = (models || []).filter((m) => m.kind === 'foundation').map((m) => ({ value: m.id, label: `${m.name}${m.cache.downloaded ? '' : ' (download first)'}`, disabled: !m.cache.downloaded }));
+  const opts = modelOptions(models);
   return html`<${Card}><div class="grid gap-5 md:grid-cols-2">
     <div class="grid content-start gap-4"><${Field} label="Model"><${Select} value=${model} onChange=${setModel} options=${opts} /><//>
       <div class="grid grid-cols-2 gap-3"><${Field} label="Timed repeats" hint="per scenario"><${NumberInput} value=${repeats} min=${1} max=${200} onChange=${(v) => setRepeats(v || 1)} /><//></div></div>

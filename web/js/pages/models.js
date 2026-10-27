@@ -1,7 +1,8 @@
 import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
 import { api, useAsync, useStore, useFocus, params, bytes, ms, num } from '../core.js';
 import { isActive, stopJob } from '../activity.js';
-import { Logo } from '../icons.js';
+import { Logo, Icon } from '../icons.js';
+import { familyName } from './shared.js';
 import { Card, PageHeader, Section, Tag, Button, Spinner, ErrorBox, Notice, KV, Progress, Collapse } from '../ui.js';
 import { confirmDialog } from '../dialog.js';
 
@@ -30,11 +31,14 @@ function CacheControls({ model, onChange }) {
     ${error && html`<div class="mt-3"><${ErrorBox} error=${error} /></div>`}</div>`;
 }
 
+const REPORTED = { gift_eval_mase: 'GIFT-Eval MASE', gift_eval_crps: 'GIFT-Eval CRPS', time_mase: 'TIME MASE', time_crps: 'TIME CRPS', fev_bench_sql_skill: 'fev-bench SQL skill', fev_bench_mase_skill: 'fev-bench MASE skill' };
+
 function Reported({ r }) {
-  if (!r) return null;
-  return html`<${Collapse} title=${html`Vendor-reported benchmarks <span class="tag ml-1">not measured here</span>`}>
-    <p class="mb-3 text-body-small text-text-muted">From Mistral's model card. Lower is better for MASE/CRPS, higher for fev-bench skill. Compare with <a class="underline" href="#/runs">your own runs</a> before drawing conclusions.</p>
-    <${KV} items=${[['GIFT-Eval MASE', r.gift_eval_mase], ['GIFT-Eval CRPS', r.gift_eval_crps], ['TIME MASE', r.time_mase], ['TIME CRPS', r.time_crps], ['fev-bench SQL skill', r.fev_bench_sql_skill + '%'], ['fev-bench MASE skill', r.fev_bench_mase_skill + '%']]} /><//>`;
+  const rows = r ? Object.entries(REPORTED).filter(([k]) => r[k] !== undefined).map(([k, label]) => [label, k.startsWith('fev_bench') ? r[k] + '%' : r[k]]) : [];
+  if (!rows.length) return null;
+  return html`<${Collapse} title=${html`Published benchmarks <span class="tag ml-1">not measured here</span>`}>
+    <p class="mb-3 text-body-small text-text-muted">Source: ${r.source || 'the vendor'}. Lower is better for MASE/CRPS, higher for fev-bench skill. Compare with <a class="underline" href="#/runs">your own runs</a> before drawing conclusions.</p>
+    <${KV} items=${rows} /><//>`;
 }
 
 function LocalBench({ b }) {
@@ -50,12 +54,13 @@ function LocalBench({ b }) {
 function ModelCard({ m, reload }) {
   const d = m.details, c = m.capabilities;
   return html`<${Card} class="flex flex-col">
-    <div class="flex items-start justify-between gap-3"><div class="flex min-w-0 items-center gap-4"><${Logo} size=${48} /><div class="min-w-0"><span class="eyebrow">${m.family}</span><h3 class="mt-1 font-mistral text-h3">${m.name}</h3></div></div><div class="flex flex-wrap justify-end gap-1.5"><${Tag}>${params(m.params)} params<//></div></div>
+    <div class="flex items-start justify-between gap-3"><div class="flex min-w-0 items-center gap-4">${m.family === 'timestral' ? html`<${Logo} size=${48} />` : html`<span class="grid size-12 shrink-0 place-items-center rounded-md bg-surface-brand-tertiary text-text-secondary"><${Icon} name="models" size=${24} /></span>`}<div class="min-w-0"><span class="eyebrow">${m.family}</span><h3 class="mt-1 font-mistral text-h3">${m.name}</h3></div></div><div class="flex flex-wrap justify-end gap-1.5"><${Tag}>${params(m.params)} params<//></div></div>
     <p class="mt-3 text-body-small text-text-muted">${m.description}</p>
     <div class="mt-5"><${KV} items=${[
       ['Layers × width', `${d.layers} × ${d.d_model}`], ['Attention heads', d.num_heads ?? 'download to read'], ['Patch size', `${d.patch_size} steps`],
       ['Context', `${c.max_context.toLocaleString()} steps`], ['Horizon per pass', `${c.max_horizon_per_pass.toLocaleString()} steps`],
-      ['Quantiles', `${c.quantile_levels.length} (${c.quantile_levels[0]} … ${c.quantile_levels.at(-1)})`], ['Inputs', 'multivariate · past & known covariates · categorical'],
+      ['Quantiles', `${c.quantile_levels.length} (${c.quantile_levels[0]} … ${c.quantile_levels.at(-1)})`],
+      ['Inputs', [c.multivariate && 'multivariate', c.past_covariates && 'past covariates', c.known_covariates && 'known covariates', c.categorical_covariates && 'categorical'].filter(Boolean).join(' · ')],
       ['Devices', c.device_kinds.join(', ').toUpperCase()],
     ]} /></div>
     <${CacheControls} model=${m} onChange=${reload} />
@@ -68,11 +73,12 @@ export function Models({ route }) {
   const [s, reload] = useAsync(() => api('/api/models'), []);
   useFocus(route, !s.loading);
   const foundation = (s.data || []).filter((m) => m.kind === 'foundation');
+  const families = [...new Set(foundation.map((m) => m.family))];
   const baselines = (s.data || []).filter((m) => m.kind === 'baseline');
   return html`<div><${PageHeader} eyebrow="Model library" title="Models">Specifications come from each checkpoint's own config; benchmark figures from the vendor are labelled as such. Everything under “Measured” was produced on this machine.<//>
     ${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : html`
-      <${Section} title="Timestral" aside=${html`<span class="text-body-small text-text-muted">New models plug in as adapters</span>`}>
-        <div class="grid gap-4 lg:grid-cols-2">${foundation.map((m) => html`<div data-focus=${m.id} class="flex flex-col"><${ModelCard} m=${m} reload=${reload} /></div>`)}</div><//>
+      ${families.map((f, i) => html`<${Section} title=${familyName(f)} aside=${i === 0 ? html`<span class="text-body-small text-text-muted">New models plug in as adapters</span>` : null}>
+        <div class="grid gap-4 lg:grid-cols-2">${foundation.filter((m) => m.family === f).map((m) => html`<div data-focus=${m.id} class="flex flex-col"><${ModelCard} m=${m} reload=${reload} /></div>`)}</div><//>`)}
       <${Section} title="Baselines">
         <p class="mb-4 max-w-3xl text-text-muted">Simple reference methods, always available, used as yardsticks. Their prediction intervals are built from their own in-sample errors.</p>
         <div class="grid gap-4 md:grid-cols-3">${baselines.map((m) => html`<${Card} tight><span class="eyebrow">baseline</span><h3 class="mt-1 font-mistral text-h4">${m.name}</h3><p class="mt-2 text-body-small text-text-muted">${m.description}</p><//>`)}</div><//>`}

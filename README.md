@@ -1,7 +1,9 @@
 # TSFM-Lab
 
-A local sandbox to **run, compare and inspect time-series foundation models**, starting with
-Mistral's [Timestral](https://github.com/mistralai/timestral) family (5M / 28M / 123M / 209M).
+A local sandbox to **run, compare and inspect time-series foundation models**: Mistral's
+[Timestral](https://github.com/mistralai/timestral) family (5M / 28M / 123M / 209M) and Amazon's
+[Chronos-2](https://github.com/amazon-science/chronos-forecasting) (120M and 28M), which can be run on the same data and compared
+side by side. Any other model plugs in as one adapter file.
 Models run entirely on your machine, on the CPU or a GPU (NVIDIA CUDA, Apple Metal), and every result is shown with the
 measurements and configuration needed to judge it honestly.
 
@@ -72,6 +74,21 @@ before and after an install.
 | `scripts/download_models.py` | Download Timestral weights without opening the app |
 | `scripts/fetch_brand_assets.py` | Optional: fetch Mistral brand assets for local private use (see below) |
 | `scripts/fetch_vendor.py` | Re-fetch the two vendored JavaScript libraries (integrity-checked) |
+
+## Models
+
+| Family | Models | Licence | Covariates |
+|---|---|---|---|
+| Timestral (Mistral AI) | 209M, 123M, 28M, 5M | package Apache-2.0; weights "Modified MIT" with a US$20M monthly revenue limit | past, known-future, categorical |
+| Chronos-2 (Amazon) | 120M, 28M ("small") | Apache-2.0 | past, known-future (numeric) |
+
+Weights are downloaded only when you ask, from the Models page (Chronos-2 is 478 MB, its small variant 112 MB). In the Playground
+and in Experiments, choose a model and tick the others under "Compare with": they run on the same windows, with the same metrics.
+Chronos-2 uses the same 21 quantile levels as Timestral, so intervals and scores are directly comparable. Options that belong to
+Timestral (symmetric averaging, clipping, masking of flat covariates) are ignored by the other models.
+
+Adding a model means writing one `ModelAdapter` (see `src/tsfm_lab/models/chronos.py` for a short example built on the shared
+`TorchAdapter`, which already handles device choice, the CPU fallback and memory release) and one manifest per checkpoint.
 
 ## Platforms and compute devices
 

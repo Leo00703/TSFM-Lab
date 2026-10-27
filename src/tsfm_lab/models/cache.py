@@ -35,9 +35,9 @@ def status(repo: str) -> dict[str, Any]:
 
 
 def download(repo: str) -> dict[str, Any]:
-    from timestral.loading import resolve_checkpoint
+    from huggingface_hub import snapshot_download
 
-    resolve_checkpoint(repo)
+    snapshot_download(repo, allow_patterns=["config.json", "model.safetensors"])
     return status(repo)
 
 

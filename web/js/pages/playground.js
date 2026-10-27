@@ -2,11 +2,10 @@ import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
 import { api, useAsync, useStore, num, ms, pct0, deviceLabel } from '../core.js';
 import { Card, PageHeader, Section, Button, Field, Select, NumberInput, Check, Notice, Spinner, ErrorBox, Table, DeviceSelect, Tabs, Eyebrow } from '../ui.js';
 import { Figure, fanOption, baseOption, axisStyle, isNarrow } from '../charts.js';
-import { DatasetPicker, specOf } from './shared.js';
+import { DatasetPicker, specOf, modelOptions, comparable } from './shared.js';
 
 export function ModelChoice({ models, value, onChange }) {
-  const opts = (models || []).filter((m) => m.kind === 'foundation').map((m) => ({ value: m.id, label: `${m.name}${m.cache.downloaded ? '' : ' (download first)'}`, disabled: !m.cache.downloaded }));
-  return html`<${Select} value=${value} onChange=${onChange} options=${opts} aria-label="Model" />`;
+  return html`<${Select} value=${value} onChange=${onChange} options=${modelOptions(models)} aria-label="Model" />`;
 }
 
 const BASELINES = [['seasonal-naive', 'Seasonal naive'], ['naive', 'Naive'], ['drift', 'Drift']];
@@ -65,9 +64,9 @@ export function Playground({ route }) {
           <${Field} label=${`Forecast starts at step ${origin} of ${len}`} hint=${origin + c.horizon > len ? 'Beyond the data: no real values to compare with.' : `${len - origin} steps of real data follow.`}>
             <input type="range" class="w-full h-10" min=${Math.min(16, len)} max=${len} value=${origin} onInput=${(e) => set({ origin: Number(e.currentTarget.value) })} aria-label="Forecast origin" /><//></div>`}
         <div class="grid gap-4 border-t border-border-primary pt-5">
-          <${Field} label="Model"><${ModelChoice} models=${models.data} value=${c.model} onChange=${(v) => set({ model: v })} /><//>
+          <${Field} label="Model"><${ModelChoice} models=${models.data} value=${c.model} onChange=${(v) => set({ model: v, baselines: c.baselines.filter((b) => b !== v) })} /><//>
           <${DeviceSelect} class="flex-col !items-stretch" />
-          <div><span class="label">Compare with</span><${ToggleList} items=${BASELINES} value=${c.baselines} onChange=${(v) => set({ baselines: v })} /></div></div>
+          <div><span class="label">Compare with</span><${ToggleList} items=${[...BASELINES, ...comparable(models.data, c.model)]} value=${c.baselines} onChange=${(v) => set({ baselines: v })} /></div></div>
         <div class="border-t border-border-primary pt-4">
           ${info && (info.n_known > 0 || info.n_past_covariates > 0) && html`<${Check} checked=${c.covariates} onChange=${(v) => set({ covariates: v })} hint="Known-future and past-only columns of this dataset">Use covariates<//>`}
           <${Check} checked=${c.symmetric} onChange=${(v) => set({ symmetric: v })} hint="Timestral averages with the forecast of the mirrored series">Symmetric averaging<//>

@@ -2,6 +2,7 @@ import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
 import { api, useAsync, useStore, waitForJob, pct0 } from '../core.js';
 import { Card, Button, Tabs, Select, Switch, Spinner, ErrorBox, Notice, Collapse, Eyebrow, Progress } from '../ui.js';
 import { Logo } from '../icons.js';
+import { familyName } from './shared.js';
 import { Chart, isNarrow, baseOption, axisStyle } from '../charts.js';
 
 const nulls = (n) => Array(n).fill(null);
@@ -189,7 +190,7 @@ export function Showcase({ route }) {
   if (list.error) return html`<div class="pt-10"><${ErrorBox} error=${list.error} /></div>`;
   const allOn = sc && enabled.length === sc.covariates.length;
   const setAll = (v) => setOn((o) => ({ ...o, ...Object.fromEntries(sc.covariates.map((c) => [sc.id + c.key, v])) }));
-  const modelOpts = ready.map((m) => ({ value: m.id, label: m.name }));
+  const modelOpts = ready.map((m) => ({ value: m.id, label: m.name, group: familyName(m.family) }));
   const m = MARGIN();
   const pos = sc ? ((cut - 1) / (sc.window - 1)) * 100 : 0;
 

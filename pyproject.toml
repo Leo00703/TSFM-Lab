@@ -15,6 +15,7 @@ dependencies = [
     "uvicorn>=0.30",
     "openpyxl>=3.1",
     "timestral",
+    "chronos-forecasting>=2.3,<3",  # Amazon's Chronos-2 (Apache-2.0); official PyPI package
 ]
 
 # PyTorch comes from exactly one of these extras (chosen by scripts/bootstrap.py):
