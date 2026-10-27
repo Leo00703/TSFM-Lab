@@ -54,6 +54,39 @@ class ModelOutcome:
     skill: dict[str, dict[str, float]] = field(default_factory=dict)  # vs each other model
 
 
+def _shared_levels(all_levels: list[tuple[float, ...]]) -> tuple[float, ...]:
+    shared = [lv for lv in all_levels[0] if all(any(abs(lv - o) < 1e-9 for o in levels) for levels in all_levels[1:])]
+    return tuple(shared)
+
+
+def _score_on_shared_levels(outcomes: dict[str, ModelOutcome], y: np.ndarray, scale: np.ndarray) -> None:
+    """SQL and WQL average over quantile levels, so models that predict different levels are not comparable on them.
+
+    When the models of one run do not all produce the same levels (Timestral's 21 against TimesFM's nine deciles), every model
+    is scored on the levels they all share, which makes the headline SQL/WQL (and the skill scores built on them) comparable.
+    Each model's own-level values stay available as ``sql_own_levels`` / ``wql_own_levels``.
+    """
+    if len(outcomes) < 2:
+        return
+    shared = _shared_levels([o.levels for o in outcomes.values()])
+    if len(shared) < 2 or 0.5 not in shared or all(tuple(o.levels) == shared for o in outcomes.values()):
+        return
+    for out in outcomes.values():
+        idx = [next(i for i, lv in enumerate(out.levels) if abs(lv - s) < 1e-9) for s in shared]
+        q = out.quantiles[..., idx]
+        common = M.item_metrics(y, q, shared, scale)
+        if tuple(out.levels) != shared:
+            for key in ("sql", "wql"):
+                out.items[f"{key}_own_levels"] = out.items[key]
+        for key in ("sql", "wql"):
+            out.items[key] = common[key]
+        out.horizon["sql"] = M.horizon_metrics(y, q, shared, scale)["sql"]
+        out.summary = M.summarize(out.items)
+        out.notes.append(f"SQL and WQL use the {len(shared)} quantile levels shared by every model in this run "
+                         f"({shared[0]:g} to {shared[-1]:g}), so models with different level sets are comparable"
+                         + ("; this model's own-level values are kept as sql_own_levels / wql_own_levels." if tuple(out.levels) != shared else "."))
+
+
 @dataclass
 class BacktestResult:
     dataset: dict[str, Any]
@@ -171,6 +204,8 @@ def run_backtest(dataset: Dataset, adapters: list[ModelAdapter], cfg: BacktestCo
         out.calibration = M.calibration_curve(y, q, levels)
         out.summary = M.summarize(out.items)
         outcomes[adapter.info.id] = out
+
+    _score_on_shared_levels(outcomes, y, scale)
 
     for mid, out in outcomes.items():
         for other_id, other in outcomes.items():

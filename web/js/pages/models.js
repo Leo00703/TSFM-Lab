@@ -15,6 +15,12 @@ function CacheControls({ model, onChange }) {
   useEffect(() => { if (was.current && !active) onChange(); was.current = !!active; }, [!!active]);
   const download = async () => {
     setError(null);
+    const restriction = model.details.restriction;
+    if (restriction) {  // a licence that limits what the weights may be used for must be read before they are fetched
+      const ok = await confirmDialog({ title: `${model.name} has a restricted licence`, danger: false, confirmLabel: 'I understand, download',
+        body: html`<p>${model.details.restriction_note}</p><p class="mt-3">Read the <a class="underline underline-offset-2" href=${model.license_url} target="_blank" rel="noreferrer">licence</a> before relying on any result. By downloading you confirm that you will use the weights only as it allows.</p>` });
+      if (!ok) return;
+    }
     try { await api(`/api/models/${model.id}/download`, { method: 'POST' }); } catch (e) { setError(e); }
   };
   const remove = async () => {
@@ -56,6 +62,7 @@ function ModelCard({ m, reload }) {
   return html`<${Card} class="flex flex-col">
     <div class="flex items-start justify-between gap-3"><div class="flex min-w-0 items-center gap-4">${m.family === 'timestral' ? html`<${Logo} size=${48} />` : html`<span class="grid size-12 shrink-0 place-items-center rounded-md bg-surface-brand-tertiary text-text-secondary"><${Icon} name="models" size=${24} /></span>`}<div class="min-w-0"><span class="eyebrow">${m.family}</span><h3 class="mt-1 font-mistral text-h3">${m.name}</h3></div></div><div class="flex flex-wrap justify-end gap-1.5"><${Tag}>${params(m.params)} params<//></div></div>
     <p class="mt-3 text-body-small text-text-muted">${m.description}</p>
+    ${d.restriction && html`<div class="mt-3"><${Notice} kind="warning" title="Non-commercial licence">${d.restriction_note}<//></div>`}
     <div class="mt-5"><${KV} items=${[
       ['Layers × width', `${d.layers} × ${d.d_model}`], ['Attention heads', d.num_heads ?? 'download to read'], ['Patch size', `${d.patch_size} steps`],
       ['Context', `${c.max_context.toLocaleString()} steps`], ['Horizon per pass', `${c.max_horizon_per_pass.toLocaleString()} steps`],

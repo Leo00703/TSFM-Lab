@@ -1,0 +1,27 @@
+# Numbers under [reported] were computed on 2026-10-27 from the result files published in the autogluon/fev repository
+# (benchmarks/fev_bench/results, commit ceb25ae); vendor-submitted, NOT measured here. 10 of the 100 fev-bench tasks use
+# datasets that are part of this model's training data.
+id = "timesfm-2-5"
+family = "timesfm"
+name = "TimesFM 2.5"
+repo = "google/timesfm-2.5-200m-pytorch"
+params = 231289280
+description = "Google's 200M-parameter time-series foundation model (plus a 30M quantile head): zero-shot univariate forecasts with a decile forecast and up to 16k steps of context."
+license = "Apache-2.0"
+license_url = "https://huggingface.co/google/timesfm-2.5-200m-pytorch"
+source_url = "https://github.com/google-research/timesfm"
+max_context = 16384
+max_horizon_per_pass = 1024
+quantile_levels = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+[details]
+layers = 20
+d_model = 1280
+num_heads = 16
+patch_size = 32
+weights_mb_fp32 = 925
+
+[reported]
+source = "fev-bench result files (vendor-submitted), computed here"
+fev_bench_sql_skill = 46.68
+fev_bench_mase_skill = 35.62

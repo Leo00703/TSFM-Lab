@@ -4,7 +4,7 @@ import { Field, Select, NumberInput } from '../ui.js';
 export const keyOf = (d) => `${d.source}:${d.id}`;
 
 /** Model families as the interface names them; an unknown family still gets a readable name. */
-const FAMILIES = { timestral: 'Timestral · Mistral AI', chronos: 'Chronos · Amazon' };
+const FAMILIES = { timestral: 'Timestral · Mistral AI', chronos: 'Chronos · Amazon', timesfm: 'TimesFM · Google' };
 export const familyName = (f) => FAMILIES[f] || f.charAt(0).toUpperCase() + f.slice(1);
 
 /** Options for a model menu: foundation models grouped by family (largest first inside a family, as the server lists them). */

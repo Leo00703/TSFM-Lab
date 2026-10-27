@@ -20,7 +20,7 @@ from tsfm_lab.eval.backtest import BacktestConfig, run_backtest
 from tsfm_lab.models.base import ForecastRequest
 from tsfm_lab.showcase.scenarios import SCENARIOS, Scenario
 
-BANDS = (0.1, 0.25, 0.5, 0.75, 0.9)  # 80% and 50% central intervals + median
+BANDS = (0.1, 0.25, 0.3, 0.5, 0.7, 0.75, 0.9)  # 80% and 50% central intervals + median (40% when a model has only deciles)
 _CACHE: dict[str, Dataset] = {}
 
 

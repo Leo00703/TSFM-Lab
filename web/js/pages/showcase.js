@@ -22,7 +22,9 @@ const MARGIN = () => ({ left: 12, right: isNarrow() ? 40 : 52 });
 // ------------------------------------------------------------------ charts
 function mainOption(p, d, showActual) {
   const w = d.window, k = d.k, h = d.horizon, m = MARGIN();
-  const lo80 = d.bands['0.1'], hi80 = d.bands['0.9'], lo50 = d.bands['0.25'], hi50 = d.bands['0.75'], med = d.bands['0.5'];
+  const lo80 = d.bands['0.1'], hi80 = d.bands['0.9'], med = d.bands['0.5'];
+  const inner = d.bands['0.25'] ? ['0.25', '0.75'] : ['0.3', '0.7'];  // a model that predicts only deciles has no 50% interval
+  const lo50 = d.bands[inner[0]], hi50 = d.bands[inner[1]];
   const band = (lo, hi, key, opacity) => [
     { type: 'line', data: [...nulls(k), ...lo], stack: key, symbol: 'none', lineStyle: { opacity: 0 }, silent: true, tooltip: { show: false } },
     { type: 'line', data: [...nulls(k), ...hi.map((v, i) => v - lo[i])], stack: key, symbol: 'none', lineStyle: { opacity: 0 }, areaStyle: { color: p.brand, opacity }, silent: true, tooltip: { show: false } },
@@ -235,8 +237,9 @@ export function Showcase({ route }) {
               <span class="pointer-events-none absolute left-4 top-2 whitespace-nowrap text-body-small font-medium text-surface-brand">${dragging && data.x[cut] ? dayLabel(data.x[cut]) : 'Forecast'}</span></div></div>`}
           ${busy && valid && html`<span class="absolute right-2 top-12 rounded-sm bg-surface-brand-tertiary px-2 py-0.5 font-mono text-[0.6875rem] uppercase text-text-muted">updating…</span>`}</div>
         ${wait && html`<p class="mt-2 text-body-small text-text-muted">${wait}</p>`}
+        ${valid && (data.warnings || []).some((w) => /covariates ignored/.test(w)) && html`<div class="mt-3"><${Notice} kind="info" title="This model does not use the factors">The factors below are shown for reference, but ${(models.data || []).find((m2) => m2.id === model)?.name || 'this model'} forecasts from the history alone: switching them on or off changes nothing, and the measured effect is zero by construction. Pick a model that takes covariates (Timestral, Chronos-2, TimesFM 3.0) to see what they add.<//></div>`}
         ${valid && data.device === 'cpu' && device !== 'cpu' && html`<div class="mt-3"><${Notice} kind="warning" title="Running on the CPU">${(data.warnings || []).find((w) => /CPU/.test(w)) || 'The selected GPU could not be used, so this forecast ran on the CPU.'}<//></div>`}
-        <div class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-body-small text-text-muted"><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-text-primary"></i>History</span><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-surface-brand"></i>Forecast${valid ? ' · ' + span(sc, data.horizon) : ''}</span><span class="inline-flex items-center gap-2"><i class="inline-block h-3 w-5 rounded-sm bg-surface-brand opacity-30"></i>Likely range (50% and 80%)</span></div>
+        <div class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-body-small text-text-muted"><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-text-primary"></i>History</span><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-surface-brand"></i>Forecast${valid ? ' · ' + span(sc, data.horizon) : ''}</span><span class="inline-flex items-center gap-2"><i class="inline-block h-3 w-5 rounded-sm bg-surface-brand opacity-30"></i>Likely range (${valid && !data.bands['0.25'] ? '40' : '50'}% and 80%)</span></div>
 
         <div class="mt-4 grid gap-x-6 gap-y-1 border-t border-border-primary pt-4 md:grid-cols-[11rem_minmax(0,1fr)]">
           <div><div class="font-medium">Forecast starts</div><div class="num text-body-small text-text-muted">${valid ? longDate(data.start) : ''}</div></div>

@@ -1,0 +1,29 @@
+# The weights are under Google's "TimesFM Non-Commercial License v1.0": testing, evaluation and research only, no
+# commercial or production use, no distribution. Numbers under [reported] were computed on 2026-10-27 from the result files
+# published in the autogluon/fev repository (benchmarks/fev_bench/results, commit ceb25ae); vendor-submitted, NOT measured here.
+id = "timesfm-3"
+family = "timesfm"
+name = "TimesFM 3.0"
+repo = "google/timesfm-3.0-pytorch"
+params = 330710976
+description = "Google's time-series foundation model: zero-shot forecasts for univariate and multivariate series with past-only and known-future covariates, with a decile forecast."
+license = "TimesFM Non-Commercial License v1.0 (weights); Apache-2.0 (code)"
+license_url = "https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE"
+source_url = "https://github.com/google-research/timesfm"
+restriction = "non-commercial"
+restriction_note = "Google licenses these weights for non-commercial, non-production use only (testing, evaluation, research). Commercial or production use of downloaded or self-hosted weights is not permitted, and the weights may not be distributed. Outputs are not restricted, but results must not be used in commercial decision-making, client deliverables or paid products."
+max_context = 15360
+max_horizon_per_pass = 1024
+quantile_levels = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+[details]
+layers = 20
+d_model = 1280
+num_heads = 16
+patch_size = 32
+weights_mb_fp32 = 1323
+
+[reported]
+source = "fev-bench result files (vendor-submitted), computed here"
+fev_bench_sql_skill = 48.99
+fev_bench_mase_skill = 37.82

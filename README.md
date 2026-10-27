@@ -2,8 +2,9 @@
 
 A local sandbox to **run, compare and inspect time-series foundation models**: Mistral's
 [Timestral](https://github.com/mistralai/timestral) family (5M / 28M / 123M / 209M) and Amazon's
-[Chronos-2](https://github.com/amazon-science/chronos-forecasting) (120M and 28M), which can be run on the same data and compared
-side by side. Any other model plugs in as one adapter file.
+[Chronos-2](https://github.com/amazon-science/chronos-forecasting) (120M and 28M) and Google's
+[TimesFM](https://github.com/google-research/timesfm) 3.0 and 2.5, which can be run on the same data and compared side by side.
+Any other model plugs in as one adapter file.
 Models run entirely on your machine, on the CPU or a GPU (NVIDIA CUDA, Apple Metal), and every result is shown with the
 measurements and configuration needed to judge it honestly.
 
@@ -81,11 +82,18 @@ before and after an install.
 |---|---|---|---|
 | Timestral (Mistral AI) | 209M, 123M, 28M, 5M | package Apache-2.0; weights "Modified MIT" with a US$20M monthly revenue limit | past, known-future, categorical |
 | Chronos-2 (Amazon) | 120M, 28M ("small") | Apache-2.0 | past, known-future (numeric) |
+| TimesFM 3.0 (Google) | 331M | code Apache-2.0; **weights non-commercial** (testing, evaluation, research only) | past, known-future (numeric) |
+| TimesFM 2.5 (Google) | 231M | Apache-2.0 | none (univariate; covariates are ignored and the result says so) |
 
-Weights are downloaded only when you ask, from the Models page (Chronos-2 is 478 MB, its small variant 112 MB). In the Playground
+Weights are downloaded only when you ask, from the Models page (Chronos-2 is 478 MB, its small variant 112 MB, TimesFM 2.5 925 MB,
+TimesFM 3.0 1.3 GB). **TimesFM 3.0's weights are under Google's non-commercial licence**: the card says so and asks you to
+acknowledge it before downloading; do not use them for commercial or production purposes, and do not redistribute them. In the Playground
 and in Experiments, choose a model and tick the others under "Compare with": they run on the same windows, with the same metrics.
-Chronos-2 uses the same 21 quantile levels as Timestral, so intervals and scores are directly comparable. Options that belong to
-Timestral (symmetric averaging, clipping, masking of flat covariates) are ignored by the other models.
+Chronos-2 uses the same 21 quantile levels as Timestral; both TimesFM models produce nine deciles (0.1 to 0.9). When models with
+different levels run in one backtest, **SQL and WQL are computed for every model on the levels they all share**, so those scores
+(and the skill scores built on them) stay comparable; each model's own-level values are kept alongside, and the 90% and 98%
+interval coverage is only reported for models that predict those tails. Timestral's options map to the closest equivalent
+(symmetric averaging, keeping non-negative inputs non-negative) for TimesFM and are ignored by Chronos-2.
 
 Adding a model means writing one `ModelAdapter` (see `src/tsfm_lab/models/chronos.py` for a short example built on the shared
 `TorchAdapter`, which already handles device choice, the CPU fallback and memory release) and one manifest per checkpoint.
