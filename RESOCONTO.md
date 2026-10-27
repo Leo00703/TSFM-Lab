@@ -396,3 +396,16 @@ Fase 3: pagina di confronto tra run, ulteriori viste e rifiniture di visualizzaz
 - **Eccezione voluta:** i benchmark CPU contro GPU sono severi: se la GPU non c'è, falliscono invece di etichettare numeri della CPU come numeri della GPU.
 - **Robustezza:** un driver CUDA rotto non nasconde più la CPU nell'elenco dei dispositivi; su macOS `PYTORCH_ENABLE_MPS_FALLBACK=1` (rispettando una scelta diversa dell'utente) manda sulla CPU le singole operazioni che la GPU Apple non ha; su MPS le chiamate sono spezzate in blocchi da 64 righe (la memoria è condivisa con il sistema).
 - **La CI ha già trovato un difetto mio specifico di macOS** (la variabile aggiunta rompeva il contratto di isolamento, test rosso solo lì): corretto e verde. 77 test locali, CI verde su Linux, Windows e macOS.
+
+### Misura sul MacBook Air M5 (2026-10-27)
+Installazione dal repository (`python3.13 scripts/bootstrap.py`, Python 3.13 di Homebrew; la 3.14 non è supportata) e `scripts/check_device_parity.py --device mps` eseguito dall'utente. Il bootstrap ha installato il fork `paschembri/timestral@c49d40f` e ha scaricato Tailwind con checksum verificato.
+
+| Modello | Caso | Differenza CPU/GPU | CPU (regime) | GPU Apple (regime) | Velocità GPU |
+|---|---|---|---|---|---|
+| 5M, 32 serie | tre casi | ≤ 2,8·10⁻⁵ | 0,03–0,11 s | 1–1,8 s (una sola chiamata, con la compilazione) | non misurato bene |
+| 28M, 64 serie | senza covariate / con covariata / 1200 passi | 4,6·10⁻⁷ / 9,2·10⁻⁷ / 4,7·10⁻⁵ | 0,137 / 0,522 / 0,080 s | 0,107 / 0,399 / 0,082 s | 1,28× / 1,31× / 0,98× |
+| 209M, 128 serie | senza covariate / con covariata / 1200 passi | 3,1·10⁻⁷ / 6,9·10⁻⁷ / 5,4·10⁻⁶ | 1,410 / 5,670 / 0,355 s | 1,060 / 4,271 / 0,269 s | 1,33× / 1,33× / 1,32× |
+
+- **Correttezza confermata:** la GPU Apple dà le stesse previsioni della CPU entro il rumore float32, anche con covariate e con orizzonti lunghi decodificati a blocchi; il fork funziona su M5.
+- **Velocità:** modesta, circa **+30%** sul 209M (a regime, dopo la compilazione dei kernel). Sul 28M da +30% a pari, sul 5M conviene la CPU. Il primo utilizzo di ogni forma di dati costa circa mezzo secondo in più sulla GPU (compilazione Metal). Su un MacBook Air senza ventola il regime prolungato non è stato misurato.
+- **Decisione:** il dispositivo predefinito resta la CPU su ogni sistema; la GPU Apple è un'opzione nel selettore, utile soprattutto con i modelli grandi (per confronto: sulla RTX 5060 Ti lo stesso 28M va da 1,7× a 22× la CPU secondo il caso).
