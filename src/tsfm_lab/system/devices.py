@@ -62,10 +62,10 @@ def list_devices() -> list[DeviceInfo]:
     mps = getattr(torch.backends, "mps", None)
     if mps is not None and mps.is_available():
         if mps_usable():
-            devices.append(DeviceInfo("mps", "mps", "Apple GPU (Metal)", devices[0].memory_gb))  # unified memory
+            devices.append(DeviceInfo("mps", "mps", f"{devices[0].name} GPU (Metal)", devices[0].memory_gb))  # unified memory
         else:
             devices.append(DeviceInfo(
-                "mps", "mps", "Apple GPU (Metal)", None, supported=False,
+                "mps", "mps", f"{devices[0].name} GPU (Metal)", None, supported=False,
                 reason="this timestral build computes in float64 on the device, which MPS lacks "
                        "(upstream issue #6); use CPU, or the macOS build of the package"))
     elif platform.system() != "Darwin" and not torch.cuda.is_available() and os.environ.get("TSFM_LAB_HINT_CUDA", "1") == "1":

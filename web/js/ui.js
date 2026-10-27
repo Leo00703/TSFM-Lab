@@ -105,13 +105,19 @@ export function download(filename, content, type = 'text/plain') {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+/** What the compute-device menu says: 'CPU', 'GPU · RTX 5060 Ti', 'GPU · Apple M5'. Technical ids and full specs live on the System page. */
+export function friendlyDevice(d, all) {
+  if (d.id === 'cpu') return 'CPU';
+  const gpus = all.filter((x) => x.kind !== 'cpu');
+  const n = gpus.length > 1 ? ` ${gpus.indexOf(d) + 1}` : '';  // only numbered when there are several
+  const model = d.name.replace(/^NVIDIA (GeForce )?/, '').replace(/ GPU( \(Metal\))?$/, '').replace(/^CUDA$/, '');
+  return `GPU${n}${model ? ' · ' + model : ''}${d.supported ? '' : ' (unavailable)'}`;
+}
+
 export function DeviceSelect({ class: c = '', compact }) {
   const { device, devices } = useStore();
   const list = devices.length ? devices : [{ id: 'cpu', name: 'CPU', supported: true }];
-  const options = list.map((d) => ({
-    value: d.id, disabled: !d.supported, text: d.id,
-    label: (d.id === 'cpu' ? 'CPU' : deviceLabel(d.id) + ' · ' + d.name.replace(/^NVIDIA (GeForce )?/, '')) + (d.supported ? '' : ' (unavailable)'),
-  }));
+  const options = list.map((d) => ({ value: d.id, disabled: !d.supported, text: d.id === 'cpu' ? 'CPU' : 'GPU', label: friendlyDevice(d, list) }));
   return html`<div class=${'flex items-center gap-2 ' + c}><span class=${compact ? 'sr-only' : 'label !mb-0 shrink-0'}>Compute device</span>
     <${Select} compact=${compact} value=${device} onChange=${setDevice} options=${options} aria-label="Compute device" class=${compact ? 'w-40' : 'min-w-0 flex-1'} /></div>`;
 }

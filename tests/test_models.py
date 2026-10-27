@@ -162,3 +162,15 @@ def test_a_broken_cuda_driver_never_hides_the_cpu(monkeypatch) -> None:
     monkeypatch.setattr(torch.cuda, "device_count", lambda: (_ for _ in ()).throw(RuntimeError("driver exploded")))
     listed = {d.id: d for d in devices.list_devices()}
     assert listed["cpu"].supported and not listed["cuda:0"].supported and "RuntimeError" in listed["cuda:0"].reason
+
+
+def test_the_apple_gpu_is_named_after_the_chip(monkeypatch) -> None:
+    import torch
+
+    from tsfm_lab.system import devices
+
+    monkeypatch.setattr(torch.backends.mps, "is_available", lambda: True)
+    monkeypatch.setattr(devices, "cpu_name", lambda: "Apple M5")
+    monkeypatch.setattr(devices, "mps_usable", lambda: True)
+    mps = {d.id: d for d in devices.list_devices()}["mps"]
+    assert mps.name == "Apple M5 GPU (Metal)" and mps.supported  # the menu shows "GPU · Apple M5", System shows this

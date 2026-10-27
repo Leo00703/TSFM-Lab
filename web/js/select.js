@@ -9,13 +9,14 @@ export function Select({ value, onChange, options, compact, placeholder = 'Selec
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const [pos, setPos] = useState(null);
-  const btn = useRef(null), list = useRef(null), typed = useRef({ s: '', t: 0 }), id = useRef('sel' + ++uid);
+  const btn = useRef(null), list = useRef(null), typed = useRef({ s: '', t: 0 }), id = useRef('sel' + ++uid), anchor = useRef(null);
   const cur = options.find((o) => o.value === value);
   const enabled = options.map((o, i) => (o.disabled ? -1 : i)).filter((i) => i >= 0);
 
   const show = () => {
     if (disabled) return;
     const r = btn.current.getBoundingClientRect(), below = innerHeight - r.bottom - 12, above = r.top - 12;
+    anchor.current = { top: r.top, left: r.left };
     const up = below < 220 && above > below, room = up ? above : below;
     const width = Math.min(Math.max(r.width, 200), innerWidth - 16);
     setPos({ left: Math.max(8, Math.min(r.left, innerWidth - width - 8)), width, maxH: Math.max(120, Math.min(340, room)), ...(up ? { bottom: innerHeight - r.top + 4 } : { top: r.bottom + 4 }) });
@@ -29,13 +30,28 @@ export function Select({ value, onChange, options, compact, placeholder = 'Selec
   useEffect(() => {
     if (!open) return;
     const away = (e) => { if (!btn.current.contains(e.target) && !(list.current && list.current.contains(e.target))) setOpen(false); };
-    const scroll = (e) => { if (!(list.current && list.current.contains(e.target))) setOpen(false); };
+    // The menu is fixed to where the button was when it opened, so it only has to close when the button moves away from
+    // there. A scroll that leaves the button in place (a tiny nudge, an unrelated panel) must not dismiss it.
+    const scroll = (e) => {
+      if (list.current && list.current.contains(e.target)) return;
+      const r = btn.current.getBoundingClientRect();
+      if (!anchor.current || Math.abs(r.top - anchor.current.top) > 2 || Math.abs(r.left - anchor.current.left) > 2) setOpen(false);
+    };
     document.addEventListener('pointerdown', away);
     addEventListener('scroll', scroll, true);
     addEventListener('resize', close);
     return () => { document.removeEventListener('pointerdown', away); removeEventListener('scroll', scroll, true); removeEventListener('resize', close); };
   }, [open]);
-  useEffect(() => { if (open && list.current) { const el = list.current.querySelector(`[data-i="${active}"]`); if (el) el.scrollIntoView({ block: 'nearest' }); } }, [open, active]);
+  useEffect(() => {
+    if (!open || !list.current) return;
+    const box = list.current, el = box.querySelector(`[data-i="${active}"]`);
+    if (!el) return;
+    // Scroll the list itself and nothing else: scrollIntoView also scrolls the page, and a page scroll used to close the
+    // menu right under the pointer (every hover changes the active option).
+    const top = el.offsetTop, bottom = top + el.offsetHeight;
+    if (top < box.scrollTop) box.scrollTop = top;
+    else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
+  }, [open, active]);
 
   const onKey = (e) => {
     if (!open) { if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); show(); } return; }
