@@ -210,13 +210,18 @@ def test_showcase_lists_scenarios_and_runs_a_forecast_with_covariates(client) ->
     assert sales["source"]["revision"] and "other" in sales["source"]["license"]
     if not sales["ready"]:
         pytest.skip("Rossmann data not downloaded")
-    body = {"scenario": "sales", "series": "1", "offset": 0, "model": "naive", "covariates": ["open", "promo"]}
+    assert sales["window"] == 118 and sales["k_default"] == 90 and sales["k_min"] < sales["k_default"] < sales["k_max"]
+    body = {"scenario": "sales", "series": "1", "model": "naive", "covariates": ["open", "promo"]}
     out = client.post("/api/showcase/forecast", json=body).json()
-    assert out["horizon"] == 28 and len(out["x_future"]) == 28 and "0.5" in out["bands"] and len(out["bands"]["0.1"]) == 28
+    assert out["k"] == 90 and out["horizon"] == 28 and len(out["x"]) == 118 == len(out["real"])
+    assert len(out["bands"]["0.1"]) == 28 and "0.5" in out["bands"]
     assert [c["enabled"] for c in out["covariates"]] == [True, True, False, False]
-    assert all(len(c["values"]) == len(out["x_history"]) + 28 for c in out["covariates"])
-    moved = client.post("/api/showcase/forecast", json={**body, "offset": 28}).json()
-    assert moved["origin"] == out["origin"] - 28 and moved["start"] < out["start"]
+    assert all(len(c["values"]) == 118 for c in out["covariates"])
+    moved = client.post("/api/showcase/forecast", json={**body, "cut": 60}).json()  # divider moved left: longer horizon
+    assert moved["k"] == 60 and moved["horizon"] == 58 and len(moved["bands"]["0.5"]) == 58 and moved["start"] < out["start"]
+    assert moved["x"] == out["x"] and moved["real"] == out["real"]  # the window itself never moves
+    clamped = client.post("/api/showcase/forecast", json={**body, "cut": 5}).json()
+    assert clamped["k"] == sales["k_min"]
     assert client.post("/api/showcase/forecast", json={**body, "scenario": "nope"}).status_code == 404
 
 

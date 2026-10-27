@@ -52,19 +52,34 @@ def _x(s: Series, a: int, b: int) -> list[str]:
     return [str(t) for t in s.timestamps[a:b]]
 
 
+def window_params(sc: Scenario) -> dict[str, int]:
+    """The chart shows a FIXED window of the most recent data; the user drags the divider inside it.
+
+    ``k`` = number of window steps on the left of the divider (what the model sees); everything on its right is
+    forecast, so the horizon is whatever remains up to the window's end.
+    """
+    w = sc.view + sc.horizon
+    return {"window": w, "k_default": sc.view, "k_min": max(8, round(w * 0.2)), "k_max": w - max(4, round(w * 0.06))}
+
+
 def forecast(svc, body: dict[str, Any], progress=None) -> dict[str, Any]:
-    """Single interactive forecast. ``offset`` = how many steps before the end of the data the forecast starts."""
+    """Interactive forecast from a divider position ``cut`` (steps from the window start) to the end of the window."""
     sc = scenario(body["scenario"])
     ds = dataset_for(sc)
     s = _series(ds, body["series"])
     keys = [c.key for c in sc.covariates]
     enabled = [k for k in body["covariates"] if k in keys]
-    h = sc.horizon
-    offset = int(max(0, min(body["offset"], sc.max_offset_steps, s.length - h - 64)))
-    origin = s.length - h - offset
+    wp = window_params(sc)
+    w = wp["window"]
+    k = int(body.get("cut") or wp["k_default"])
+    k = max(wp["k_min"], min(wp["k_max"], k))
+    start = s.length - w
+    if start < 64:
+        raise ValueError("series too short for this scenario")
+    origin, h = start + k, w - k
     lo = max(0, origin - sc.context)
     ctx = s.target[:, lo:origin][None]
-    sel = [keys.index(k) for k in enabled]
+    sel = [keys.index(c) for c in enabled]
     known = s.known_covariates[sel][:, lo:origin + h][None] if sel else None
 
     adapter, loaded = svc.pooled(body["model"], body["device"])
@@ -72,22 +87,22 @@ def forecast(svc, body: dict[str, Any], progress=None) -> dict[str, Any]:
                                            options=dict(body.get("options") or {})))
     q = res.quantiles[0, 0]  # (H, Q)
     bands = {str(lv): q[:, i] for i, lv in enumerate(res.quantile_levels) if any(abs(lv - b) < 1e-9 for b in BANDS)}
-    actual = s.target[0, origin:origin + h]
-    view_lo = max(0, origin - sc.view)
+    real = s.target[0, start:]
+    actual = real[k:]
     scaled = M.history_scale(s.target[None, :, :origin], ds.seasonal_period)
     metrics = {}
     if np.isfinite(actual).any():
         items = M.item_metrics(actual[None, None], res.quantiles, res.quantile_levels, scaled)
-        metrics = {k: float(v[0, 0]) for k, v in items.items() if k in ("mase", "coverage_80") and np.isfinite(v[0, 0])}
+        metrics = {m: float(v[0, 0]) for m, v in items.items() if m in ("mase", "coverage_80") and np.isfinite(v[0, 0])}
+    x = _x(s, start, s.length)
     return {
-        "scenario": sc.id, "series": s.id, "offset": offset, "origin": origin, "horizon": h,
-        "x_history": _x(s, view_lo, origin), "x_future": _x(s, origin, origin + h),
-        "history": s.target[0, view_lo:origin], "actual": actual, "bands": bands,
+        "scenario": sc.id, "series": s.id, "window": w, "k": k, "k_min": wp["k_min"], "k_max": wp["k_max"], "horizon": h,
+        "x": x, "real": real, "bands": bands,
         "covariates": [{"key": c.key, "label": c.label, "hint": c.hint, "binary": c.binary, "enabled": c.key in enabled,
-                        "values": s.known_covariates[i, view_lo:origin + h]} for i, c in enumerate(sc.covariates)],
+                        "values": s.known_covariates[i, start:]} for i, c in enumerate(sc.covariates)],
         "timings": {**res.timings, "model_load_s": None if loaded is None else loaded.get("load_s")},
         "warnings": res.warnings, "device": res.device, "metrics": metrics,
-        "start": str(s.timestamps[origin]), "end": str(s.timestamps[origin + h - 1]),
+        "start": x[k], "end": x[-1],
     }
 
 

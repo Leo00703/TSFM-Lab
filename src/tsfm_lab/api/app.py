@@ -78,7 +78,7 @@ class BenchmarkBody(BaseModel):
 class ShowcaseBody(BaseModel):
     scenario: str
     series: str
-    offset: int = Field(0, ge=0)
+    cut: int | None = Field(None, ge=1)
     model: str
     device: str = "cpu"
     covariates: list[str] = Field(default_factory=list)
@@ -410,7 +410,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
             "id": sc.id, "tab": sc.tab, "title": sc.title, "subtitle": sc.subtitle, "story": sc.story, "unit": sc.unit,
             "freq": sc.freq, "horizon": sc.horizon, "horizon_label": sc.horizon_label, "view": sc.view,
             "series_label": sc.series_label, "series": [{"id": k, "label": v} for k, v in sc.series.items()],
-            "default_series": sc.default_series, "max_offset_steps": sc.max_offset_steps,
+            "default_series": sc.default_series, **engine.window_params(sc),
             "covariates": [{"key": c.key, "label": c.label, "hint": c.hint, "binary": c.binary} for c in sc.covariates],
             "caveats": list(sc.caveats), "size_mb": sc.size_mb, "ready": engine.is_ready(sc),
             "source": {"repo": FEV_REPO, "revision": FEV_REVISION, "name": sc.name, "freq": sc.freq,

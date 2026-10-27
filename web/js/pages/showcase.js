@@ -1,58 +1,60 @@
 import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
 import { api, useAsync, useStore, waitForJob, pct0 } from '../core.js';
 import { Card, Button, Tabs, Select, Switch, Spinner, ErrorBox, Notice, Collapse, Eyebrow, Progress } from '../ui.js';
-import { Chart, palette, baseOption, axisStyle, isNarrow } from '../charts.js';
+import { Chart, isNarrow, baseOption, axisStyle } from '../charts.js';
 
 const nulls = (n) => Array(n).fill(null);
 const compact = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
-const dayLabel = (v) => { const d = new Date(v); return Number.isNaN(d) ? String(v) : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); };
 const num2 = new Intl.NumberFormat('en', { maximumFractionDigits: 1 });
 const fmtV = (v, binary) => (v === null || v === undefined || Number.isNaN(v) ? '–' : binary ? (v >= 0.5 ? 'Yes' : 'No') : Math.abs(v) >= 100 ? compact.format(v) : num2.format(v));
-const fullDate = (v, hourly) => { const d = new Date(v); return Number.isNaN(d) ? String(v) : d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', ...(hourly ? { hour: '2-digit', minute: '2-digit' } : {}) }); };
+const dayLabel = (v) => { const d = new Date(v); return Number.isNaN(d) ? String(v) : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); };
 const longDate = (v) => new Date(v).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const fullDate = (v, hourly) => { const d = new Date(v); return Number.isNaN(d) ? String(v) : d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', ...(hourly ? { hour: '2-digit', minute: '2-digit' } : {}) }); };
+
+// Plot margins shared by the main chart and every factor row, so all time axes line up exactly.
+const MARGIN = () => ({ left: 12, right: isNarrow() ? 40 : 52 });
 
 // ------------------------------------------------------------------ charts
 function mainOption(p, d, showActual) {
-  const nh = d.x_history.length, nf = d.x_future.length, x = [...d.x_history, ...d.x_future];
+  const w = d.window, k = d.k, h = d.horizon, m = MARGIN();
   const lo80 = d.bands['0.1'], hi80 = d.bands['0.9'], lo50 = d.bands['0.25'], hi50 = d.bands['0.75'], med = d.bands['0.5'];
   const band = (lo, hi, key, opacity) => [
-    { type: 'line', data: [...nulls(nh), ...lo], stack: key, symbol: 'none', lineStyle: { opacity: 0 }, silent: true, tooltip: { show: false } },
-    { type: 'line', data: [...nulls(nh), ...hi.map((v, i) => v - lo[i])], stack: key, symbol: 'none', lineStyle: { opacity: 0 }, areaStyle: { color: p.brand, opacity }, silent: true, tooltip: { show: false } },
+    { type: 'line', data: [...nulls(k), ...lo], stack: key, symbol: 'none', lineStyle: { opacity: 0 }, silent: true, tooltip: { show: false } },
+    { type: 'line', data: [...nulls(k), ...hi.map((v, i) => v - lo[i])], stack: key, symbol: 'none', lineStyle: { opacity: 0 }, areaStyle: { color: p.brand, opacity }, silent: true, tooltip: { show: false } },
   ];
-  const last = d.history[d.history.length - 1];
   return {
     ...baseOption(p),
-    grid: { left: 12, right: isNarrow() ? 40 : 52, top: 38, bottom: 28 },
-    xAxis: { type: 'category', data: x, boundaryGap: false, ...axisStyle(p, { splitLine: { show: false }, axisLine: { show: false } }), axisLabel: { color: p.text, fontSize: 12, hideOverlap: true, formatter: dayLabel }, axisPointer: { show: true, label: { show: false } } },
+    grid: { left: m.left, right: m.right, top: 40, bottom: 28 },
+    xAxis: { type: 'category', data: d.x, boundaryGap: false, ...axisStyle(p, { splitLine: { show: false }, axisLine: { show: false } }), axisLabel: { color: p.text, fontSize: 12, hideOverlap: true, formatter: dayLabel }, axisPointer: { show: true, label: { show: false } } },
     yAxis: { type: 'value', position: 'right', scale: true, ...axisStyle(p, { axisLine: { show: false }, splitLine: { lineStyle: { color: p.grid, opacity: 0.5 } } }), axisLabel: { color: p.muted, fontSize: 11, formatter: (v) => compact.format(v) } },
     tooltip: { trigger: 'axis', showContent: false, axisPointer: { type: 'line', lineStyle: { color: p.text, opacity: 0.55, width: 1 } } },
     series: [
-      { name: 'History', type: 'line', data: [...d.history, ...nulls(nf)], showSymbol: false, lineStyle: { width: 1.6, color: p.text }, itemStyle: { color: p.text }, z: 3,
-        markLine: { silent: true, symbol: 'none', label: { show: false }, lineStyle: { color: p.axis, type: 'solid', opacity: 0.8 }, data: [{ xAxis: nh - 1 }] },
-        markArea: { silent: true, itemStyle: { color: p.brand, opacity: 0.04 }, data: [[{ xAxis: nh - 1 }, { xAxis: x.length - 1 }]] } },
-      ...(showActual ? [{ name: 'What really happened', type: 'line', data: [...nulls(nh - 1), last, ...d.actual], showSymbol: false, lineStyle: { width: 1.5, color: p.muted, opacity: 0.8 }, itemStyle: { color: p.muted }, z: 4 }] : []),
+      { name: 'History', type: 'line', data: [...d.real.slice(0, k), ...nulls(h)], showSymbol: false, lineStyle: { width: 1.7, color: p.text }, itemStyle: { color: p.text }, z: 3,
+        markArea: { silent: true, itemStyle: { color: p.brand, opacity: 0.05 }, data: [[{ xAxis: k - 1 }, { xAxis: w - 1 }]] } },
+      ...(showActual ? [{ name: 'What really happened', type: 'line', data: [...nulls(k - 1), ...d.real.slice(k - 1)], showSymbol: false, lineStyle: { width: 1.5, color: p.muted, opacity: 0.8 }, itemStyle: { color: p.muted }, z: 4 }] : []),
       ...band(lo80, hi80, 'b80', 0.16), ...band(lo50, hi50, 'b50', 0.28),
-      { name: 'Forecast', type: 'line', data: [...nulls(nh), ...med], showSymbol: false, lineStyle: { width: 2.4, color: p.brand }, itemStyle: { color: p.brand }, z: 5 },
+      { name: 'Forecast', type: 'line', data: [...nulls(k), ...med], showSymbol: false, lineStyle: { width: 2.4, color: p.brand }, itemStyle: { color: p.brand }, z: 5 },
     ],
   };
 }
 
 function sparkOption(p, row, d) {
-  const x = [...d.x_history, ...d.x_future], nh = d.x_history.length;
-  const color = row.enabled ? p.text : p.muted;
+  const k = d.k, m = MARGIN(), v = row.values;
+  const color = row.enabled ? p.text : p.muted, op = row.enabled ? 1 : 0.4;
+  const line = (data, opacity) => ({ type: 'line', data, showSymbol: false, step: row.binary ? 'end' : false, lineStyle: { width: row.binary ? 1.6 : 1.2, color, opacity: opacity * 0.9 },
+    areaStyle: row.binary ? undefined : { color, opacity: opacity * 0.12 }, silent: true });
   return {
     animation: false, backgroundColor: 'transparent',
     tooltip: { trigger: 'axis', showContent: false, axisPointer: { type: 'line', lineStyle: { color: p.text, opacity: 0.55, width: 1 } } },
-    grid: { left: 12, right: isNarrow() ? 40 : 52, top: 4, bottom: 4 },
-    xAxis: { type: 'category', data: x, show: false, boundaryGap: false },
+    grid: { left: m.left, right: m.right, top: 4, bottom: 4 },
+    xAxis: { type: 'category', data: d.x, show: false, boundaryGap: false },
     yAxis: { type: 'value', show: false, scale: true, min: row.binary ? -0.15 : undefined, max: row.binary ? 1.15 : undefined },
-    series: [{ type: 'line', data: row.values, showSymbol: false, step: row.binary ? 'end' : false, lineStyle: { width: row.binary ? 1.6 : 1.2, color, opacity: row.enabled ? 0.9 : 0.35 },
-      areaStyle: row.binary ? undefined : { color, opacity: row.enabled ? 0.12 : 0.05 },
-      markLine: { silent: true, symbol: 'none', label: { show: false }, lineStyle: { color: p.axis, opacity: 0.8 }, data: [{ xAxis: nh - 1 }] } }],
+    // before the divider = what the model has seen; after it = what it is told about the future (dimmer)
+    series: [line([...v.slice(0, k), ...nulls(v.length - k)], op), line([...nulls(k - 1), ...v.slice(k - 1)], op * 0.55)],
   };
 }
 
-// ------------------------------------------------------------------ page
+// ------------------------------------------------------------------ pieces
 function Prepare({ sc, onReady }) {
   const [busy, setBusy] = useState(false), [err, setErr] = useState(null);
   const go = async () => {
@@ -67,7 +69,7 @@ function Prepare({ sc, onReady }) {
     ${err && html`<div class="mt-4"><${ErrorBox} error=${err} /></div>`}</div></div>`;
 }
 
-function Effect({ sc, impact, loading, progress, covOn, onFocus }) {
+function Effect({ sc, impact, loading, progress }) {
   if (loading) return html`<${Progress} done=${progress.done} total=${progress.total} message=${progress.message || 'Measuring on past windows (first time only)…'} />`;
   if (!impact) return null;
   const rows = sc.covariates.map((c) => ({ ...c, gain: impact.gain_each[c.key] }));
@@ -75,38 +77,40 @@ function Effect({ sc, impact, loading, progress, covOn, onFocus }) {
   const d = impact.detail;
   return html`<div class="grid gap-5">
     <p class="max-w-3xl text-body-large">Given <b>all</b> the factors, the model's error score drops by <b class="text-surface-brand num">${pct0(impact.gain_all)}</b> compared with using the history alone.
-      Measured on <b class="num">${impact.forecasts}</b> past forecasts (${impact.series} ${impact.series === 1 ? 'series' : 'series'} × the ${impact.windows} most recent windows of ${sc.horizon_label}).</p>
+      Measured on <b class="num">${impact.forecasts}</b> past forecasts (${impact.series} series × the ${impact.windows} most recent windows of ${sc.horizon_label}).</p>
     <div class="grid gap-2">${rows.map((r) => html`<div class="grid grid-cols-[8.5rem_1fr_3.5rem] items-center gap-3 text-body-small"><span>${r.label}</span>
       <span class="h-2 rounded-sm bg-surface-brand-tertiary"><span class="block h-full rounded-sm bg-surface-brand" style=${bar(r.gain)}></span></span><span class="num text-right">${r.gain === null ? '–' : (r.gain >= 0 ? '+' : '') + Math.round(r.gain * 100) + '%'}</span></div>`)}
       <p class="text-body-small text-text-muted">Each bar: the improvement when only that one factor is given.</p></div>
     <p class="text-body-small text-text-muted">The shaded 80% range contained what really happened <b class="num text-text-primary">${pct0(d.all.coverage_80)}</b> of the time with the factors (<b class="num text-text-primary">${pct0(d.none.coverage_80)}</b> without). A trustworthy range would be close to 80%${Math.min(d.all.coverage_80, d.none.coverage_80) < 0.7 ? ': here it is too narrow, so treat the shaded band as optimistic.' : '.'}</p></div>`;
 }
 
+// ------------------------------------------------------------------ page
 export function Showcase() {
   const { device } = useStore();
   const [list] = useAsync(() => api('/api/showcase'), []);
   const [models] = useAsync(() => api('/api/models'), []);
   const [reloadKey, setReloadKey] = useState(0);
+  const [fresh] = useAsync(() => api('/api/showcase'), [reloadKey]);
   const [tab, setTab] = useState('sales');
-  const [series, setSeries] = useState({}), [back, setBack] = useState(0), [on, setOn] = useState({});
-  const [model, setModel] = useState(null), [reveal, setReveal] = useState(true);
-  const [geo, setGeo] = useState(null), [drag, setDrag] = useState(null), [hover, setHover] = useState(null);
-  const mainChart = useRef(null), wrap = useRef(null), dataRef = useRef(null), dragRef = useRef(null);
+  const [series, setSeries] = useState({}), [cuts, setCuts] = useState({}), [on, setOn] = useState({});
+  const [model, setModel] = useState(null), [reveal, setReveal] = useState(true), [dragging, setDragging] = useState(false), [hover, setHover] = useState(null);
   const [data, setData] = useState(null), [err, setErr] = useState(null), [busy, setBusy] = useState(false), [wait, setWait] = useState('');
   const [impact, setImpact] = useState(null), [impLoading, setImpLoading] = useState(false), [prog, setProg] = useState({});
-  const seq = useRef(0), impJob = useRef(null);
-  const [fresh, refetch] = useAsync(() => api('/api/showcase'), [reloadKey]);
+  const seq = useRef(0), impJob = useRef(null), box = useRef(null), dataRef = useRef(null);
+
   const scs = fresh.data || list.data || [];
   const sc = scs.find((s) => s.id === tab);
   const ready = (models.data || []).filter((m) => m.kind === 'foundation' && m.cache.downloaded);
   useEffect(() => { if (!model && ready.length) setModel((ready.find((m) => m.id === 'timestral-28m') || ready[0]).id); }, [models.data]);
-  dataRef.current = data;
   const sid = sc ? (series[sc.id] || sc.default_series) : null;
+  const cut = sc ? (cuts[sc.id] ?? sc.k_default) : 0;
   const enabled = sc ? sc.covariates.filter((c) => on[sc.id + c.key] !== false).map((c) => c.key) : [];
-  const stepDays = sc && sc.freq.endsWith('H') ? 24 : 1;
-  const maxDays = sc ? Math.floor(sc.max_offset_steps / stepDays) : 0;
+  const hourly = !!(sc && sc.freq.endsWith('H'));
+  dataRef.current = data;
+  const setCut = (k) => sc && setCuts((c) => ({ ...c, [sc.id]: Math.max(sc.k_min, Math.min(sc.k_max, Math.round(k))) }));
 
-  // interactive forecast (debounced; stale answers ignored; waits politely while a measurement job holds the compute)
+  // interactive forecast: follows the divider while it is dragged (short debounce), ignores stale answers, and waits
+  // politely while a measurement job holds the compute
   useEffect(() => {
     if (!sc || !sc.ready || !model) return;
     const mine = ++seq.current;
@@ -115,7 +119,7 @@ export function Showcase() {
       try {
         for (let attempt = 0; attempt < 40; attempt++) {
           try {
-            const r = await api('/api/showcase/forecast', { method: 'POST', body: { scenario: sc.id, series: sid, offset: back * stepDays, model, device, covariates: enabled } });
+            const r = await api('/api/showcase/forecast', { method: 'POST', body: { scenario: sc.id, series: sid, cut, model, device, covariates: enabled } });
             if (mine === seq.current) { setData(r); setErr(null); setWait(''); }
             return;
           } catch (e) {
@@ -126,45 +130,11 @@ export function Showcase() {
           }
         }
       } catch (e) { if (mine === seq.current) setErr(e); } finally { if (mine === seq.current) setBusy(false); }
-    }, 220);
+    }, dragging ? 90 : 200);
     return () => clearTimeout(t);
-  }, [sc && sc.id, sc && sc.ready, sid, back, enabled.join(','), model, device]);
+  }, [sc && sc.id, sc && sc.ready, sid, cut, enabled.join(','), model, device]);
 
-  const measure = () => {
-    const c = mainChart.current, d = dataRef.current;
-    if (!c || !d || !wrap.current) return;
-    const n = d.x_history.length + d.x_future.length, at = (i) => c.convertToPixel({ xAxisIndex: 0 }, i);
-    const x0 = at(0), x1 = at(n - 1), xo = at(d.x_history.length - 1);
-    if ([x0, x1, xo].some((v) => typeof v !== 'number' || Number.isNaN(v))) return;
-    setGeo({ x: xo, per: (x1 - x0) / (n - 1), nh: d.x_history.length, n });
-  };
-  useEffect(() => { const t = setTimeout(measure, 60); return () => clearTimeout(t); }, [data, reveal]);
-  useEffect(() => { if (!wrap.current) return; const ro = new ResizeObserver(() => setTimeout(measure, 30)); ro.observe(wrap.current); return () => ro.disconnect(); }, [data && data.scenario]);
-
-  // the curtain: drag the handle to move where the forecast starts (left = what really happened, right = what is predicted)
-  const clampDelta = (dSteps) => Math.max(-(maxDays - back) * stepDays, Math.min(back * stepDays, dSteps));
-  const onDown = (e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { x0: e.clientX, d: 0 }; setDrag(0); };
-  const onMove = (e) => { if (!dragRef.current || !geo) return; const d = clampDelta(Math.round((e.clientX - dragRef.current.x0) / geo.per)); dragRef.current.d = d; setDrag(d); };
-  const onUp = () => { if (!dragRef.current) return; const d = dragRef.current.d; dragRef.current = null; setDrag(null); if (d !== 0) setBack(back - Math.round(d / stepDays)); };
-  const onKey = (e) => { const k = { ArrowLeft: 1, ArrowDown: 1, ArrowRight: -1, ArrowUp: -1, PageDown: 7, PageUp: -7 }[e.key]; if (k === undefined && e.key !== 'Home' && e.key !== 'End') return; e.preventDefault(); setBack(e.key === 'Home' ? maxDays : e.key === 'End' ? 0 : Math.max(0, Math.min(maxDays, back + k))); };
-
-  // hover read-out: date and values of the forecast and of every factor at the pointed time
-  const onChartReady = (c) => {
-    mainChart.current = c; c.group = 'showcase';
-    c.on('updateAxisPointer', (ev) => { const v = ev.axesInfo && ev.axesInfo[0] && ev.axesInfo[0].value; const d = dataRef.current; if (v === undefined || !d) return; const x = [...d.x_history, ...d.x_future]; setHover(typeof v === 'number' ? Math.round(v) : x.indexOf(v)); });
-    c.getZr().on('globalout', () => setHover(null));
-    setTimeout(() => { if (window.echarts) echarts.connect('showcase'); measure(); }, 80);
-  };
-  const readout = (() => {
-    if (hover === null || !data || data.scenario !== (sc && sc.id)) return null;
-    const x = [...data.x_history, ...data.x_future], nh = data.x_history.length, j = hover - nh;
-    if (hover < 0 || hover >= x.length) return null;
-    const real = hover < nh ? data.history[hover] : (reveal ? data.actual[j] : null);
-    return { when: fullDate(x[hover], stepDays === 24), future: j >= 0, real, med: j >= 0 ? data.bands['0.5'][j] : null, lo: j >= 0 ? data.bands['0.1'][j] : null, hi: j >= 0 ? data.bands['0.9'][j] : null,
-      covs: data.covariates.map((r) => ({ label: r.label, v: r.values[hover], binary: r.binary, on: r.enabled })) };
-  })();
-
-  // measured effect over many windows (cached on disk after the first run)
+  // measured effect over many windows (cached on disk after the first run); starts after the first chart is shown
   const firstShown = !!(data && sc && data.scenario === sc.id);
   useEffect(() => {
     if (!sc || !sc.ready || !model || !firstShown) return;
@@ -179,17 +149,50 @@ export function Showcase() {
     return () => { alive = false; };
   }, [sc && sc.id, sc && sc.ready, model, device, firstShown]);
 
+  // ---- the curtain: the divider moves freely over a FIXED window (left = what really happened, right = what is predicted)
+  const fromPointer = (e) => {
+    const r = box.current.getBoundingClientRect();
+    const idx = Math.round(((e.clientX - r.left) / r.width) * (sc.window - 1));
+    setCut(idx + 1);
+  };
+  const onDown = (e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); setDragging(true); fromPointer(e); };
+  const onMove = (e) => { if (dragging) fromPointer(e); };
+  const onUp = () => setDragging(false);
+  const onKey = (e) => {
+    const step = hourly ? 6 : 1, big = hourly ? 24 : 7;
+    const d = { ArrowLeft: -step, ArrowDown: -step, ArrowRight: step, ArrowUp: step, PageDown: -big, PageUp: big }[e.key];
+    if (d !== undefined) { e.preventDefault(); setCut(cut + d); } else if (e.key === 'Home') { e.preventDefault(); setCut(sc.k_min); } else if (e.key === 'End') { e.preventDefault(); setCut(sc.k_max); }
+  };
+
+  // ---- synchronised crosshair + read-out of date and values
+  const onChartReady = (c) => {
+    c.group = 'showcase';
+    c.on('updateAxisPointer', (ev) => { const v = ev.axesInfo && ev.axesInfo[0] && ev.axesInfo[0].value; const d = dataRef.current; if (v === undefined || !d) return; setHover(typeof v === 'number' ? Math.round(v) : d.x.indexOf(v)); });
+    c.getZr().on('globalout', () => setHover(null));
+    setTimeout(() => window.echarts && echarts.connect('showcase'), 80);
+  };
+  const valid = !!(data && sc && data.scenario === sc.id);
+  const readout = (() => {
+    if (hover === null || !valid || hover < 0 || hover >= data.x.length) return null;
+    const j = hover - data.k;
+    return { when: fullDate(data.x[hover], hourly), future: j >= 0, real: j < 0 ? data.real[hover] : (reveal ? data.real[hover] : null),
+      med: j >= 0 ? data.bands['0.5'][j] : null, lo: j >= 0 ? data.bands['0.1'][j] : null, hi: j >= 0 ? data.bands['0.9'][j] : null,
+      covs: data.covariates.map((r) => ({ label: r.label, v: r.values[hover], binary: r.binary, on: r.enabled })) };
+  })();
+
   if (list.loading && !scs.length) return html`<${Spinner} />`;
   if (list.error) return html`<div class="pt-10"><${ErrorBox} error=${list.error} /></div>`;
   const allOn = sc && enabled.length === sc.covariates.length;
   const setAll = (v) => setOn((o) => ({ ...o, ...Object.fromEntries(sc.covariates.map((c) => [sc.id + c.key, v])) }));
   const modelOpts = ready.map((m) => ({ value: m.id, label: m.name }));
+  const m = MARGIN();
+  const pos = sc ? ((cut - 1) / (sc.window - 1)) * 100 : 0;
 
   return html`<div>
     <header class="pt-8 pb-6 md:pt-14 md:pb-10 border-b border-border-primary">
       <${Eyebrow}>Showcase · real data, forecast on your machine<//>
       <h1 class="page-title mt-2">See what the model can do</h1>
-      <p class="mt-3 max-w-3xl text-body-large text-text-muted">Pick a real situation. The white line is what happened; the orange line is what Timestral predicts <i>without ever seeing</i> what comes next. Give it the factors that are known in advance, and see how much closer it gets.</p>
+      <p class="mt-3 max-w-3xl text-body-large text-text-muted">Pick a real situation. Drag the handle: everything on its left is what happened, everything on its right is what Timestral predicts <i>without ever seeing</i> it. Give it the factors that are known in advance, and see how much closer it gets.</p>
     </header>
 
     <div class="mt-8 rounded-xl border border-border-primary bg-surface-brand-secondary">
@@ -204,47 +207,48 @@ export function Showcase() {
         ${ready.length === 0 && html`<${Notice} kind="warning" title="No model downloaded">Download a Timestral model on the <a class="underline" href="#/models">Models</a> page to run forecasts.<//>`}
         <div class="flex flex-wrap items-end justify-between gap-4">
           <div><h2 class="font-mistral text-h3">${sc.title}</h2><p class="text-body-small text-text-muted">${sc.subtitle}${sc.unit ? ' · ' + sc.unit : ''}</p></div>
-          ${sc.series.length > 1 && html`<div class="flex items-center gap-2"><span class="label !mb-0">${sc.series_label}</span><${Select} compact class="w-44" value=${sid} onChange=${(v) => { setSeries({ ...series, [sc.id]: v }); }} options=${sc.series.map((s) => ({ value: s.id, label: s.label }))} aria-label=${sc.series_label} /></div>`}</div>
+          ${sc.series.length > 1 && html`<div class="flex items-center gap-2"><span class="label !mb-0">${sc.series_label}</span><${Select} compact class="w-44" value=${sid} onChange=${(v) => setSeries({ ...series, [sc.id]: v })} options=${sc.series.map((s) => ({ value: s.id, label: s.label }))} aria-label=${sc.series_label} /></div>`}</div>
 
-        <div class="mt-4 grid gap-x-4 md:grid-cols-[11rem_minmax(0,1fr)_3.25rem]"><div class="hidden md:block"></div><div class="relative min-w-0">
+        <div class="relative mt-4">
           ${err && html`<${ErrorBox} error=${err} />`}
-          <div ref=${wrap} class="relative">${data && data.scenario === sc.id && html`<${Chart} build=${(p) => mainOption(p, data, reveal)} deps=${[data, reveal]} height=${isNarrow() ? 250 : 320} name=${sc.title + ' forecast'} onInstance=${onChartReady} />`}
-          ${geo && data && data.scenario === sc.id && (() => { const x = geo.x + (drag || 0) * geo.per; const idx = geo.nh - 1 + (drag || 0); const xs = [...data.x_history, ...data.x_future];
-            return html`<div class="pointer-events-none absolute inset-y-0 z-10 w-0" style=${`left:${x}px`}>
-              <span class="absolute bottom-7 top-9 w-px -translate-x-1/2 bg-text-primary opacity-60"></span>
-              <button type="button" role="slider" tabindex="0" aria-label="Where the forecast starts: drag, or use the arrow keys" aria-valuemin="0" aria-valuemax=${maxDays} aria-valuenow=${maxDays - back} aria-valuetext=${longDate(data.start)}
-                class="pointer-events-auto absolute left-0 top-1 grid h-8 w-6 -translate-x-1/2 cursor-ew-resize touch-none place-items-center rounded-md bg-text-primary text-text-invert shadow-md" onPointerDown=${onDown} onPointerMove=${onMove} onPointerUp=${onUp} onPointerCancel=${onUp} onKeyDown=${onKey}>
-                <span class="h-3.5 w-0.5 bg-current"></span></button>
-              <span class="absolute left-4 top-2 whitespace-nowrap text-body-small font-medium text-surface-brand">${drag ? dayLabel(xs[Math.max(0, Math.min(xs.length - 1, idx + 1))]) : 'Forecast'}</span></div>`; })()}</div>
-          ${(!data || data.scenario !== sc.id) && !err && html`<${Spinner} label="Forecasting…" />`}
-          ${busy && data && html`<span class="absolute right-2 top-1 rounded-sm bg-surface-brand-tertiary px-2 py-0.5 font-mono text-[0.6875rem] uppercase text-text-muted">updating…</span>`}
+          ${valid && html`<${Chart} build=${(p) => mainOption(p, data, reveal)} deps=${[data, reveal]} height=${isNarrow() ? 260 : 340} name=${sc.title + ' forecast'} onInstance=${onChartReady} />`}
+          ${!valid && !err && html`<${Spinner} label="Forecasting…" />`}
+          ${valid && html`<div ref=${box} class="pointer-events-none absolute inset-y-0 z-10" style=${`left:${m.left}px;right:${m.right}px`}>
+            <div class="absolute inset-y-0 w-0" style=${`left:${pos}%`}>
+              <span class="absolute bottom-7 top-10 w-px -translate-x-1/2 bg-text-primary opacity-60"></span>
+              <button type="button" role="slider" tabindex="0" aria-label="Where the forecast starts: drag, or use the arrow keys" aria-valuemin=${sc.k_min} aria-valuemax=${sc.k_max} aria-valuenow=${cut} aria-valuetext=${data.x[Math.min(cut, data.x.length - 1)] ? longDate(data.x[Math.min(cut, data.x.length - 1)]) : ''}
+                class="pointer-events-auto absolute left-0 top-1 grid h-8 w-6 -translate-x-1/2 cursor-ew-resize touch-none place-items-center rounded-md bg-text-primary text-text-invert shadow-md"
+                onPointerDown=${onDown} onPointerMove=${onMove} onPointerUp=${onUp} onPointerCancel=${onUp} onKeyDown=${onKey}><span class="h-3.5 w-0.5 bg-current"></span></button>
+              <span class="pointer-events-none absolute left-4 top-2 whitespace-nowrap text-body-small font-medium text-surface-brand">${dragging && data.x[cut] ? dayLabel(data.x[cut]) : 'Forecast'}</span></div></div>`}
+          ${busy && valid && html`<span class="absolute right-2 top-12 rounded-sm bg-surface-brand-tertiary px-2 py-0.5 font-mono text-[0.6875rem] uppercase text-text-muted">updating…</span>`}</div>
         ${wait && html`<p class="mt-2 text-body-small text-text-muted">${wait}</p>`}
-        <div class="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-body-small text-text-muted"><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-text-primary"></i>History</span><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-surface-brand"></i>Forecast · ${sc.horizon_label}</span><span class="inline-flex items-center gap-2"><i class="inline-block h-3 w-5 rounded-sm bg-surface-brand opacity-30"></i>Likely range (50% and 80%)</span></div></div><div class="hidden md:block"></div></div>
+        <div class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-body-small text-text-muted"><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-text-primary"></i>History</span><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-surface-brand"></i>Forecast${valid ? ' · ' + (hourly ? (data.horizon >= 48 ? Math.round(data.horizon / 24) + ' days' : data.horizon + ' hours') : (data.horizon >= 14 ? Math.round(data.horizon / 7) + ' weeks' : data.horizon + ' days')) : ''}</span><span class="inline-flex items-center gap-2"><i class="inline-block h-3 w-5 rounded-sm bg-surface-brand opacity-30"></i>Likely range (50% and 80%)</span></div>
 
-        <div class="mt-5 grid items-start gap-x-4 gap-y-2 border-t border-border-primary pt-4 md:grid-cols-[11rem_minmax(0,1fr)_3.25rem]">
-          <div><div class="font-medium">Forecast starts</div><div class="num text-body-small text-text-muted">${data && data.scenario === sc.id ? longDate(data.start) : ''}</div></div>
+        <div class="mt-4 grid gap-x-6 gap-y-1 border-t border-border-primary pt-4 md:grid-cols-[11rem_minmax(0,1fr)]">
+          <div><div class="font-medium">Forecast starts</div><div class="num text-body-small text-text-muted">${valid ? longDate(data.start) : ''}</div></div>
           <div class="min-h-[3.25rem] min-w-0 text-body-small">${readout ? html`<div class="flex flex-wrap items-baseline gap-x-5 gap-y-1"><b class="num">${readout.when}</b>
               ${readout.real !== null && readout.real !== undefined && html`<span><span class="text-text-muted">${readout.future ? 'Really happened' : 'Real'}</span> <b class="num">${fmtV(readout.real)}</b></span>`}
               ${readout.future && html`<span class="text-surface-brand"><span>Forecast</span> <b class="num">${fmtV(readout.med)}</b> <span class="num text-text-muted">(likely ${fmtV(readout.lo)}–${fmtV(readout.hi)})</span></span>`}</div>
               <div class="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-text-muted">${readout.covs.map((c) => html`<span class=${c.on ? '' : 'opacity-50'}>${c.label} <b class="num text-text-primary">${fmtV(c.v, c.binary)}</b></span>`)}</div>`
-            : html`<span class="text-text-muted">Drag the handle on the chart (or use the arrow keys) to move where the forecast starts. Move the pointer over the chart to read the date and the values.</span>`}</div><div class="hidden md:block"></div></div>
+            : html`<span class="text-text-muted">Drag the handle along the chart (or use the arrow keys) to choose where the forecast starts: the further left, the longer the forecast. Move the pointer over the chart to read the date and the values.</span>`}</div></div>
 
-        <div class="mt-6 grid gap-0 border-t border-border-primary">
+        <div class="mt-4 border-t border-border-primary">
           <div class="flex flex-wrap items-center justify-between gap-3 py-4"><span class="font-medium">Factors known in advance</span>
             <div class="flex items-center gap-4">${impact && html`<span class="text-body-small"><b class="text-surface-brand num">${pct0(impact.gain_all)}</b> <span class="text-text-muted">lower error with all of them</span></span>`}
               ${impLoading && html`<span class="text-body-small text-text-muted">measuring…</span>`}
               <${Switch} checked=${allOn} onChange=${setAll} label=${allOn ? 'All on' : 'All off'} /></div></div>
-          ${sc.covariates.map((c) => { const row = data && data.scenario === sc.id ? data.covariates.find((r) => r.key === c.key) : null; const g = impact && impact.gain_each[c.key];
-            return html`<div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-t border-border-primary py-3 md:grid-cols-[11rem_minmax(0,1fr)_3.25rem]">
-              <div class="order-1 min-w-0"><div class="font-medium">${c.label}</div><div class="truncate text-body-small text-text-muted" title=${c.hint}>${g === null || g === undefined ? c.hint : `alone: ${g >= 0 ? '+' : ''}${Math.round(g * 100)}%`}</div></div>
-              <div class="order-3 col-span-2 min-w-0 md:order-2 md:col-span-1">${row && html`<${Chart} build=${(p) => sparkOption(p, row, data)} deps=${[data]} height=${46} name=${c.label} onInstance=${(c2) => { c2.group = 'showcase'; setTimeout(() => window.echarts && echarts.connect('showcase'), 100); }} />`}</div>
-              <div class="order-2 justify-self-end md:order-3"><${Switch} checked=${on[sc.id + c.key] !== false} onChange=${(v) => setOn({ ...on, [sc.id + c.key]: v })} label=${c.label} hideLabel /></div></div>`; })}</div>
+          ${sc.covariates.map((c) => { const row = valid ? data.covariates.find((r) => r.key === c.key) : null; const g = impact && impact.gain_each[c.key];
+            return html`<div class="border-t border-border-primary py-3">
+              <div class="flex items-center justify-between gap-3"><div class="min-w-0"><span class="font-medium">${c.label}</span>
+                <span class="ml-2 text-body-small text-text-muted" title=${c.hint}>${g === null || g === undefined ? '' : `alone: ${g >= 0 ? '+' : ''}${Math.round(g * 100)}%`}</span></div>
+                <${Switch} checked=${on[sc.id + c.key] !== false} onChange=${(v) => setOn({ ...on, [sc.id + c.key]: v })} label=${c.label} hideLabel /></div>
+              <div class="min-w-0">${row && html`<${Chart} build=${(p) => sparkOption(p, row, data)} deps=${[data]} height=${46} name=${c.label} onInstance=${(c2) => { c2.group = 'showcase'; setTimeout(() => window.echarts && echarts.connect('showcase'), 100); }} />`}</div></div>`; })}</div>
       </div>`}
     </div>
 
     ${sc && sc.ready && html`<div class="mt-10 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
       <${Card}><${Eyebrow}>How much do the factors really help?<//><div class="mt-4"><${Effect} sc=${sc} impact=${impact} loading=${impLoading} progress=${prog} /></div>
-        <p class="mt-5 border-t border-border-primary pt-4 text-body-small text-text-muted">“Error score” is a quantile loss: it measures how close the forecast is <i>and</i> how honest its shaded range is. Lower is better. It is computed here on this machine for the model and device selected above, and stored so the second time is instant.</p><//>
+        <p class="mt-5 border-t border-border-primary pt-4 text-body-small text-text-muted">“Error score” is a quantile loss: it measures how close the forecast is <i>and</i> how honest its shaded range is. Lower is better. It is computed here on this machine for the model and device selected above, on the default ${sc.horizon_label}, and stored so the second time is instant.</p><//>
       <${Card}><${Eyebrow}>Read this before trusting a number<//>
         <ul class="mt-4 list-disc space-y-3 pl-5 text-body-small text-text-muted">${sc.caveats.map((c) => html`<li>${c}</li>`)}
           <li>These are public datasets: Timestral's training data is not disclosed, so it may have seen them. Results on your own data are the real test.</li></ul>
