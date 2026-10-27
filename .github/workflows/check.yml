@@ -28,6 +28,15 @@ jobs:
         run: python scripts/bootstrap.py --device ${{ inputs.device }} --skip-brand-assets
       - name: Environment report
         run: ${{ inputs.python }} scripts/doctor.py
+      - name: The right timestral build was installed (macOS gets the Apple GPU fix, the others the official package)
+        run: |
+          ${{ inputs.python }} - <<'PY'
+          import sys
+          from tsfm_lab.system.devices import mps_usable
+          expected = sys.platform == "darwin"
+          print("timestral can use the Apple GPU:", mps_usable(), "(expected:", expected, ")")
+          sys.exit(0 if mps_usable() == expected else 1)
+          PY
       - name: Tests without model weights
         run: ${{ inputs.python }} -m pytest -q -m "not model"
       - name: Tests with the real Timestral-5M checkpoint (21 MB)

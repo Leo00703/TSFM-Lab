@@ -111,3 +111,54 @@ def test_new_model_plugs_in_without_touching_the_core() -> None:
     assert res.models["mean-model"].summary["mase"]["n"] == 6
     with pytest.raises(ValueError, match="already registered"):
         registry.add(MeanModel.info, MeanModel)
+
+
+def test_mps_is_offered_only_when_timestral_can_run_its_float64_statistics_on_the_cpu(monkeypatch) -> None:
+    import sys
+    import types
+
+    import torch
+
+    from tsfm_lab.system import devices
+
+    monkeypatch.setattr(torch.backends.mps, "is_available", lambda: True)
+    plain = types.ModuleType("timestral.scaler")  # the official package: no cpu_for_float64
+    patched = types.ModuleType("timestral.scaler")
+    patched.cpu_for_float64 = lambda *t: t
+    pkg = types.ModuleType("timestral")
+
+    def listed(scaler):
+        monkeypatch.setitem(sys.modules, "timestral", pkg)
+        monkeypatch.setitem(sys.modules, "timestral.scaler", scaler)
+        pkg.scaler = scaler
+        return {d.id: d for d in devices.list_devices()}["mps"]
+
+    off = listed(plain)
+    assert not off.supported and "float64" in off.reason
+    assert listed(patched).supported
+
+
+def test_a_missing_gpu_falls_back_to_the_cpu_unless_the_caller_is_strict(monkeypatch) -> None:
+    from tsfm_lab.models.base import DeviceInfo
+    from tsfm_lab.system import devices
+
+    monkeypatch.setattr(devices, "list_devices", lambda: [DeviceInfo("cpu", "cpu", "CPU", 8.0)])
+    assert devices.pick_device("cpu", ("cpu", "cuda", "mps")) == ("cpu", None)
+    for gpu in ("cuda", "cuda:0", "mps"):
+        device, note = devices.pick_device(gpu, ("cpu", "cuda", "mps"))
+        assert device == "cpu" and "CPU" in note and "unavailable" in note
+        with pytest.raises(ValueError):
+            devices.pick_device(gpu, ("cpu", "cuda", "mps"), strict=True)
+    device, note = devices.pick_device("mps", ("cpu", "cuda"))  # a model that cannot use that kind of device at all
+    assert device == "cpu" and "not supported" in note
+
+
+def test_a_broken_cuda_driver_never_hides_the_cpu(monkeypatch) -> None:
+    import torch
+
+    from tsfm_lab.system import devices
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: (_ for _ in ()).throw(RuntimeError("driver exploded")))
+    listed = {d.id: d for d in devices.list_devices()}
+    assert listed["cpu"].supported and not listed["cuda:0"].supported and "RuntimeError" in listed["cuda:0"].reason

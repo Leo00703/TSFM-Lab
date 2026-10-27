@@ -59,8 +59,15 @@ conflicts = [
 ]
 
 [tool.uv.sources]
-# Pinned to the commit current on 2026-10-27 (the package is not on PyPI, issue #5 upstream).
-timestral = { git = "https://github.com/mistralai/timestral.git", rev = "a534bdbd244d64f3d9d743f46c7bf6fc330ed4ff" }
+# The package is not on PyPI (issue #5 upstream), so it is pinned by commit.
+# macOS uses a one-commit fork of that same upstream commit: it runs the float64 statistics on the CPU, which is what
+# makes the Apple GPU (MPS) usable (upstream issue #6). Reviewed on 2026-10-27: the only commit on top of the pinned
+# upstream commit, 3 files (2 of code, 1 of tests), no new dependency, no network, process, environment or file access.
+# Windows and Linux stay on the official repository. Drop the second entry when upstream merges the fix.
+timestral = [
+    { git = "https://github.com/mistralai/timestral.git", rev = "a534bdbd244d64f3d9d743f46c7bf6fc330ed4ff", marker = "sys_platform != 'darwin'" },
+    { git = "https://github.com/paschembri/timestral.git", rev = "c49d40f08dc75c05d7489a3ef26fb3fd565584c7", marker = "sys_platform == 'darwin'" },
+]
 torch = [
     { index = "pytorch-cu128", extra = "cu128" },
     { index = "pytorch-cpu", extra = "cpu" },

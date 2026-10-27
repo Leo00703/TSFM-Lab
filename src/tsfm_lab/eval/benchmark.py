@@ -61,6 +61,7 @@ def run_benchmark(model_id: str, devices: list[str], repeats: int = 15, scenario
     proc = psutil.Process()
     for device in devices:
         adapter = registry.create(model_id)
+        adapter.strict_device = True  # a benchmark must fail, not quietly measure the CPU under a GPU's name
         rss_before = proc.memory_info().rss
         meta = adapter.load(device)
         rss_after = proc.memory_info().rss

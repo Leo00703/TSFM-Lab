@@ -78,6 +78,57 @@ def test_cuda_matches_cpu_and_reports_vram(model) -> None:
     gpu.unload()
 
 
-def test_unsupported_device_is_rejected_with_a_reason() -> None:
-    with pytest.raises(ValueError, match="not supported"):
-        build_default_registry().create("timestral-5m").load("mps")
+def test_strict_mode_rejects_an_unavailable_device_with_a_reason() -> None:
+    adapter = build_default_registry().create("timestral-5m")
+    adapter.strict_device = True
+    present = {d.id for d in list_devices() if d.supported}
+    with pytest.raises(ValueError, match="unavailable|not supported"):
+        adapter.load("mps" if "mps" not in present else "cuda:7")
+
+
+def test_asking_for_an_unavailable_gpu_runs_on_the_cpu_and_says_so() -> None:
+    adapter = build_default_registry().create("timestral-5m")
+    try:
+        gone = next(k for k in ("mps", "cuda:0") if k not in {d.id for d in list_devices() if d.supported})
+        meta = adapter.load(gone)
+        assert meta["device"] == "cpu" and meta["requested_device"] == gone and gone in meta["fallback"]
+        res = adapter.forecast(ForecastRequest(_ctx(), 24))
+        assert res.device == "cpu" and np.isfinite(res.quantiles).all() and gone in res.warnings[0]
+        adapter.strict_device = True  # benchmarks must not do this
+        with pytest.raises(ValueError):
+            adapter.load(gone)
+    finally:
+        adapter.unload()
+
+
+def test_a_gpu_that_fails_while_forecasting_continues_on_the_cpu(model, monkeypatch) -> None:
+    adapter = build_default_registry().create("timestral-5m")
+    adapter.load("cpu")
+    adapter._device = "mps"  # pretend the model sits on a GPU whose kernels fail
+    real = adapter._forecast_once
+    calls = []
+
+    def flaky(request):
+        calls.append(adapter.device)
+        if adapter.device != "cpu":
+            raise RuntimeError("MPS backend out of memory")
+        return real(request)
+
+    monkeypatch.setattr(adapter, "_forecast_once", flaky)
+    try:
+        res = adapter.forecast(ForecastRequest(_ctx(), 24))
+        assert calls == ["mps", "cpu"] and res.device == "cpu" and np.isfinite(res.quantiles).all()
+        assert "mps failed while forecasting" in res.warnings[0] and "continued on the CPU" in res.warnings[0]
+        again = adapter.forecast(ForecastRequest(_ctx(), 24))  # stays on the CPU, still explains why
+        assert again.device == "cpu" and "continued on the CPU" in again.warnings[0]
+    finally:
+        adapter.unload()
+
+
+def test_a_real_error_on_the_cpu_is_not_swallowed(model, monkeypatch) -> None:
+    def broken(request):
+        raise RuntimeError("genuine bug")
+
+    monkeypatch.setattr(model, "_forecast_once", broken)
+    with pytest.raises(RuntimeError, match="genuine bug"):
+        model.forecast(ForecastRequest(_ctx(), 24))

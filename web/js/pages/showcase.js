@@ -234,6 +234,7 @@ export function Showcase() {
               <span class="pointer-events-none absolute left-4 top-2 whitespace-nowrap text-body-small font-medium text-surface-brand">${dragging && data.x[cut] ? dayLabel(data.x[cut]) : 'Forecast'}</span></div></div>`}
           ${busy && valid && html`<span class="absolute right-2 top-12 rounded-sm bg-surface-brand-tertiary px-2 py-0.5 font-mono text-[0.6875rem] uppercase text-text-muted">updating…</span>`}</div>
         ${wait && html`<p class="mt-2 text-body-small text-text-muted">${wait}</p>`}
+        ${valid && data.device === 'cpu' && device !== 'cpu' && html`<div class="mt-3"><${Notice} kind="warning" title="Running on the CPU">${(data.warnings || []).find((w) => /CPU/.test(w)) || 'The selected GPU could not be used, so this forecast ran on the CPU.'}<//></div>`}
         <div class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-body-small text-text-muted"><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-text-primary"></i>History</span><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-surface-brand"></i>Forecast${valid ? ' · ' + span(sc, data.horizon) : ''}</span><span class="inline-flex items-center gap-2"><i class="inline-block h-3 w-5 rounded-sm bg-surface-brand opacity-30"></i>Likely range (50% and 80%)</span></div>
 
         <div class="mt-4 grid gap-x-6 gap-y-1 border-t border-border-primary pt-4 md:grid-cols-[11rem_minmax(0,1fr)]">

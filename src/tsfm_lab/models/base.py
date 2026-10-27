@@ -118,6 +118,9 @@ class ModelAdapter(ABC):
     """One loaded-or-loadable model. Instances hold weights only while loaded."""
 
     info: ModelInfo
+    # False (default): asking for a GPU that is missing or fails continues on the CPU and says so in the warnings.
+    # True: raise instead (benchmarks must never label CPU numbers as GPU numbers).
+    strict_device: bool = False
 
     @abstractmethod
     def available_devices(self) -> list[DeviceInfo]:
