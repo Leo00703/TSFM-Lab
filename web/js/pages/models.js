@@ -1,5 +1,6 @@
 import { html, useState } from '/vendor/htm-preact.js';
 import { api, useAsync, params, bytes, ms, num, waitForJob } from '../core.js';
+import { Logo } from '../icons.js';
 import { Card, PageHeader, Section, Tag, Button, Spinner, ErrorBox, Notice, KV, Progress, Collapse } from '../ui.js';
 
 function CacheControls({ model, onChange }) {
@@ -48,7 +49,7 @@ function LocalBench({ b }) {
 function ModelCard({ m, reload }) {
   const d = m.details, c = m.capabilities;
   return html`<${Card} class="flex flex-col">
-    <div class="flex items-start justify-between gap-3"><div class="min-w-0"><span class="eyebrow">${m.family}</span><h3 class="mt-1 font-mistral text-h3">${m.name}</h3></div><div class="flex flex-wrap justify-end gap-1.5"><${Tag}>${params(m.params)} params<//></div></div>
+    <div class="flex items-start justify-between gap-3"><div class="flex min-w-0 items-center gap-4"><${Logo} size=${48} /><div class="min-w-0"><span class="eyebrow">${m.family}</span><h3 class="mt-1 font-mistral text-h3">${m.name}</h3></div></div><div class="flex flex-wrap justify-end gap-1.5"><${Tag}>${params(m.params)} params<//></div></div>
     <p class="mt-3 text-body-small text-text-muted">${m.description}</p>
     <div class="mt-5"><${KV} items=${[
       ['Layers × width', `${d.layers} × ${d.d_model}`], ['Attention heads', d.num_heads ?? 'download to read'], ['Patch size', `${d.patch_size} steps`],

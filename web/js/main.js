@@ -40,11 +40,12 @@ function Nav({ page }) {
     class=${`flex h-12 items-center gap-2 px-4 text-button-large font-medium transition-colors hover:bg-action-ghost-1 ${page === p.id ? 'bg-surface-brand-secondary' : ''} ${cls}`}>${p.label}</a>`;
   return html`<nav class="sticky top-0 z-30 border-b border-border-primary bg-surface-brand-primary/95 backdrop-blur" aria-label="Main">
     <div class="mx-auto flex h-12 max-w-6xl items-stretch border-x border-border-primary">
-      <a href="#/overview" class="flex shrink-0 items-center gap-2.5 whitespace-nowrap px-4 font-mistral text-[1.0625rem] font-medium" aria-label="tsfm-lab home"><${Logo} size=${22} />tsfm-lab</a>
+      <a href="#/overview" class="flex shrink-0 items-center gap-2.5 whitespace-nowrap px-4 font-mistral text-[1.0625rem] font-medium" aria-label="TSFM-Lab home"><${Logo} size=${22} />TSFM-Lab</a>
       <div class="hidden items-stretch border-l border-border-primary xl:flex">${PAGES.filter((p) => p.id !== 'about' && !p.hidden).map((p) => html`<div class="border-r border-border-primary">${link(p)}</div>`)}</div>
-      <div class="ml-auto flex shrink-0 items-center gap-3 border-l border-border-primary px-3">
-        <${DeviceSelect} compact class="hidden sm:flex" /><div class="hidden md:block"><${ThemeSwitch} /></div>
-        <button type="button" class="btn btn-outline btn-small xl:hidden" aria-label=${open ? 'Close menu' : 'Open menu'} aria-expanded=${open} onClick=${() => setOpen(!open)}><${Icon} name=${open ? 'close' : 'menu'} size=${16} /></button>
+      <div class="ml-auto flex shrink-0 items-stretch">
+        <div class="hidden items-center border-l border-border-primary px-3 sm:flex"><${DeviceSelect} compact /></div>
+        <div class="hidden items-center border-l border-border-primary px-3 md:flex"><${ThemeSwitch} /></div>
+        <div class="flex items-center border-l border-border-primary px-3 xl:hidden"><button type="button" class="btn btn-outline btn-small" aria-label=${open ? 'Close menu' : 'Open menu'} aria-expanded=${open} onClick=${() => setOpen(!open)}><${Icon} name=${open ? 'close' : 'menu'} size=${16} /></button></div>
       </div>
     </div>
     ${open && html`<div class="border-t border-border-primary bg-surface-brand-primary xl:hidden"><div class="mx-auto max-w-6xl border-x border-border-primary">
@@ -56,7 +57,7 @@ function Nav({ page }) {
 function Footer() {
   return html`<footer class="border-t border-border-primary"><div class="mx-auto flex max-w-6xl flex-col gap-4 border-x border-border-primary px-4 py-8 text-body-small text-text-muted md:flex-row md:items-center md:justify-between md:px-8">
     <p class="max-w-xl">Independent tool, not affiliated with or endorsed by Mistral AI. Runs entirely on this machine; nothing is uploaded.</p>
-    <div class="flex items-center gap-4"><a class="underline-offset-4 hover:underline" href="#/about">Licenses & definitions</a><${ThemeSwitch} /></div></div></footer>`;
+    <a class="underline-offset-4 hover:underline" href="#/about">Licenses & definitions</a></div></footer>`;
 }
 
 function App() {
@@ -78,4 +79,8 @@ function App() {
 }
 
 applyTheme(localStorage.getItem('tsfm-theme') || 'dark');
+// Tab icon: the Timestral icon when present locally (git-ignored asset); the built-in pixel mark otherwise.
+const probe = new Image();
+probe.onload = () => { const l = document.querySelector('link[rel=icon]'); l.type = 'image/svg+xml'; l.href = probe.src; };
+probe.src = '/assets/mistral/logos/timestral-icon-model.svg';
 render(html`<${App} />`, document.getElementById('app'));

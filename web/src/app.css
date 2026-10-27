@@ -116,6 +116,8 @@
   body { @apply bg-surface-brand-primary text-text-primary font-inter antialiased; -webkit-font-smoothing: antialiased; }
   /* A bare `grid` must never grow to its widest child (charts/tables) on narrow screens; utilities override this. */
   .grid { grid-template-columns: minmax(0, 1fr); }
+  /* thin scrollbars that follow the theme (dropdown lists, tables, code blocks) */
+  * { scrollbar-width: thin; scrollbar-color: var(--color-border-secondary) transparent; }
   ::selection { background: #ff522944; }
   :focus-visible { outline: 2px solid var(--color-surface-brand); outline-offset: 2px; }
   input[type="range"] { accent-color: var(--color-surface-brand); }

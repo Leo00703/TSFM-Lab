@@ -14,10 +14,7 @@ export function DatasetPicker({ datasets, value, onChange }) {
   const set = (patch) => onChange({ ...value, ...patch });
   return html`<div class="grid gap-4">
     <${Field} label="Dataset" hint=${cur && cur.description}>
-      <select class="input" value=${value.key} onChange=${(e) => set({ key: e.currentTarget.value, params: {} })} aria-label="Dataset">
-        <optgroup label="Bundled scenarios">${syn.map((d) => html`<option value=${keyOf(d)} selected=${keyOf(d) === value.key}>${d.name}</option>`)}</optgroup>
-        ${loc.length > 0 && html`<optgroup label="Your data">${loc.map((d) => html`<option value=${keyOf(d)} selected=${keyOf(d) === value.key}>${d.name}</option>`)}</optgroup>`}
-      </select><//>
+      <${Select} value=${value.key} onChange=${(k) => set({ key: k, params: {} })} aria-label="Dataset" options=${[...syn.map((d) => ({ value: keyOf(d), label: d.name, group: 'Bundled scenarios' })), ...loc.map((d) => ({ value: keyOf(d), label: d.name, group: 'Your data' }))]} /><//>
     ${cur && cur.source === 'synthetic' && html`<div class="grid grid-cols-3 gap-3">
       ${['n_series', 'length', 'seed'].filter((k) => k in cur.params).map((k) => html`<${Field} label=${k.replace('_', ' ')}>
         <${NumberInput} value=${value.params[k] ?? cur.params[k]} min=${k === 'seed' ? 0 : 1} onChange=${(v) => set({ params: { ...value.params, [k]: v ?? cur.params[k] } })} /><//>`)}</div>`}

@@ -1,6 +1,7 @@
 // Reusable components in Mistral's visual language (hairlines, 12px cards, mono eyebrows).
 import { html, useState } from '/vendor/htm-preact.js';
 import { Icon } from './icons.js';
+import { Select } from './select.js';
 import { useStore, setDevice, deviceLabel } from './core.js';
 
 export const Eyebrow = ({ children, class: c = '' }) => html`<div class=${'eyebrow ' + c}>${children}</div>`;
@@ -27,10 +28,7 @@ export function Field({ label, hint, children, class: c = '' }) {
   return html`<label class=${'block ' + c}><span class="label">${label}</span>${children}${hint && html`<span class="mt-1 block text-body-small text-text-muted">${hint}</span>`}</label>`;
 }
 
-export function Select({ value, onChange, options, ...rest }) {
-  return html`<select class="input pr-8" value=${value} onChange=${(e) => onChange(e.currentTarget.value)} ...${rest}>
-    ${options.map((o) => html`<option value=${o.value} disabled=${o.disabled} selected=${o.value === value}>${o.label}</option>`)}</select>`;
-}
+export { Select } from './select.js';
 
 export function NumberInput({ value, onChange, min, max, step = 1, placeholder }) {
   return html`<input class="input num" type="number" inputmode="numeric" value=${value ?? ''} min=${min} max=${max} step=${step} placeholder=${placeholder}
@@ -101,9 +99,11 @@ export function download(filename, content, type = 'text/plain') {
 
 export function DeviceSelect({ class: c = '', compact }) {
   const { device, devices } = useStore();
-  const options = devices.length ? devices : [{ id: 'cpu', name: 'CPU', supported: true }];
-  return html`<label class=${'flex items-center gap-2 ' + c}><span class=${compact ? 'sr-only' : 'label !mb-0'}>Compute device</span>
-    <select class=${'input ' + (compact ? '!h-8 !w-auto !text-body-small min-w-24 max-w-44' : '')} value=${device} aria-label="Compute device" onChange=${(e) => setDevice(e.currentTarget.value)}>
-      ${options.map((d) => html`<option value=${d.id} disabled=${!d.supported} selected=${d.id === device}>${d.id === 'cpu' ? 'CPU' : deviceLabel(d.id) + ' · ' + d.name.replace(/^NVIDIA (GeForce )?/, '')}${d.supported ? '' : ' (unavailable)'}</option>`)}</select></label>`;
+  const list = devices.length ? devices : [{ id: 'cpu', name: 'CPU', supported: true }];
+  const options = list.map((d) => ({
+    value: d.id, disabled: !d.supported, text: d.id,
+    label: (d.id === 'cpu' ? 'CPU' : deviceLabel(d.id) + ' · ' + d.name.replace(/^NVIDIA (GeForce )?/, '')) + (d.supported ? '' : ' (unavailable)'),
+  }));
+  return html`<div class=${'flex items-center gap-2 ' + c}><span class=${compact ? 'sr-only' : 'label !mb-0 shrink-0'}>Compute device</span>
+    <${Select} compact=${compact} value=${device} onChange=${setDevice} options=${options} aria-label="Compute device" class=${compact ? 'w-44' : 'min-w-0 flex-1'} /></div>`;
 }
-
