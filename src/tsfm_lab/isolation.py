@@ -68,14 +68,14 @@ def apply(root: Path | None = None, environ: dict[str, str] | None = None) -> di
     if env.get(OPT_OUT_VAR) == "1":
         return {}
     mapping = cache_env(root or find_root())
+    if sys.platform == "darwin" and "PYTORCH_ENABLE_MPS_FALLBACK" not in env:
+        # Not a cache: an operation the Apple GPU lacks runs on the CPU instead of raising. torch reads it at import.
+        mapping["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
     for key, value in mapping.items():
         env[key] = value
     for key in ("HF_HOME", "TORCH_HOME", "TRITON_CACHE_DIR", "CUDA_CACHE_PATH", "XDG_CACHE_HOME",
                 "MPLCONFIGDIR", "NUMBA_CACHE_DIR", "PYTHONPYCACHEPREFIX", "TEMP"):
         Path(mapping[key]).mkdir(parents=True, exist_ok=True)
-    if sys.platform == "darwin":
-        # An operation the Apple GPU lacks runs on the CPU instead of raising. Read by torch at import, so it is set here.
-        env.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
     if environ is None:
         # Only read by the interpreter at startup, so set it explicitly for this process too.
         sys.pycache_prefix = mapping["PYTHONPYCACHEPREFIX"]
