@@ -1,0 +1,34 @@
+# One system: the real onboarding path (scripts/bootstrap.py), then the tests. No GPU exists on hosted runners, so this
+# proves installation, the isolation of caches, the API/UI and the CPU path of the real Timestral-5M checkpoint.
+name: Check one system
+
+on:
+  workflow_call:
+    inputs:
+      runner: { type: string, required: true }
+      device: { type: string, required: true }  # PyTorch build for scripts/bootstrap.py: cpu | pypi
+      python: { type: string, required: true }  # path of the project interpreter after bootstrap
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Bootstrap (uv sync --locked, Tailwind CLI with pinned checksum)
+        run: python scripts/bootstrap.py --device ${{ inputs.device }} --skip-brand-assets
+      - name: Environment report
+        run: ${{ inputs.python }} scripts/doctor.py
+      - name: Tests without model weights
+        run: ${{ inputs.python }} -m pytest -q -m "not model"
+      - name: Tests with the real Timestral-5M checkpoint (21 MB)
+        run: ${{ inputs.python }} -m pytest -q -m model
