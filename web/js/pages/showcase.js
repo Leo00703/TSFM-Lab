@@ -1,6 +1,7 @@
 import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
 import { api, useAsync, useStore, waitForJob, pct0 } from '../core.js';
 import { Card, Button, Tabs, Select, Switch, Spinner, ErrorBox, Notice, Collapse, Eyebrow, Progress } from '../ui.js';
+import { Logo } from '../icons.js';
 import { Chart, isNarrow, baseOption, axisStyle } from '../charts.js';
 
 const nulls = (n) => Array(n).fill(null);
@@ -189,9 +190,16 @@ export function Showcase() {
   const pos = sc ? ((cut - 1) / (sc.window - 1)) * 100 : 0;
 
   return html`<div>
+    <section class="pt-10 pb-8 md:pt-20 md:pb-14 border-b border-border-primary">
+      <div class="flex items-center gap-4"><${Logo} size=${56} /><${Eyebrow}>Timestral · by Mistral AI<//></div>
+      <h1 class="mt-5 max-w-4xl font-mistral text-h1 font-medium md:text-[3.5rem] md:leading-[3.75rem]">A forecasting model that runs on your own machine.</h1>
+      <p class="mt-5 max-w-3xl text-body-large text-text-muted">Timestral is a family of small AI models, from 5 million to 209 million parameters, that predict how a number will evolve over time: sales, electricity demand, solar output. It was never trained on the series you give it, and it answers with a range of likely outcomes, not a single guess. This app runs it locally, so you can see how good it really is on real data.</p>
+      <p class="mt-4 max-w-3xl text-body-large text-text-muted">Start with the examples below. When you want to look under the hood, the <a class="underline underline-offset-4" href="#/playground">Playground</a> forecasts your own files and the <a class="underline underline-offset-4" href="#/experiments">Experiments</a> page measures accuracy against simple baselines.</p>
+    </section>
+
     <header class="pt-8 pb-6 md:pt-14 md:pb-10 border-b border-border-primary">
       <${Eyebrow}>Showcase · real data, forecast on your machine<//>
-      <h1 class="page-title mt-2">See what the model can do</h1>
+      <h2 class="page-title mt-2">See what the model can do</h2>
       <p class="mt-3 max-w-3xl text-body-large text-text-muted">Pick a real situation. Drag the handle: everything on its left is what happened, everything on its right is what Timestral predicts <i>without ever seeing</i> it. Give it the factors that are known in advance, and see how much closer it gets.</p>
     </header>
 
