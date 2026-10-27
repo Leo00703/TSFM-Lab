@@ -1,11 +1,14 @@
-import { html, useState, useRef } from '/vendor/htm-preact.js';
+import { html, useState, useRef, useEffect } from '/vendor/htm-preact.js';
 import { api, useAsync, go, num } from '../core.js';
 import { Card, PageHeader, Section, Tag, Button, Spinner, ErrorBox, Notice, Table, Field, Select, Check, Tabs } from '../ui.js';
 import { Figure, axisStyle, baseOption, palette, isNarrow } from '../charts.js';
 import { specOf, keyOf } from './shared.js';
+import { OnlineCatalog } from './catalog.js';
 
 function Preview({ ds, onClose }) {
   const spec = specOf(keyOf(ds));
+  const top = useRef(null);
+  useEffect(() => { if (top.current) top.current.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, [ds.id]);  // the catalog is far below
   const [idx, setIdx] = useState(0);
   const [info] = useAsync(() => api('/api/datasets/inspect', { method: 'POST', body: spec }), [ds.id]);
   const [data] = useAsync(() => api(`/api/datasets/series?index=${idx}&max_points=3000`, { method: 'POST', body: spec }), [ds.id, idx]);
@@ -14,7 +17,7 @@ function Preview({ ds, onClose }) {
     const lines = d.target.map((row, i) => ({ name: d.target_names[i], type: 'line', data: row, showSymbol: false, lineStyle: { width: 1.5, color: p.series[i % p.series.length] }, itemStyle: { color: p.series[i % p.series.length] } }));
     return { ...baseOption(p), legend: { top: 0, textStyle: { color: p.text }, show: d.target.length > 1 },
       grid: { left: isNarrow() ? 44 : 56, right: 16, top: d.target.length > 1 ? 36 : 20, bottom: isNarrow() ? 30 : 56 },
-      xAxis: { type: 'category', data: d.x, boundaryGap: false, ...axisStyle(p, { splitLine: { show: false } }), axisLabel: { color: p.muted, hideOverlap: true, formatter: (v) => String(v).replace('T', ' ').slice(0, 16) } },
+      xAxis: { type: 'category', data: d.x, boundaryGap: false, ...axisStyle(p, { splitLine: { show: false } }), axisLabel: { color: p.muted, hideOverlap: true, formatter: (v) => String(v).replace('T', ' ').slice(0, 16).replace(/ 00:00$/, '') } },
       yAxis: { type: 'value', scale: true, ...axisStyle(p) },
       dataZoom: [{ type: 'inside', filterMode: 'none' }, ...(isNarrow() ? [] : [{ type: 'slider', height: 16, bottom: 6, borderColor: p.axis, textStyle: { color: p.muted } }])], series: lines };
   };
@@ -25,7 +28,7 @@ function Preview({ ds, onClose }) {
       yAxis: { type: 'value', scale: true, ...axisStyle(p) },
       series: rows.map(([n, r], i) => ({ name: n, type: 'line', step: 'end', data: r, showSymbol: false, lineStyle: { width: 1.4, color: p.series[(i + 2) % p.series.length] } })) };
   };
-  return html`<${Section} title=${'Preview · ' + ds.name} aside=${html`<${Button} small kind="outline" onClick=${onClose}>Close<//>`}>
+  return html`<div ref=${top} class="scroll-mt-20"><${Section} title=${'Preview · ' + ds.name} aside=${html`<${Button} small kind="outline" onClick=${onClose}>Close<//>`}>
     ${info.loading ? html`<${Spinner} />` : info.error ? html`<${ErrorBox} error=${info.error} />` : html`
       <div class="mb-4 flex flex-wrap items-end gap-4">
         <div class="w-64 max-w-full"><${Field} label=${`Series (${info.data.n_series})`}><${Select} value=${String(idx)} onChange=${(v) => setIdx(Number(v))} options=${info.data.series.slice(0, 200).map((s, i) => ({ value: String(i), label: `${s.id} · ${s.length} steps` }))} /><//></div>
@@ -33,7 +36,7 @@ function Preview({ ds, onClose }) {
       ${data.loading || !d ? html`<${Spinner} />` : html`<div class="grid grid-cols-[minmax(0,1fr)] gap-4">
         <${Figure} title=${d.id} subtitle=${d.downsampled ? `Showing a ${d.x.length}-point downsample of ${d.length} steps` : `${d.length} steps`} build=${build} deps=${[d]} filename=${'dataset-' + ds.id} />
         ${(d.known || d.past) && html`<${Figure} title="Covariates" subtitle="Known-future (and past-only) covariates over the whole series" build=${buildCov} deps=${[d]} height=${200} filename=${'covariates-' + ds.id} />`}</div>`}`}
-  <//>`;
+  <//></div>`;
 }
 
 function Wizard({ onDone }) {
@@ -105,10 +108,11 @@ export function Datasets({ route }) {
     <div class="mt-4 flex flex-wrap gap-2"><${Button} small kind="outline" onClick=${() => setPrev(d)}>Preview<//>
       <${Button} small kind="outline" onClick=${() => go(`playground?ds=${keyOf(d)}`)}>Forecast<//><${Button} small kind="outline" onClick=${() => go(`experiments?ds=${keyOf(d)}`)}>Backtest<//>
       ${d.source === 'local' && html`<${Button} small kind="danger" icon="trash" aria-label="Remove dataset" onClick=${() => del(d)} />`}</div><//>`;
-  return html`<div><${PageHeader} eyebrow="Data" title="Datasets">Bundled synthetic scenarios, your own files, and (next) online benchmarks. Public data may overlap a model's undisclosed training data: scenarios built here are guaranteed unseen, your files are marked “unknown”.<//>
+  return html`<div><${PageHeader} eyebrow="Data" title="Datasets">Bundled synthetic scenarios, your own files, and a curated list of online benchmarks. Public data may overlap a model's undisclosed training data: scenarios built here are guaranteed unseen, your files are marked “unknown”, online benchmarks “possible”.<//>
     ${prev && html`<${Preview} ds=${prev} onClose=${() => setPrev(null)} />`}
     <${Section} title="Your data">
       ${local.length > 0 && html`<div class="mb-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">${local.map(card)}</div>`}<${Wizard} onDone=${reload} /><//>
+    <${Section} title="Online benchmarks" aside=${html`<span class="text-body-small text-text-muted">curated · downloaded only when you ask</span>`}><${OnlineCatalog} onPreview=${setPrev} /><//>
     <${Section} title="Bundled scenarios" aside=${html`<span class="text-body-small text-text-muted">${syn.length} scenarios · seeded, deterministic</span>`}>
       <div class="mb-5"><${Tabs} value=${tag} onChange=${setTag} label="Filter by tag" items=${tags.map((t) => ({ value: t, label: t }))} /></div>
       ${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : html`<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">${shown.map(card)}</div>`}<//>

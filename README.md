@@ -68,6 +68,7 @@ before and after an install.
 | `scripts/check_device_parity.py` | Compare a GPU with the CPU: same forecasts? how much faster? (`--device mps`, `--model timestral-28m`) |
 | `scripts/leakcheck.py` | `--mark` before installing, `--report` after: verifies nothing was written elsewhere |
 | `scripts/clean.py` | Remove `.venv` and/or `.cache` |
+| `scripts/build_catalog.py` | Rebuild and verify the online-dataset catalog from the pinned sources (maintainers only; reads from Hugging Face, stores nothing) |
 | `scripts/download_models.py` | Download Timestral weights without opening the app |
 | `scripts/fetch_brand_assets.py` | Optional: fetch Mistral brand assets for local private use (see below) |
 | `scripts/fetch_vendor.py` | Re-fetch the two vendored JavaScript libraries (integrity-checked) |
@@ -97,7 +98,7 @@ so it is an option, not the default. Check your own machine with
 
 ## Web app
 
-Pages: **Showcase** (home), Models (download weights, specs), Datasets (bundled scenarios, your own files), Playground (one
+Pages: **Showcase** (home), Models (download weights, specs), Datasets (your own files, online benchmarks, bundled scenarios), Playground (one
 forecast, all quantiles), Experiments (rolling-window backtests against baselines), Runs (every metric, calibration, per-step
 error, reproducibility, comparison of runs), System (CPU vs GPU benchmark). Long jobs (experiments, benchmarks, downloads,
 measurements) run in the background, survive navigation and reloads, and can be stopped from the Activity panel.
@@ -108,6 +109,23 @@ process, so a PyTorch/CUDA/Metal crash cannot take the server down. The UI is bu
 
 **From your other devices (Tailscale):** `python -m tsfm_lab serve --tailscale` listens on loopback and your tailnet address
 only. There is no login, so anyone on your tailnet can use it.
+
+### Online benchmarks
+
+The Datasets page lists **100 curated tasks** from the [fev-bench](https://github.com/autogluon/fev) benchmark, over 96 files of
+[`autogluon/fev_datasets`](https://huggingface.co/datasets/autogluon/fev_datasets) at a fixed revision (about 650 MB in all).
+It is a finite, verified list, not a search box: `scripts/build_catalog.py` read every file's schema and the exact length of every
+series straight from Hugging Face, checked a sample of each (missing values, time axis, constant series, text columns) and took
+from fev-bench which columns are the target, known in advance, past-only or static, plus the recommended horizon and seasonality.
+The result is committed as `src/tsfm_lab/data/catalog_fev.json`.
+
+Nothing is downloaded until you press **Download** on an entry, which shows its size and the licence note first. The file is
+checked against the SHA-256 published by Hugging Face and discarded if it differs. Once downloaded, an entry can be previewed,
+forecast in the Playground and backtested in Experiments like any other dataset; a very large file (30,000 series) is sampled
+with a fixed seed (200 series by default, adjustable) and says so. Text columns such as holiday names become on/off flags;
+static per-series attributes are not used. The cards declare the licence as "other" and the data come from public sources:
+check their terms before reusing the data. Because the models' training data is not disclosed, these datasets are marked as
+possibly seen; synthetic scenarios are the only guaranteed-unseen ones.
 
 ### Showcase data
 

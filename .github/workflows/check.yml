@@ -38,6 +38,6 @@ jobs:
           sys.exit(0 if mps_usable() == expected else 1)
           PY
       - name: Tests without model weights
-        run: ${{ inputs.python }} -m pytest -q -m "not model"
-      - name: Tests with the real Timestral-5M checkpoint (21 MB)
-        run: ${{ inputs.python }} -m pytest -q -m model
+        run: ${{ inputs.python }} -m pytest -q -m "not model and not online"
+      - name: Tests with the real Timestral-5M checkpoint (21 MB) and a real dataset download (133 KB)
+        run: ${{ inputs.python }} -m pytest -q -m "model or online"

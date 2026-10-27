@@ -1,7 +1,8 @@
 """Dataset catalog used by the API: bundled synthetic scenarios and user-uploaded local files.
 
-A dataset is referred to by a *spec*: ``{"source": "synthetic", "id": "trend", "params": {...}}`` or
-``{"source": "local", "id": "<dataset id>"}``. Uploaded files are stored under ``data/user/`` (git-ignored).
+A dataset is referred to by a *spec*: ``{"source": "synthetic", "id": "trend", "params": {...}}``,
+``{"source": "local", "id": "<dataset id>"}`` or ``{"source": "hub", "id": "<catalog id>", "params": {"max_series": N}}``
+(a downloaded entry of the curated online catalog). Uploaded files are stored under ``data/user/`` (git-ignored).
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from tsfm_lab.data import synthetic
+from tsfm_lab.data import hub_catalog, synthetic
 from tsfm_lab.data.local import ColumnMapping, guess_mapping, load_dataframe, read_table
 from tsfm_lab.data.schema import Dataset
 from tsfm_lab.isolation import find_root
@@ -40,6 +41,13 @@ class DatasetCatalog:
             out.append({"source": "synthetic", "id": sc.id, "name": sc.name, "description": sc.description,
                         "tags": list(sc.tags), "params": sc.defaults, "license": "generated (CC0)",
                         "contamination_risk": "none"})
+        for e in hub_catalog.listing():
+            if e["downloaded"]:
+                out.append({"source": "hub", "id": e["id"], "name": e["title"] + " · " + e["freq_label"],
+                            "description": f"{e['n_series']} series, {e['length']['min']}-{e['length']['max']} steps; "
+                                           f"{len(e['known'])} known and {len(e['past'])} past covariates. Online benchmark.",
+                            "tags": ["online", e["family"]], "params": {"max_series": hub_catalog.DEFAULT_MAX_SERIES},
+                            "task": e["task"], "license": "other (see the catalog entry)", "contamination_risk": "possible"})
         for meta in sorted(self.root.joinpath("datasets").glob("*.json")):
             d = json.loads(meta.read_text(encoding="utf-8"))
             out.append({"source": "local", "id": d["id"], "name": d["name"], "description": d["description"],
@@ -56,7 +64,17 @@ class DatasetCatalog:
             return self._cached(key, lambda: synthetic.build(sid, **params))
         if source == "local":
             return self._cached(f"local:{sid}", lambda: self._load_local(sid))
-        raise ValueError("dataset spec needs source 'synthetic' or 'local'")
+        if source == "hub":
+            e = hub_catalog.entry(sid)
+            params = spec.get("params") or {}
+            unknown = set(params) - {"max_series"}
+            if unknown:
+                raise ValueError(f"parameter '{sorted(unknown)[0]}' is not valid for online datasets")
+            limit = int(params.get("max_series", hub_catalog.DEFAULT_MAX_SERIES))
+            if not 1 <= limit <= hub_catalog.MAX_SERIES_LIMIT:
+                raise ValueError(f"max_series must be between 1 and {hub_catalog.MAX_SERIES_LIMIT}")
+            return self._cached(f"hub:{sid}:{limit}", lambda: hub_catalog.read(e, limit))
+        raise ValueError("dataset spec needs source 'synthetic', 'local' or 'hub'")
 
     @staticmethod
     def _clean_params(sid: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -139,6 +157,12 @@ class DatasetCatalog:
         frame = read_table(self._upload_path(rec["file_id"]))
         ds, _ = load_dataframe(frame, ColumnMapping(**rec["mapping"]), rec["name"], rec["filename"])
         return ds
+
+    def forget_hub(self, entry_id: str) -> None:
+        """Drop in-memory copies of a catalog dataset (after its file was removed)."""
+        with self._lock:
+            for key in [k for k in self._cache if k.startswith(f"hub:{entry_id}:")]:
+                del self._cache[key]
 
     def delete_local(self, dataset_id: str) -> None:
         meta = self.root / "datasets" / f"{dataset_id}.json"

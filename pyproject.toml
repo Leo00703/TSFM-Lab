@@ -40,11 +40,14 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-tsfm_lab = ["models/manifests/*.toml"]
+tsfm_lab = ["models/manifests/*.toml", "data/catalog_fev.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["model: loads real model weights (slow, may download the 21 MB Timestral-5M checkpoint)"]
+markers = [
+    "model: loads real model weights (slow, may download the 21 MB Timestral-5M checkpoint)",
+    "online: needs the network (downloads a tiny public dataset from Hugging Face)",
+]
 # Keep pytest's temp dirs and cache inside the project (nothing in the system temp folder).
 addopts = "--basetemp=.cache/pytest"
 cache_dir = ".cache/pytest_cache"

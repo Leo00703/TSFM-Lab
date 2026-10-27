@@ -174,6 +174,16 @@ def do_showcase_prepare(svc: Services, a: dict[str, Any], progress) -> dict[str,
     return {"ready": True}
 
 
+def do_catalog_download(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
+    from tsfm_lab.data import hub_catalog
+
+    e = hub_catalog.entry(a["entry"])
+    progress(0, 0, f"downloading {e['path']} ({e['size_bytes'] / 1e6:.1f} MB) and checking its SHA-256…")
+    hub_catalog.download(e)
+    svc.catalog._cache.clear()  # a dataset resolved earlier must not outlive a re-download
+    return {"downloaded": True}
+
+
 def do_showcase_forecast(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
     from tsfm_lab.showcase import engine
 
@@ -187,7 +197,7 @@ def do_showcase_impact(svc: Services, a: dict[str, Any], progress) -> dict[str, 
     return engine.impact(svc, a, progress)
 
 
-OPS: dict[str, Callable] = {"showcase_prepare": do_showcase_prepare, "showcase_forecast": do_showcase_forecast,
+OPS: dict[str, Callable] = {"catalog_download": do_catalog_download, "showcase_prepare": do_showcase_prepare, "showcase_forecast": do_showcase_forecast,
                             "showcase_impact": do_showcase_impact,"forecast": do_forecast, "experiment": do_experiment, "benchmark": do_benchmark,
                             "download": do_download, "remove": do_remove}
 if os.environ.get("TSFM_LAB_TEST_OPS") == "1":

@@ -5,6 +5,7 @@ Files are fetched on demand into the project cache at a pinned revision, so resu
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -47,9 +48,16 @@ def download(name: str, freq: str) -> Path:
     return Path(hf_hub_download(FEV_REPO, fev_file(name, freq), repo_type="dataset", revision=FEV_REVISION))
 
 
-def _alias(freq: str) -> str:
-    """fev frequency names ('1H', '15T') -> current pandas aliases ('1h', '15min')."""
-    return freq[:-1] + "min" if freq.endswith("T") else freq[:-1] + "h" if freq.endswith("H") else freq
+_FEV_UNITS = {"T": "min", "H": "h", "M": "ME", "Q": "QE", "Y": "YE", "A": "YE"}
+
+
+def alias(freq: str) -> str:
+    """fev frequency names ('1H', '15T', '1M') -> current pandas aliases ('1h', '15min', '1ME'); others pass through."""
+    match = re.fullmatch(r"(\d*)([A-Za-z]+)(-[A-Za-z]{3})?", freq.strip())
+    if not match:
+        return freq
+    count, unit, anchor = match.groups()
+    return f"{count}{_FEV_UNITS.get(unit, unit)}{anchor or ''}"
 
 
 def _values(cell, transform: str) -> np.ndarray:
@@ -75,7 +83,7 @@ def read_fev(name: str, freq: str, target: str, covariates: tuple[Covariate, ...
         tgt = np.asarray(table.column(target)[i].as_py(), dtype=np.float64)
         cov = np.stack([_values(table.column(c.col)[i].as_py(), c.transform) for c in covariates]) if covariates else None
         # make the time axis strictly regular (the model assumes equal spacing); gaps become NaN
-        step = pd.tseries.frequencies.to_offset(_alias(freq))
+        step = pd.tseries.frequencies.to_offset(alias(freq))
         full = pd.date_range(ts[0], ts[-1], freq=step)
         if len(full) != len(ts) or not np.array_equal(full.values.astype("datetime64[ms]"), ts):
             pos = full.get_indexer(pd.DatetimeIndex(ts))
