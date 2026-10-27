@@ -267,8 +267,8 @@ def test_stop_really_stops_a_long_computation_and_the_worker_recovers(tmp_path, 
 def test_models_are_listed_by_family_and_from_largest_to_smallest_within_each(client) -> None:
     models = [m for m in client.get("/api/models").json() if m["kind"] == "foundation"]
     assert [m["id"] for m in models] == ["timestral-209m", "timestral-123m", "timestral-28m", "timestral-5m", "chronos-2",
-                                         "chronos-2-small", "timesfm-3", "timesfm-2-5"]
-    for family in ("timestral", "chronos", "timesfm"):
+                                         "chronos-2-small", "timesfm-3", "timesfm-2-5", "t0-gamma"]
+    for family in ("timestral", "chronos", "timesfm", "t0"):
         sizes = [m["params"] for m in models if m["family"] == family]
         assert sizes == sorted(sizes, reverse=True)
     assert all(m["license"] and m["capabilities"]["quantile_levels"] and "downloaded" in m["cache"] for m in models)

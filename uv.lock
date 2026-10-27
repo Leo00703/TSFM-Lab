@@ -436,6 +436,18 @@ wheels = [
 ]
 
 [[package]]
+name = "jaxtyping"
+version = "0.3.11"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "wadler-lindig" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/91/c1/091b8852bd7cbf50bd655543c8506033cf4029300c67f8c176c1286879a9/jaxtyping-0.3.11.tar.gz", hash = "sha256:b09c14acf6686feb9e0df5b0d8c6e7c5b6f8d36bf059ee54cd522a186c2ef050", size = 46489, upload-time = "2026-06-13T18:35:23.167Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8b/38/c66bbdc5047f4776c2bd3e47e5295a350e3fa44d5b8942105e71c2a876a0/jaxtyping-0.3.11-py3-none-any.whl", hash = "sha256:8a4bedc4e3f963fa82df41bd13c7ebc2bad925601eb48614c65798f21329d4e3", size = 56593, upload-time = "2026-06-13T18:35:22.01Z" },
+]
+
+[[package]]
 name = "jinja2"
 version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -1177,6 +1189,22 @@ wheels = [
 ]
 
 [[package]]
+name = "rotary-embedding-torch"
+version = "0.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "einops" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-8-tsfm-lab-cpu') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-8-tsfm-lab-pypi' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128')" },
+    { name = "torch", version = "2.11.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-8-tsfm-lab-cpu') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-8-tsfm-lab-cu128' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fc/63/776d55b395aed9d2815afc1740056e919691d1be1ceee203d101d33d1674/rotary_embedding_torch-0.9.1.tar.gz", hash = "sha256:f43c39cd9c0aaa17d47e876db89a552a203dd8af35e7980f484ab7ad7ea8bf69", size = 13246, upload-time = "2026-06-20T23:39:14.667Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ea/63/ca681366df98d207876c6ad7761ef6910668c83ec766fd5a70c56b9c3567/rotary_embedding_torch-0.9.1-py3-none-any.whl", hash = "sha256:489ef53e21ab4c4eb35c0c97b551d724f5eea71c2bca39acb8fee8d88b142a76", size = 17423, upload-time = "2026-06-20T23:39:13.427Z" },
+]
+
+[[package]]
 name = "ruff"
 version = "0.17.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1275,6 +1303,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5", size = 6299353, upload-time = "2025-04-27T18:04:59.103Z" },
+]
+
+[[package]]
+name = "tfc-t0"
+version = "0.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huggingface-hub" },
+    { name = "jaxtyping" },
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ba/0d/1a25ce944f4ecc4598937ecb34330b93484dd4f4111770d3181d73d21da4/tfc_t0-0.6.0.tar.gz", hash = "sha256:40284afc78a544485f4f62aaf541f66f988028f6e51691a308cf604134da94d4", size = 1125198, upload-time = "2026-10-13T09:47:46.291Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/55/82/4e47c03dd3a22af03fded4d85feb1c7770d71623ea2173809b731c2d2a21/tfc_t0-0.6.0-py3-none-any.whl", hash = "sha256:0db2315e051d1fcb3c40f9525534817d40ee2f700d3b7498145a86cf0bcfd864", size = 75131, upload-time = "2026-10-13T09:47:44.624Z" },
 ]
 
 [[package]]
@@ -1546,6 +1588,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "chronos-forecasting" },
+    { name = "einops" },
     { name = "fastapi" },
     { name = "huggingface-hub" },
     { name = "numpy" },
@@ -1553,7 +1596,9 @@ dependencies = [
     { name = "pandas" },
     { name = "psutil" },
     { name = "pyarrow" },
+    { name = "rotary-embedding-torch" },
     { name = "safetensors" },
+    { name = "tfc-t0" },
     { name = "timesfm" },
     { name = "timestral", version = "1.0.0", source = { git = "https://github.com/mistralai/timestral.git?rev=a534bdbd244d64f3d9d743f46c7bf6fc330ed4ff#a534bdbd244d64f3d9d743f46c7bf6fc330ed4ff" }, marker = "sys_platform != 'darwin' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
     { name = "timestral", version = "1.0.0", source = { git = "https://github.com/paschembri/timestral.git?rev=c49d40f08dc75c05d7489a3ef26fb3fd565584c7#c49d40f08dc75c05d7489a3ef26fb3fd565584c7" }, marker = "sys_platform == 'darwin' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
@@ -1582,6 +1627,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "chronos-forecasting", specifier = ">=2.3,<3" },
+    { name = "einops", specifier = ">=0.7" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "huggingface-hub", specifier = ">=0.23" },
     { name = "numpy", specifier = ">=1.24" },
@@ -1589,7 +1635,9 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.2" },
     { name = "psutil", specifier = ">=6" },
     { name = "pyarrow", specifier = ">=17" },
+    { name = "rotary-embedding-torch", specifier = ">=0.8" },
     { name = "safetensors", specifier = ">=0.4" },
+    { name = "tfc-t0", specifier = "==0.6.0" },
     { name = "timesfm", specifier = ">=3.0.2,<4" },
     { name = "timestral", marker = "sys_platform != 'darwin'", git = "https://github.com/mistralai/timestral.git?rev=a534bdbd244d64f3d9d743f46c7bf6fc330ed4ff" },
     { name = "timestral", marker = "sys_platform == 'darwin'", git = "https://github.com/paschembri/timestral.git?rev=c49d40f08dc75c05d7489a3ef26fb3fd565584c7" },
@@ -1663,4 +1711,13 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/da/34/30e9280707135d2cfc589dfff3cb796bd07a3aeb1a3e415ba09dd89d7bb4/uvicorn-0.54.0.tar.gz", hash = "sha256:a2e33cbfaa0306f8e6b0c13e0cb89d7d7a2da3e62b90c66e18c33d9807b28620", size = 112283, upload-time = "2026-09-25T06:52:37.601Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/38/0c/b54a4fdd7f90a3af8b02ebc9ce6712c2c208b7926a2f7bad95c33ebbe943/uvicorn-0.54.0-py3-none-any.whl", hash = "sha256:505bdb0f318731d45f1f712071fc781a8981f6847a31c902c9f5e652d4f67faf", size = 87427, upload-time = "2026-09-25T06:52:35.829Z" },
+]
+
+[[package]]
+name = "wadler-lindig"
+version = "0.1.8"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/bf/4caf1aada6c84eb3fadf9341a90367f436a759692456e1a234d444d428ee/wadler_lindig-0.1.8.tar.gz", hash = "sha256:1a94d51cd26100dda9e430c64539c5b92b9788c87f10db3e1c87503ab814411a", size = 16256, upload-time = "2026-10-25T19:06:02.92Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/0b/b170089cd44848f25dbc9efda08e5aa4a8402d9a13f0d4d0f3d7808be539/wadler_lindig-0.1.8-py3-none-any.whl", hash = "sha256:8671e8c98449ae3f4e4ba720eccd63a502b3983042f8d112b49a9c6be49e8d92", size = 20840, upload-time = "2026-10-25T19:06:01.79Z" },
 ]

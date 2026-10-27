@@ -3,7 +3,8 @@
 A local sandbox to **run, compare and inspect time-series foundation models**: Mistral's
 [Timestral](https://github.com/mistralai/timestral) family (5M / 28M / 123M / 209M) and Amazon's
 [Chronos-2](https://github.com/amazon-science/chronos-forecasting) (120M and 28M) and Google's
-[TimesFM](https://github.com/google-research/timesfm) 3.0 and 2.5, which can be run on the same data and compared side by side.
+[TimesFM](https://github.com/google-research/timesfm) 3.0 and 2.5, and The Forecasting Company's
+[t0-gamma](https://huggingface.co/theforecastingcompany/t0-gamma), which can be run on the same data and compared side by side.
 Any other model plugs in as one adapter file.
 Models run entirely on your machine, on the CPU or a GPU (NVIDIA CUDA, Apple Metal), and every result is shown with the
 measurements and configuration needed to judge it honestly.
@@ -84,12 +85,13 @@ before and after an install.
 | Chronos-2 (Amazon) | 120M, 28M ("small") | Apache-2.0 | past, known-future (numeric) |
 | TimesFM 3.0 (Google) | 331M | code Apache-2.0; **weights non-commercial** (testing, evaluation, research only) | past, known-future (numeric) |
 | TimesFM 2.5 (Google) | 231M | Apache-2.0 | none (univariate; covariates are ignored and the result says so) |
+| t0-gamma (The Forecasting Company) | 256M | Apache-2.0 (a very young model: read its notes) | past, known-future (numeric) |
 
 Weights are downloaded only when you ask, from the Models page (Chronos-2 is 478 MB, its small variant 112 MB, TimesFM 2.5 925 MB,
-TimesFM 3.0 1.3 GB). **TimesFM 3.0's weights are under Google's non-commercial licence**: the card says so and asks you to
+TimesFM 3.0 1.3 GB, t0-gamma 1 GB). **TimesFM 3.0's weights are under Google's non-commercial licence**: the card says so and asks you to
 acknowledge it before downloading; do not use them for commercial or production purposes, and do not redistribute them. In the Playground
 and in Experiments, choose a model and tick the others under "Compare with": they run on the same windows, with the same metrics.
-Chronos-2 uses the same 21 quantile levels as Timestral; both TimesFM models produce nine deciles (0.1 to 0.9). When models with
+Chronos-2 and t0-gamma use the same 21 quantile levels as Timestral; both TimesFM models produce nine deciles (0.1 to 0.9). When models with
 different levels run in one backtest, **SQL and WQL are computed for every model on the levels they all share**, so those scores
 (and the skill scores built on them) stay comparable; each model's own-level values are kept alongside, and the 90% and 98%
 interval coverage is only reported for models that predict those tails. Timestral's options map to the closest equivalent

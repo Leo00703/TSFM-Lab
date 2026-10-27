@@ -1,0 +1,28 @@
+# Numbers under [reported] were computed on 2026-10-28 from the result file published in the autogluon/fev repository
+# (benchmarks/fev_bench/results/t0-gamma.csv, submitted by the model's authors in pull request #199); vendor-submitted,
+# NOT measured here. Their evaluation forecast 64 unrelated series jointly on the tasks without covariates, a mode this
+# app does not use (it forecasts every series on its own).
+id = "t0-gamma"
+family = "t0"
+name = "t0-gamma"
+repo = "theforecastingcompany/t0-gamma"
+params = 255614293
+description = "The Forecasting Company's open-weights model: zero-shot probabilistic forecasts with past-only and known-future covariates, alternating attention over time and over the variables of a series."
+license = "Apache-2.0"
+license_url = "https://huggingface.co/theforecastingcompany/t0-gamma"
+source_url = "https://github.com/theforecastingcompany/tfc-t0"
+max_context = 8192
+max_horizon_per_pass = 1024
+quantile_levels = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
+
+[details]
+layers = 24
+d_model = 1024
+num_heads = 8
+patch_size = 32
+weights_mb_fp32 = 1023
+
+[reported]
+source = "fev-bench result file (submitted by the authors), computed here"
+fev_bench_sql_skill = 49.42
+fev_bench_mase_skill = 37.99

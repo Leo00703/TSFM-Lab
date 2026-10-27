@@ -17,6 +17,9 @@ dependencies = [
     "timestral",
     "chronos-forecasting>=2.3,<3",  # Amazon's Chronos-2 (Apache-2.0); official PyPI package
     "timesfm>=3.0.2,<4",  # Google's TimesFM 2.5 and 3.0 (code Apache-2.0); torch comes from the project extras
+    "tfc-t0==0.6.0",  # The Forecasting Company's t0 (Apache-2.0, pure Python); its torch extra is replaced by the three lines below
+    "rotary-embedding-torch>=0.8",
+    "einops>=0.7",
 ]
 
 # PyTorch comes from exactly one of these extras (chosen by scripts/bootstrap.py):
