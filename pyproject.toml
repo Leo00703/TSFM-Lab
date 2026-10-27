@@ -1,0 +1,69 @@
+[project]
+name = "tsfm-lab"
+version = "0.1.0"
+description = "Local sandbox to run, compare and inspect time-series foundation models (Timestral first). Unofficial, not affiliated with Mistral AI."
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.2",
+    "pyarrow>=17",
+    "psutil>=6",
+    "huggingface_hub>=0.23",
+    "safetensors>=0.4",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "timestral",
+]
+
+# PyTorch comes from exactly one of these extras (chosen by scripts/bootstrap.py):
+#   cu128 -> CUDA 12.8 build (Windows/Linux + NVIDIA, incl. RTX 50xx). It also runs on CPU.
+#   cpu   -> small CPU-only build (Windows/Linux without NVIDIA)
+#   pypi  -> the standard PyPI wheel (macOS)
+[project.optional-dependencies]
+cu128 = ["torch==2.11.0"]
+cpu = ["torch==2.11.0"]
+pypi = ["torch==2.11.0"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Keep pytest's temp dirs and cache inside the project (nothing in the system temp folder).
+addopts = "--basetemp=.cache/pytest"
+cache_dir = ".cache/pytest_cache"
+
+[tool.uv]
+conflicts = [
+    [
+        { extra = "cu128" },
+        { extra = "cpu" },
+        { extra = "pypi" },
+    ],
+]
+
+[tool.uv.sources]
+# Pinned to the commit current on 2026-10-27 (the package is not on PyPI, issue #5 upstream).
+timestral = { git = "https://github.com/mistralai/timestral.git", rev = "a534bdbd244d64f3d9d743f46c7bf6fc330ed4ff" }
+torch = [
+    { index = "pytorch-cu128", extra = "cu128" },
+    { index = "pytorch-cpu", extra = "cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

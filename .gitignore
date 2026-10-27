@@ -1,0 +1,27 @@
+# --- Third-party brand assets: private/local use only, NEVER commit or publish ---
+# (ALTMistral font, Timestral logos/banner, any Mistral brand-kit material.)
+# They are re-fetched locally by scripts/fetch-brand-assets; the UI falls back to Inter without them.
+/web/assets/mistral/
+
+# --- Isolated environment and every cache (all of it lives inside the project) ---
+/.venv/
+/.cache/
+
+# --- Model weights, datasets and results produced locally ---
+/data/user/
+/data/downloads/
+/runs/
+*.db
+*.sqlite
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+desktop.ini
