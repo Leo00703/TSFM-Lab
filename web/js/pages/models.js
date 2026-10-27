@@ -3,6 +3,7 @@ import { api, useAsync, useStore, useFocus, params, bytes, ms, num } from '../co
 import { isActive, stopJob } from '../activity.js';
 import { Logo } from '../icons.js';
 import { Card, PageHeader, Section, Tag, Button, Spinner, ErrorBox, Notice, KV, Progress, Collapse } from '../ui.js';
+import { confirmDialog } from '../dialog.js';
 
 function CacheControls({ model, onChange }) {
   const { jobs } = useStore();
@@ -16,8 +17,9 @@ function CacheControls({ model, onChange }) {
     try { await api(`/api/models/${model.id}/download`, { method: 'POST' }); } catch (e) { setError(e); }
   };
   const remove = async () => {
-    if (!confirm(`Delete the downloaded weights of ${model.name} (${bytes(c.size_bytes)})? You can download them again later.`)) return;
-    try { await api(`/api/models/${model.id}/cache`, { method: 'DELETE' }); onChange(); } catch (e) { setError(e); }
+    const ok = await confirmDialog({ title: `Delete the weights of ${model.name}?`, confirmLabel: 'Delete weights', busyLabel: 'Deleting…', run: () => api(`/api/models/${model.id}/cache`, { method: 'DELETE' }),
+      body: html`${bytes(c.size_bytes)} will be freed from this project's cache. You can download the weights again later.` });
+    if (ok) onChange();
   };
   return html`<div class="mt-4 border-t border-border-primary pt-4">
     <div class="flex flex-wrap items-center justify-between gap-3">

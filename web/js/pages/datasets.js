@@ -4,6 +4,7 @@ import { Card, PageHeader, Section, Tag, Button, Spinner, ErrorBox, Notice, Tabl
 import { Figure, axisStyle, baseOption, palette, isNarrow } from '../charts.js';
 import { specOf, keyOf } from './shared.js';
 import { OnlineCatalog } from './catalog.js';
+import { confirmDialog } from '../dialog.js';
 
 function Preview({ ds, onClose }) {
   const spec = specOf(keyOf(ds));
@@ -101,7 +102,11 @@ export function Datasets({ route }) {
   const tags = ['all', ...new Set(syn.flatMap((d) => d.tags))];
   const shown = syn.filter((d) => tag === 'all' || d.tags.includes(tag));
   const local = all.filter((d) => d.source === 'local');
-  const del = async (d) => { if (confirm(`Remove “${d.name}” from this tool? The uploaded file in data/user is kept.`)) { await api(`/api/datasets/local/${d.id}`, { method: 'DELETE' }); reload(); } };
+  const del = async (d) => {
+    const ok = await confirmDialog({ title: 'Remove this dataset?', confirmLabel: 'Remove', busyLabel: 'Removing…', run: () => api(`/api/datasets/local/${d.id}`, { method: 'DELETE' }),
+      body: html`<b class="text-text-primary">${d.name}</b> disappears from this tool. The file you uploaded stays in <span class="font-mono">data/user/</span>, so you can register it again.` });
+    if (ok) reload();
+  };
   const card = (d) => html`<${Card} tight class="flex flex-col">
     <div class="flex flex-wrap gap-1.5">${d.tags.map((t) => html`<${Tag}>${t}<//>`)}</div>
     <h3 class="mt-3 font-mistral text-h4">${d.name}</h3><p class="mt-1 flex-1 text-body-small text-text-muted">${d.description}</p>

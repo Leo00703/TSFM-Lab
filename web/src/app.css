@@ -128,9 +128,11 @@
   /* Progress of unknown length: a bar sweeping across the track (the old pulsing third of a bar looked frozen). */
   @keyframes sweep { 0% { left: -40%; } 100% { left: 100%; } }
   .sweep { animation: sweep 1.3s ease-in-out infinite; }
+  @keyframes dialog-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+  .dialog-in { animation: dialog-in 160ms ease-out both; }
   @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   .toast-in { animation: toast-in 180ms ease-out both; }
-  @media (prefers-reduced-motion: reduce) { .sweep, .toast-in { animation: none; } .sweep { left: 30%; } }
+  @media (prefers-reduced-motion: reduce) { .sweep, .toast-in, .dialog-in { animation: none; } .sweep { left: 30%; } }
 
   /* the element a notification's button led you to */
   @keyframes focus-flash { 0%, 55% { box-shadow: 0 0 0 2px var(--color-surface-brand); } 100% { box-shadow: 0 0 0 2px transparent; } }
@@ -149,6 +151,7 @@
   .btn-ghost { @apply bg-action-ghost-1 hover:bg-action-ghost-2 text-text-primary; }
   .btn-outline { @apply border border-border-primary text-text-primary hover:bg-action-ghost-1; }
   .btn-danger { @apply border border-border-primary text-text-destructive hover:bg-action-ghost-1; }
+  .btn-destructive { @apply bg-text-destructive text-text-invert hover:brightness-110; }
 
   .card { @apply rounded-xl border border-border-primary bg-surface-brand-secondary p-5 md:p-8; }
   .card-tight { @apply rounded-xl border border-border-primary bg-surface-brand-secondary p-4 md:p-5; }

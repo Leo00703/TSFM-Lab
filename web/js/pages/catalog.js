@@ -2,6 +2,7 @@ import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
 import { api, useAsync, useStore, useFocus, go, bytes } from '../core.js';
 import { Card, Button, Tag, Select, Tabs, Spinner, ErrorBox, Progress } from '../ui.js';
 import { isActive, stopJob } from '../activity.js';
+import { confirmDialog } from '../dialog.js';
 
 const int = (n) => Number(n).toLocaleString('en-US');
 const mb = (b) => (b >= 1e8 ? `${Math.round(b / 1e6)} MB` : b >= 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1e3))} KB`);
@@ -45,8 +46,9 @@ function Row({ e, src, active, onPreview, reload }) {
   useEffect(() => { if (was.current && !active) reload(); was.current = !!active; }, [!!active]);
   const start = async () => { setError(null); setAsk(false); try { await api(`/api/catalog/${e.id}/download`, { method: 'POST' }); } catch (x) { setError(x); } };
   const remove = async () => {
-    if (!confirm(`Delete the downloaded file of “${label(e)}” (${mb(e.size_bytes)})? You can download it again later.`)) return;
-    try { await api(`/api/catalog/${e.id}`, { method: 'DELETE' }); reload(); } catch (x) { setError(x); }
+    const ok = await confirmDialog({ title: 'Delete the downloaded file?', confirmLabel: 'Delete file', busyLabel: 'Deleting…', run: () => api(`/api/catalog/${e.id}`, { method: 'DELETE' }),
+      body: html`<b class="text-text-primary capitalize">${label(e)}</b> (${mb(e.size_bytes)}) is removed from this project's cache. You can download it again later.` });
+    if (ok) reload();
   };
   const key = `hub:${e.id}`;
   const cov = [e.known.length ? `${e.known.length} known` : '', e.past.length ? `${e.past.length} past` : ''].filter(Boolean).join(' + ');

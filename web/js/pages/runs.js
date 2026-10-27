@@ -1,6 +1,7 @@
 import { html, useState } from '/vendor/htm-preact.js';
 import { api, useAsync, go, num, pct, pct0, ms, when } from '../core.js';
 import { Card, PageHeader, Section, Button, Tabs, Select, Field, Spinner, ErrorBox, Notice, Table, KV, Collapse, Tag, Eyebrow, download } from '../ui.js';
+import { confirmDialog } from '../dialog.js';
 import { Figure, barOption, linesOption, fanOption, baseOption, axisStyle, modelColors, quantileStats, isNarrow } from '../charts.js';
 
 const METRICS = { mase: 'MASE', sql: 'SQL', wql: 'WQL' };
@@ -9,7 +10,11 @@ function RunList() {
   const [s, reload] = useAsync(() => api('/api/runs'), []);
   const [sel, setSel] = useState([]);
   const toggle = (id) => setSel((x) => (x.includes(id) ? x.filter((i) => i !== id) : x.length < 6 ? [...x, id] : x));
-  const del = async (r) => { if (confirm('Delete this run and its stored forecasts?')) { await api(`/api/runs/${r.id}`, { method: 'DELETE' }); reload(); } };
+  const del = async (r) => {
+    const ok = await confirmDialog({ title: 'Delete this run?', confirmLabel: 'Delete run', busyLabel: 'Deleting…', run: () => api(`/api/runs/${r.id}`, { method: 'DELETE' }),
+      body: 'The run and all of its stored forecasts are deleted. This cannot be undone.' });
+    if (ok) reload();
+  };
   return html`<div><${PageHeader} eyebrow="History" title="Runs">Every experiment is stored with its configuration, environment and raw forecasts, so any chart can be redrawn and any number traced back.<//>
     <${Section}>${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : !s.data.length ? html`<${Card}><p class="text-text-muted">No runs yet. <a class="underline" href="#/experiments">Start an experiment</a>.</p><//>` : html`
       <div class="mb-3 flex flex-wrap items-center gap-3"><${Button} kind="brand" disabled=${sel.length < 2} onClick=${() => go('compare?runs=' + sel.join(','))}>Compare selected (${sel.length})<//><span class="text-body-small text-text-muted">Tick two or more runs of the same dataset and horizon (up to 6).</span></div>
@@ -84,7 +89,7 @@ function RunDetail({ id }) {
       ${meta.dataset.name} · ${meta.dataset.n_series} series · horizon ${horizonLen} · ${meta.config.n_windows} windows · ${meta.items.series.length} forecasts per model<//>
     <div class="mt-5 flex flex-wrap gap-2"><a class="btn btn-outline btn-small" href=${`/api/runs/${id}/export.csv`} download>Export CSV</a><a class="btn btn-outline btn-small" href=${`/api/runs/${id}`} target="_blank" rel="noopener">Raw JSON</a>
       ${meta.request && html`<${Button} small kind="outline" icon="refresh" disabled=${rerun === 'started'} onClick=${async () => { setRerun(true); try { await api('/api/jobs/experiment', { method: 'POST', body: { ...meta.request, label: (meta.label || meta.dataset.name) + ' (re-run)' } }); setRerun('started'); } catch (e) { setRerun(String(e.message)); } }}>Re-run with the same settings<//>${rerun === 'started' ? html`<span class="text-body-small text-text-muted">Started: follow it in the Activity panel (bottom right) and open the run when it finishes.</span>` : rerun ? html`<span class="text-body-small text-text-destructive">${rerun}</span>` : null}`}
-      <${Button} small kind="danger" icon="trash" onClick=${async () => { if (confirm('Delete this run?')) { await api(`/api/runs/${id}`, { method: 'DELETE' }); go('runs'); } }}>Delete<//>
+      <${Button} small kind="danger" icon="trash" onClick=${async () => { if (await confirmDialog({ title: 'Delete this run?', confirmLabel: 'Delete run', busyLabel: 'Deleting…', run: () => api(`/api/runs/${id}`, { method: 'DELETE' }), body: 'The run and all of its stored forecasts are deleted. This cannot be undone.' })) go('runs'); }}>Delete<//>
       <${Button} small kind="outline" onClick=${() => go('runs')}>All runs<//></div>
 
     <${Section} title="Summary">

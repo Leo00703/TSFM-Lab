@@ -13,6 +13,7 @@ import { System } from './pages/system.js';
 import { About } from './pages/about.js';
 import { Compare } from './pages/compare.js';
 import { ActivityPanel, useJobPoller } from './activity.js';
+import { DialogHost } from './dialog.js';
 
 const PAGES = [
   { id: 'showcase', label: 'Showcase', icon: 'play', C: Showcase },
@@ -79,7 +80,7 @@ function App() {
   return html`<div class="min-h-dvh flex flex-col"><a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-surface-brand-primary focus:p-3">Skip to content</a>
     <${Nav} page=${current.id} />
     <main id="main" class="mx-auto w-full max-w-6xl flex-1 border-x border-border-primary px-4 pb-16 md:px-8"><${current.C} route=${route} key=${current.id + (route.query.ds || '') + (route.query.runs || '')} /></main>
-    <${Footer} /><${ActivityPanel} /></div>`;
+    <${Footer} /><${ActivityPanel} /><${DialogHost} /></div>`;
 }
 
 applyTheme(localStorage.getItem('tsfm-theme') || 'dark');
