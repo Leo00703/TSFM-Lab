@@ -125,6 +125,18 @@
 }
 
 @layer components {
+  /* Progress of unknown length: a bar sweeping across the track (the old pulsing third of a bar looked frozen). */
+  @keyframes sweep { 0% { left: -40%; } 100% { left: 100%; } }
+  .sweep { animation: sweep 1.3s ease-in-out infinite; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .toast-in { animation: toast-in 180ms ease-out both; }
+  @media (prefers-reduced-motion: reduce) { .sweep, .toast-in { animation: none; } .sweep { left: 30%; } }
+
+  /* the element a notification's button led you to */
+  @keyframes focus-flash { 0%, 55% { box-shadow: 0 0 0 2px var(--color-surface-brand); } 100% { box-shadow: 0 0 0 2px transparent; } }
+  .focus-flash { animation: focus-flash 2.2s ease-out; border-radius: 0.75rem; }
+  @media (prefers-reduced-motion: reduce) { .focus-flash { animation: none; box-shadow: 0 0 0 2px var(--color-surface-brand); } }
+
   .eyebrow { @apply font-mono uppercase text-eyebrow text-text-muted; letter-spacing: .02em; }
   .page-title { @apply font-mistral text-h2 md:text-[2.75rem] md:leading-[3.25rem] font-medium; }
   .section-title { @apply font-mistral text-h3 font-medium; }

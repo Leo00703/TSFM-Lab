@@ -112,7 +112,7 @@ export function Datasets({ route }) {
     ${prev && html`<${Preview} ds=${prev} onClose=${() => setPrev(null)} />`}
     <${Section} title="Your data">
       ${local.length > 0 && html`<div class="mb-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">${local.map(card)}</div>`}<${Wizard} onDone=${reload} /><//>
-    <${Section} title="Online benchmarks" aside=${html`<span class="text-body-small text-text-muted">curated · downloaded only when you ask</span>`}><${OnlineCatalog} onPreview=${setPrev} /><//>
+    <${Section} title="Online benchmarks" aside=${html`<span class="text-body-small text-text-muted">curated · downloaded only when you ask</span>`}><${OnlineCatalog} onPreview=${setPrev} route=${route} /><//>
     <${Section} title="Bundled scenarios" aside=${html`<span class="text-body-small text-text-muted">${syn.length} scenarios · seeded, deterministic</span>`}>
       <div class="mb-5"><${Tabs} value=${tag} onChange=${setTag} label="Filter by tag" items=${tags.map((t) => ({ value: t, label: t }))} /></div>
       ${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : html`<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">${shown.map(card)}</div>`}<//>

@@ -77,6 +77,26 @@ export function useRoute() {
 }
 export const go = (path) => { location.hash = '#/' + path.replace(/^#?\/?/, ''); };
 
+/** The page a route points at, without its query: 'runs/20261027-1' or 'models'. */
+export const pathOf = (r) => [r.page, ...(r.args || [])].join('/');
+
+/** Deep links: a route like `models?focus=timestral-209m` scrolls to the element marked `data-focus="timestral-209m"` and flashes it. */
+export function useFocus(route, ready = true) {
+  const f = route && route.query && route.query.focus;
+  useEffect(() => {
+    if (!f || !ready) return undefined;
+    const t = setTimeout(() => {
+      const el = document.querySelector(`[data-focus="${f.replace(/"/g, '')}"]`);
+      if (!el) return;
+      // instant: a smooth scroll over a long page takes seconds, and the flash shows where you landed
+      el.scrollIntoView({ block: el.offsetHeight > innerHeight * 0.8 ? 'start' : 'center' });
+      el.classList.remove('focus-flash'); void el.offsetWidth; el.classList.add('focus-flash');
+      setTimeout(() => el.classList.remove('focus-flash'), 2400);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [f, ready]);
+}
+
 // ---------------------------------------------------------------- formatters
 export const num = (x, d = 3) => (x === null || x === undefined || Number.isNaN(x) ? '–' : Math.abs(x) >= 1e5 ? x.toExponential(2) : Number(x).toFixed(d));
 export const pct = (x, d = 1) => (x === null || x === undefined || Number.isNaN(x) ? '–' : `${x >= 0 ? '+' : ''}${(x * 100).toFixed(d)}%`);

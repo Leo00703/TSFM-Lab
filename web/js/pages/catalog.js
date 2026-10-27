@@ -1,5 +1,5 @@
 import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
-import { api, useAsync, useStore, go, bytes } from '../core.js';
+import { api, useAsync, useStore, useFocus, go, bytes } from '../core.js';
 import { Card, Button, Tag, Select, Tabs, Spinner, ErrorBox, Progress } from '../ui.js';
 import { isActive, stopJob } from '../activity.js';
 
@@ -50,7 +50,7 @@ function Row({ e, src, active, onPreview, reload }) {
   };
   const key = `hub:${e.id}`;
   const cov = [e.known.length ? `${e.known.length} known` : '', e.past.length ? `${e.past.length} past` : ''].filter(Boolean).join(' + ');
-  return html`<li class="py-5">
+  return html`<li class="py-5" data-focus=${e.id}>
     <div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
       <div class="min-w-0 flex-1">
         <h3 class="font-mistral text-h5 capitalize">${label(e)}</h3>
@@ -76,10 +76,17 @@ function Row({ e, src, active, onPreview, reload }) {
   </li>`;
 }
 
-export function OnlineCatalog({ onPreview }) {
+export function OnlineCatalog({ onPreview, route }) {
   const { jobs } = useStore();
   const [s, reload] = useAsync(() => api('/api/catalog'), []);
   const [tab, setTab] = useState('all'), [freq, setFreq] = useState('all'), [q, setQ] = useState(''), [limit, setLimit] = useState(20);
+  const focus = route && route.query && route.query.focus;
+  // a notification can lead to a dataset far down the list: make sure it is on screen before scrolling to it
+  useEffect(() => {
+    const i = focus && s.data ? s.data.entries.findIndex((e) => e.id === focus) : -1;
+    if (i >= limit) setLimit(i + 1);
+  }, [focus, s.data]);
+  useFocus(route, !!s.data);
   if (s.loading && !s.data) return html`<${Spinner} />`;
   if (s.error) return html`<${ErrorBox} error=${s.error} />`;
   const { entries, source: src } = s.data;

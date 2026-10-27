@@ -71,7 +71,7 @@ export function Spinner({ label = 'Loading…' }) {
 export function Progress({ done, total, message }) {
   const p = total ? Math.min(100, (done / total) * 100) : null;
   return html`<div role="progressbar" aria-valuenow=${p ?? undefined} aria-valuemin="0" aria-valuemax="100">
-    <div class="h-2 w-full overflow-hidden rounded-sm bg-surface-brand-tertiary"><div class=${'h-full bg-surface-brand ' + (p === null ? 'w-1/3 animate-pulse' : 'transition-all')} style=${p === null ? '' : `width:${p}%`}></div></div>
+    <div class="relative h-2 w-full overflow-hidden rounded-sm bg-surface-brand-tertiary">${p === null ? html`<div class="sweep absolute inset-y-0 w-2/5 bg-surface-brand"></div>` : html`<div class="h-full bg-surface-brand transition-all" style=${`width:${p}%`}></div>`}</div>
     <div class="mt-2 flex justify-between gap-4 text-body-small text-text-muted"><span class="truncate">${message || ''}</span><span class="num shrink-0">${total ? `${done}/${total}` : ''}</span></div></div>`;
 }
 

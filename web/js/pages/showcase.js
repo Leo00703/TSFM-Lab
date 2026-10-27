@@ -89,13 +89,13 @@ function Effect({ sc, impact, loading, progress }) {
 }
 
 // ------------------------------------------------------------------ page
-export function Showcase() {
+export function Showcase({ route }) {
   const { device } = useStore();
   const [list] = useAsync(() => api('/api/showcase'), []);
   const [models] = useAsync(() => api('/api/models'), []);
   const [reloadKey, setReloadKey] = useState(0);
   const [fresh] = useAsync(() => api('/api/showcase'), [reloadKey]);
-  const [tab, setTab] = useState('sales');
+  const [tab, setTab] = useState((route && route.query && route.query.tab) || 'sales');
   const [series, setSeries] = useState({}), [cuts, setCuts] = useState({}), [on, setOn] = useState({});
   const [model, setModel] = useState(null), [reveal, setReveal] = useState(true), [dragging, setDragging] = useState(false), [hover, setHover] = useState(null);
   const [data, setData] = useState(null), [err, setErr] = useState(null), [busy, setBusy] = useState(false), [wait, setWait] = useState('');

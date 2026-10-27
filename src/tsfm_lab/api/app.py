@@ -208,7 +208,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         if not repo:
             raise HTTPException(400, "this model has no weights to download")
         job = jobs.submit("download", f"Download {registry.info(model_id).name}", lambda j: worker.call(
-            "download", {"repo": repo}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set))
+            "download", {"repo": repo}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set), link=f"models?focus={model_id}")
         return ok(job.to_dict(), 202)
 
     @app.delete("/api/models/{model_id}/cache")
@@ -249,7 +249,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         mb = e["size_bytes"] / 1e6
         name = f"{hub_catalog.title(e)} · {hub_catalog.freq_label(e['pandas_freq'])}"
         return ok(jobs.submit("download", f"Download {name} ({mb:.1f} MB)", lambda j: worker.call(
-            "catalog_download", {"entry": entry_id}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set)).to_dict(), 202)
+            "catalog_download", {"entry": entry_id}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set), link=f"datasets?focus={entry_id}").to_dict(), 202)
 
     @app.delete("/api/catalog/{entry_id}")
     def catalog_remove(entry_id: str):
@@ -340,7 +340,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         payload = {"model": body.model, "devices": devices, "repeats": body.repeats, "scenarios": body.scenarios}
         return ok(jobs.submit("benchmark", f"Benchmark {registry.info(body.model).name} · {', '.join(devices)}",
                               lambda j: worker.call("benchmark", payload, lambda d, t, m: j.update(d, t, m),
-                                                    j.cancel.is_set)).to_dict(), 202)
+                                                    j.cancel.is_set), link="system?focus=benchmark").to_dict(), 202)
 
     @app.get("/api/jobs")
     def list_jobs():
@@ -459,7 +459,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
 
         sc = engine.scenario(scenario_id)
         return ok(jobs.submit("download", f"Download {sc.title} data ({sc.size_mb} MB)", lambda j: worker.call(
-            "showcase_prepare", {"scenario": scenario_id}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set)).to_dict(), 202)
+            "showcase_prepare", {"scenario": scenario_id}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set), link=f"showcase?tab={scenario_id}").to_dict(), 202)
 
     @app.post("/api/showcase/forecast")
     def showcase_forecast(body: ShowcaseBody):
@@ -485,7 +485,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         payload = body.model_dump()
         payload["options"] = clean_options(body.options)
         return ok(jobs.submit("showcase", f"Measuring the effect of covariates · {sc.title}", lambda j: worker.call(
-            "showcase_impact", payload, lambda d, t, m: j.update(d, t, m), j.cancel.is_set)).to_dict(), 202)
+            "showcase_impact", payload, lambda d, t, m: j.update(d, t, m), j.cancel.is_set), link=f"showcase?tab={sc.id}").to_dict(), 202)
 
     @app.get("/api/compare")
     def compare(runs: str):

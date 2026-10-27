@@ -1,5 +1,5 @@
 import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
-import { api, useAsync, useStore, ms, num, bytes, when, deviceLabel } from '../core.js';
+import { api, useAsync, useStore, useFocus, ms, num, bytes, when, deviceLabel } from '../core.js';
 import { isActive, stopJob } from '../activity.js';
 import { Card, PageHeader, Section, Button, Field, Select, NumberInput, Check, Notice, Spinner, ErrorBox, Table, KV, Progress, Tabs, Tag, Eyebrow } from '../ui.js';
 import { Figure, barOption, linesOption } from '../charts.js';
@@ -61,7 +61,7 @@ function Results({ id }) {
   </div>`;
 }
 
-export function System() {
+export function System({ route }) {
   const [sys] = useAsync(() => api('/api/system'), []);
   const [disk] = useAsync(() => api('/api/system/disk'), []);
   const [brand] = useAsync(() => api('/api/brand'), []);
@@ -73,6 +73,7 @@ export function System() {
   const doneJob = jobs.find((j) => j.kind === 'benchmark' && j.status === 'done' && j.result);
   useEffect(() => { if (doneJob && seen.current !== doneJob.id) { const first = seen.current === null; seen.current = doneJob.id; if (!first || !list.data || !list.data.length) { setPick(doneJob.result.benchmark_id); } reload(); } }, [doneJob && doneJob.id]);
   const bid = pick || (list.data && list.data[0] && list.data[0].id);
+  useFocus(route, !sys.loading && !list.loading);
   if (sys.loading) return html`<${Spinner} />`;
   if (sys.error) return html`<${ErrorBox} error=${sys.error} />`;
   const e = sys.data.environment;
@@ -87,7 +88,7 @@ export function System() {
         <p class="mt-2 text-body-small text-text-muted">The package cache is hard-linked with <span class="font-mono">.venv</span> where the volume allows, so the real total is lower than the sum. Deleting the project folder removes everything.</p>`}<//><//>
     <${Section} title="Benchmark: CPU vs GPU">
       ${models.data && html`<${Benchmark} sys=${sys.data} models=${models.data} />`}
-      <div class="mt-6">${list.data && list.data.length > 1 && html`<div class="mb-4 w-80 max-w-full"><${Field} label="Stored benchmark"><${Select} value=${bid} onChange=${setPick} options=${list.data.map((b) => ({ value: b.id, label: `${b.name} · ${b.devices.join(' + ')} · ${when(b.created)}` }))} /><//></div>`}
+      <div class="mt-6" data-focus="benchmark">${list.data && list.data.length > 1 && html`<div class="mb-4 w-80 max-w-full"><${Field} label="Stored benchmark"><${Select} value=${bid} onChange=${setPick} options=${list.data.map((b) => ({ value: b.id, label: `${b.name} · ${b.devices.join(' + ')} · ${when(b.created)}` }))} /><//></div>`}
         ${bid ? html`<${Results} id=${bid} key=${bid} />` : html`<${Card}><p class="text-text-muted">No benchmark yet. Run one above to see cold start, warm latency, throughput and memory on this machine.</p><//>`}</div><//>
     <${Section} title="Brand assets"><${Card} tight><p class="text-body-small text-text-muted">${brand.data ? (brand.data.fonts ? `ALTMistral font loaded from this machine (${brand.data.fonts} files, local private use).` : 'ALTMistral font not found: the interface falls back to Inter.') : ''} ${brand.data && brand.data.logo ? 'Timestral logo present locally.' : 'Timestral logo not found: a neutral mark is shown.'}</p><//><//>
   </div>`;

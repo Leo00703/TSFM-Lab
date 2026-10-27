@@ -65,8 +65,8 @@ function Footer() {
 
 function App() {
   useJobPoller();
-  const { page } = useRoute();
-  const route = useRoute();
+  const route = useRoute();  // one subscription: two of them could update in different renders and hand a page the previous route
+  const { page } = route;
   useEffect(() => {
     api('/api/system').then((s) => {
       const devices = s.devices;

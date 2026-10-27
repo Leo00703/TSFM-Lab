@@ -1,5 +1,5 @@
 import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
-import { api, useAsync, useStore, params, bytes, ms, num } from '../core.js';
+import { api, useAsync, useStore, useFocus, params, bytes, ms, num } from '../core.js';
 import { isActive, stopJob } from '../activity.js';
 import { Logo } from '../icons.js';
 import { Card, PageHeader, Section, Tag, Button, Spinner, ErrorBox, Notice, KV, Progress, Collapse } from '../ui.js';
@@ -62,14 +62,15 @@ function ModelCard({ m, reload }) {
   <//>`;
 }
 
-export function Models() {
+export function Models({ route }) {
   const [s, reload] = useAsync(() => api('/api/models'), []);
+  useFocus(route, !s.loading);
   const foundation = (s.data || []).filter((m) => m.kind === 'foundation');
   const baselines = (s.data || []).filter((m) => m.kind === 'baseline');
   return html`<div><${PageHeader} eyebrow="Model library" title="Models">Specifications come from each checkpoint's own config; benchmark figures from the vendor are labelled as such. Everything under “Measured” was produced on this machine.<//>
     ${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : html`
       <${Section} title="Timestral" aside=${html`<span class="text-body-small text-text-muted">New models plug in as adapters</span>`}>
-        <div class="grid gap-4 lg:grid-cols-2">${foundation.map((m) => html`<${ModelCard} m=${m} reload=${reload} />`)}</div><//>
+        <div class="grid gap-4 lg:grid-cols-2">${foundation.map((m) => html`<div data-focus=${m.id} class="flex flex-col"><${ModelCard} m=${m} reload=${reload} /></div>`)}</div><//>
       <${Section} title="Baselines">
         <p class="mb-4 max-w-3xl text-text-muted">Simple reference methods, always available, used as yardsticks. Their prediction intervals are built from their own in-sample errors.</p>
         <div class="grid gap-4 md:grid-cols-3">${baselines.map((m) => html`<${Card} tight><span class="eyebrow">baseline</span><h3 class="mt-1 font-mistral text-h4">${m.name}</h3><p class="mt-2 text-body-small text-text-muted">${m.description}</p><//>`)}</div><//>`}

@@ -27,6 +27,7 @@ class Job:
     message: str = ""
     result: dict[str, Any] | None = None
     error: str | None = None
+    link: str | None = None  # the page that shows the outcome (None: the UI picks one from the kind)
     created: float = field(default_factory=time.time)
     started: float | None = None
     finished: float | None = None
@@ -43,7 +44,7 @@ class Job:
             self.message = message
 
     def to_dict(self) -> dict[str, Any]:
-        return {"id": self.id, "kind": self.kind, "label": self.label, "status": self.status, "done": self.done,
+        return {"id": self.id, "kind": self.kind, "label": self.label, "link": self.link, "status": self.status, "done": self.done,
                 "total": self.total, "message": self.message, "result": self.result, "error": self.error,
                 "created": self.created, "started": self.started, "finished": self.finished}
 
@@ -55,8 +56,8 @@ class JobManager:
         self._lock = threading.Lock()
         self.compute_lock = compute_lock
 
-    def submit(self, kind: str, label: str, fn: Callable[[Job], dict[str, Any] | None]) -> Job:
-        job = Job(secrets.token_hex(6), kind, label)
+    def submit(self, kind: str, label: str, fn: Callable[[Job], dict[str, Any] | None], link: str | None = None) -> Job:
+        job = Job(secrets.token_hex(6), kind, label, link=link)
         with self._lock:
             self._jobs[job.id] = job
             for old in sorted(self._jobs.values(), key=lambda j: j.created)[:-50]:
@@ -95,4 +96,6 @@ class JobManager:
     def cancel(self, job_id: str) -> Job:
         job = self.get(job_id)
         job.cancel.set()
+        if job.status == "queued":  # it never started: it can leave the queue at once instead of waiting for its turn
+            job.status, job.finished = "cancelled", time.time()
         return job
