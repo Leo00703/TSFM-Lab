@@ -4,11 +4,14 @@
     .venv/bin/python scripts/check_device_parity.py --device mps --model timestral-5m
 
 Uses a synthetic series, so it needs only the model weights. Exit code 1 if the devices disagree beyond float32 noise.
+Each case is timed twice: the FIRST call (a GPU compiles its kernels for every new data shape, so it is slow) and the
+STEADY state (median of --repeats further calls), which is what you feel when using the app.
 """
 
 from __future__ import annotations
 
 import argparse
+import statistics
 import sys
 import time
 
@@ -32,6 +35,7 @@ def main() -> None:
     parser.add_argument("--device", default="mps", help="device to compare with the CPU (mps, cuda:0)")
     parser.add_argument("--model", default="timestral-5m")
     parser.add_argument("--series", type=int, default=32)
+    parser.add_argument("--repeats", type=int, default=7, help="calls timed per case after the first one")
     parser.add_argument("--tolerance", type=float, default=1e-3, help="max relative difference accepted")
     args = parser.parse_args()
 
@@ -48,7 +52,7 @@ def main() -> None:
              "known covariate, 48 steps": ForecastRequest(ctx, 48, known_covariates=covariate, seasonal_period=24),
              "1200 steps (decoded in blocks)": ForecastRequest(ctx[:4], 1200, seasonal_period=24)}
 
-    results: dict[str, dict[str, tuple[np.ndarray, float]]] = {}
+    results: dict[str, dict[str, tuple[np.ndarray, float, float]]] = {}
     for device in ("cpu", args.device):
         adapter = default_registry().create(args.model)
         adapter.load(device)
@@ -56,16 +60,25 @@ def main() -> None:
         for name, request in cases.items():
             start = time.perf_counter()
             out = adapter.forecast(request)
-            results.setdefault(name, {})[device] = (out.quantiles, time.perf_counter() - start)
+            first = time.perf_counter() - start
+            times = []
+            for _ in range(args.repeats):
+                start = time.perf_counter()
+                adapter.forecast(request)
+                times.append(time.perf_counter() - start)
+            results.setdefault(name, {})[device] = (out.quantiles, first, statistics.median(times))
         adapter.unload()
 
     worst = 0.0
     print(f"{args.model}: CPU vs {args.device}")
     for name, per_device in results.items():
-        (a, ta), (b, tb) = per_device["cpu"], per_device[args.device]
+        (a, first_a, ta), (b, first_b, tb) = per_device["cpu"], per_device[args.device]
         rel = float(np.abs(a - b).max() / max(np.abs(a).mean(), 1e-9))
         worst = max(worst, rel)
-        print(f"  {name:34s} max relative difference {rel:.2e}   CPU {ta:6.2f} s   {args.device} {tb:6.2f} s   ({ta / tb:.1f}x)")
+        print(f"  {name}")
+        print(f"      same forecasts: max relative difference {rel:.2e}")
+        print(f"      CPU    first call {first_a:6.3f} s   steady {ta:6.3f} s")
+        print(f"      {args.device:6s} first call {first_b:6.3f} s   steady {tb:6.3f} s   -> {args.device} is {ta / tb:.2f}x the speed of the CPU")
     ok = worst <= args.tolerance
     print("OK: same forecasts up to float32 noise." if ok else f"MISMATCH: worst difference {worst:.2e} > {args.tolerance}.")
     sys.exit(0 if ok else 1)
