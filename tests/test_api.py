@@ -11,7 +11,9 @@ SPEC = {"source": "synthetic", "id": "multi_seasonality", "params": {"n_series":
 
 @pytest.fixture()
 def client(tmp_path):
-    return TestClient(create_app(root=tmp_path, allowed_hosts=("testserver",)))
+    app = create_app(root=tmp_path, allowed_hosts=("testserver",))
+    yield TestClient(app)
+    app.state.worker.stop()
 
 
 def wait(client, job_id, timeout=60):
@@ -156,3 +158,23 @@ def test_the_web_ui_is_served_with_its_vendored_libraries() -> None:
                  "/api/health"):
         assert client.get(path).status_code == 200, path
     assert client.get("/api/brand").json().keys() >= {"fonts", "logo"}
+
+
+def test_worker_crash_does_not_take_the_server_down(tmp_path, monkeypatch) -> None:
+    from tsfm_lab.api.worker import WorkerCrashed
+
+    monkeypatch.setenv("TSFM_LAB_TEST_OPS", "1")
+    app = create_app(root=tmp_path, allowed_hosts=("testserver",))
+    client = TestClient(app)
+    try:
+        body = {"dataset": SPEC, "model": "naive", "baselines": [], "horizon": 12, "origin": 200}
+        assert client.post("/api/forecast", json=body).status_code == 200
+        first_pid = app.state.worker._proc.pid
+        with pytest.raises(WorkerCrashed, match="exit code 13"):
+            app.state.worker.call("crash", {})
+        assert client.get("/api/health").status_code == 200  # the server itself is fine
+        assert client.get("/api/system").json()["worker_alive"] is False
+        again = client.post("/api/forecast", json=body)  # a fresh worker starts on demand
+        assert again.status_code == 200 and app.state.worker._proc.pid != first_pid
+    finally:
+        app.state.worker.stop()

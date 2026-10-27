@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import atexit
 import csv
 import io
 import threading
 import time
-from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Literal
 
@@ -17,14 +17,12 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from tsfm_lab.api.jobs import JobManager
+from tsfm_lab.api.worker import WorkerClient, WorkerCrashed, axis
 from tsfm_lab.data.catalog import DatasetCatalog
-from tsfm_lab.eval import metrics as M
-from tsfm_lab.eval.backtest import BacktestConfig
-from tsfm_lab.eval.benchmark import SCENARIOS, run_benchmark
-from tsfm_lab.eval.runner import DEFAULT_BASELINES, run_experiment
+from tsfm_lab.eval.benchmark import SCENARIOS
+from tsfm_lab.eval.runner import DEFAULT_BASELINES
 from tsfm_lab.isolation import find_root
 from tsfm_lab.models import cache as weights
-from tsfm_lab.models.base import ForecastRequest, ModelAdapter
 from tsfm_lab.models.registry import Registry, default_registry
 from tsfm_lab.store.store import BenchmarkStore, RunStore, to_jsonable
 from tsfm_lab.system.devices import list_devices
@@ -92,39 +90,6 @@ def clean_options(options: dict[str, Any]) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------- helpers
-class ModelPool:
-    """Keeps the last few loaded models so interactive forecasts do not pay the load time every click."""
-
-    def __init__(self, registry: Registry, size: int = 2) -> None:
-        self.registry, self.size = registry, size
-        self._items: OrderedDict[tuple[str, str], ModelAdapter] = OrderedDict()
-
-    def get(self, model_id: str, device: str) -> tuple[ModelAdapter, dict[str, Any] | None]:
-        key = (model_id, device)
-        if key in self._items:
-            self._items.move_to_end(key)
-            return self._items[key], None
-        adapter = self.registry.create(model_id)
-        meta = adapter.load(device)
-        self._items[key] = adapter
-        while len(self._items) > self.size:
-            self._items.popitem(last=False)[1].unload()
-        return adapter, meta
-
-    def drop_model(self, model_id: str) -> None:
-        for key in [k for k in self._items if k[0] == model_id]:
-            self._items.pop(key).unload()
-
-
-def axis(series, start: int, stop: int) -> list[Any]:
-    """Labels for steps [start, stop) of a series; timestamps are extended past the end using the last step."""
-    ts = series.timestamps
-    if ts is None:
-        return list(range(start, stop))
-    step = (ts[-1] - ts[-2]) if len(ts) > 1 else np.timedelta64(1, "s")
-    return [str(ts[i] if i < len(ts) else ts[-1] + step * (i - len(ts) + 1)) for i in range(start, stop)]
-
-
 def downsample_indices(n: int, limit: int) -> np.ndarray:
     return np.arange(n) if n <= limit else np.unique(np.linspace(0, n - 1, limit).astype(int))
 
@@ -137,7 +102,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     store, bench_store = RunStore(root / "runs"), BenchmarkStore(root / "runs")
     compute_lock = threading.Lock()
     jobs = JobManager(compute_lock)
-    pool = ModelPool(registry)
+    worker = WorkerClient(root)
     app = FastAPI(title="tsfm-lab", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
     def ok(payload: Any, status: int = 200) -> JSONResponse:
@@ -162,6 +127,10 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     async def key_error(_: Request, error: KeyError):
         return JSONResponse({"detail": str(error.args[0])}, status_code=404)
 
+    @app.exception_handler(WorkerCrashed)
+    async def worker_crashed(_: Request, error: WorkerCrashed):
+        return JSONResponse({"detail": str(error)}, status_code=503)
+
     @app.exception_handler(ValueError)
     async def value_error(_: Request, error: ValueError):
         return JSONResponse({"detail": str(error)}, status_code=422)
@@ -174,7 +143,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     @app.get("/api/system")
     def system():
         return ok({"environment": environment_info(), "devices": [d.__dict__ for d in list_devices()],
-                   "busy": compute_lock.locked()})
+                   "busy": compute_lock.locked(), "worker_alive": worker.alive})
 
     @app.get("/api/system/disk")
     def system_disk():
@@ -219,8 +188,8 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         repo = registry.info(model_id).details.get("repo")
         if not repo:
             raise HTTPException(400, "this model has no weights to download")
-        job = jobs.submit("download", f"Download {registry.info(model_id).name}", lambda j: (
-            j.update(message="downloading from Hugging Face…"), {"cache": weights.download(repo)})[1])
+        job = jobs.submit("download", f"Download {registry.info(model_id).name}", lambda j: worker.call(
+            "download", {"repo": repo}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set))
         return ok(job.to_dict(), 202)
 
     @app.delete("/api/models/{model_id}/cache")
@@ -231,8 +200,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         if not compute_lock.acquire(blocking=False):
             raise HTTPException(409, "a job is running; try again when it finishes")
         try:
-            pool.drop_model(model_id)
-            return ok({"removed": weights.remove(repo)})
+            return ok(worker.call("remove", {"repo": repo, "model": model_id}))
         finally:
             compute_lock.release()
 
@@ -280,77 +248,31 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     # ------------------------------------------------------------------ interactive forecast
     @app.post("/api/forecast")
     def forecast(body: ForecastBody):
-        options = clean_options(body.options)
-        ds = catalog.resolve(body.dataset.model_dump())
-        if body.series >= len(ds.series):
-            raise HTTPException(404, "series index out of range")
-        s = ds.series[body.series]
-        origin = body.origin if body.origin is not None else max(16, s.length - body.horizon)
-        origin = min(origin, s.length)
-        if origin < 8:
-            raise HTTPException(422, "need at least 8 steps of history before the forecast origin")
-        end = origin + body.horizon
-        if ds.n_known and body.use_covariates and end > s.length:
-            raise HTTPException(422, "known covariates do not cover the requested horizon: move the origin back")
-        lo = max(0, origin - body.context_length) if body.context_length else 0
-        ctx = s.target[:, lo:origin][None]
-        horizon = body.horizon
-        past = s.past_covariates[:, lo:origin][None] if (body.use_covariates and ds.n_past) else None
-        known = s.known_covariates[:, lo:end][None] if (body.use_covariates and ds.n_known) else None
-        actual = s.target[:, origin:end]
-        actual = np.concatenate([actual, np.full((actual.shape[0], horizon - actual.shape[1]), np.nan)], axis=1)
+        payload = body.model_dump()
+        payload["options"] = clean_options(body.options)
+        payload["dataset"] = body.dataset.model_dump()
+        catalog.resolve(payload["dataset"])  # fail fast (404/422) without waking the worker
+        registry.info(body.model)
         if not compute_lock.acquire(blocking=False):
             raise HTTPException(409, "a job is running on this machine; wait for it to finish")
         try:
-            outputs: dict[str, Any] = {}
-            wanted = [body.model, *[b for b in body.baselines if b != body.model]]
-            scale = M.history_scale(s.target[None, :, :origin], ds.seasonal_period)
-            for mid in wanted:
-                info = registry.info(mid)
-                if info.kind == "baseline":
-                    adapter, loaded = registry.create(mid), None
-                    adapter.load("cpu")
-                else:
-                    adapter, loaded = pool.get(mid, body.device)
-                req = ForecastRequest(ctx, horizon, past, known, seasonal_period=ds.seasonal_period, options=dict(options))
-                res = adapter.forecast(req)
-                entry = {"device": res.device, "levels": res.quantile_levels, "quantiles": res.quantiles[0],
-                         "timings": {**res.timings, "model_load_s": None if loaded is None else loaded.get("load_s"),
-                                     "first_call_after_load": loaded is not None},
-                         "warnings": res.warnings, "name": info.name, "kind": info.kind}
-                if np.isfinite(actual).any():
-                    items = M.item_metrics(actual[None], res.quantiles, res.quantile_levels, scale)
-                    entry["metrics"] = {k: float(v[0, 0]) for k, v in items.items() if np.isfinite(v[0, 0])}
-                outputs[mid] = entry
+            return ok(worker.call("forecast", payload))
         finally:
             compute_lock.release()
-        tail = min(origin - lo, 1024)
-        return ok({"series_id": s.id, "origin": origin, "horizon": horizon, "target_names": ds.target_names,
-                   "x_history": axis(s, origin - tail, origin), "x_future": axis(s, origin, end),
-                   "history": ctx[0][:, -tail:], "actual": actual, "models": outputs,
-                   "known": None if known is None else known[0][:, -(tail + horizon):] if known.shape[2] >= tail + horizon else known[0],
-                   "known_names": ds.known_names, "freq": ds.freq, "seasonal_period": ds.seasonal_period,
-                   "context_used": int(ctx.shape[2])})
 
     # ------------------------------------------------------------------ jobs
     @app.post("/api/jobs/experiment")
     def start_experiment(body: ExperimentBody):
-        options = clean_options(body.options)
-        ds = catalog.resolve(body.dataset.model_dump())
+        payload = body.model_dump()
+        payload["options"] = clean_options(body.options)
+        payload["dataset"] = body.dataset.model_dump()
+        ds = catalog.resolve(payload["dataset"])
         registry.info(body.model)
         for b in body.baselines:
             registry.info(b)
-        cfg = BacktestConfig(horizon=body.horizon, n_windows=body.windows, stride=body.stride,
-                             max_context=body.max_context, max_series=body.max_series,
-                             use_covariates=body.use_covariates, options=options)
-
-        def work(job):
-            _, run_id = run_experiment(body.model, ds, cfg, body.device, tuple(body.baselines), store, registry,
-                                       body.label, progress=lambda d, t, m: job.update(d, t, m))
-            return {"run_id": run_id}
-
         label = f"{registry.info(body.model).name} on {ds.name} · {body.device}"
-        return ok(jobs.submit("experiment", label, work).to_dict(), 202)
+        return ok(jobs.submit("experiment", label, lambda j: worker.call(
+            "experiment", payload, lambda d, t, m: j.update(d, t, m), j.cancel.is_set)).to_dict(), 202)
 
     @app.post("/api/jobs/benchmark")
     def start_benchmark(body: BenchmarkBody):
@@ -361,14 +283,10 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         devices = ["cuda:0" if d == "cuda" else d for d in body.devices]
         if not set(devices) <= valid:
             raise HTTPException(422, f"unavailable device(s): {sorted(set(devices) - valid)}")
-
-        def work(job):
-            result = run_benchmark(body.model, devices, body.repeats, tuple(body.scenarios), registry,
-                                   progress=lambda d, t, m: job.update(d, t, m))
-            return {"benchmark_id": bench_store.save(result)}
-
+        payload = {"model": body.model, "devices": devices, "repeats": body.repeats, "scenarios": body.scenarios}
         return ok(jobs.submit("benchmark", f"Benchmark {registry.info(body.model).name} · {', '.join(devices)}",
-                              work).to_dict(), 202)
+                              lambda j: worker.call("benchmark", payload, lambda d, t, m: j.update(d, t, m),
+                                                    j.cancel.is_set)).to_dict(), 202)
 
     @app.get("/api/jobs")
     def list_jobs():
@@ -479,6 +397,8 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
                         headers={"Content-Disposition": f'attachment; filename="{run_id}.csv"'})
 
     # ------------------------------------------------------------------ static UI (last: API routes win)
+    atexit.register(worker.stop)  # the worker is a daemon process, this just makes the exit clean
+    app.state.worker = worker
     web = root / "web"
     if web.is_dir():
         app.mount("/", StaticFiles(directory=web, html=True), name="web")

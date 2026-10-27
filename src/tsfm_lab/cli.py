@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from tsfm_lab.data import synthetic
 from tsfm_lab.data.local import ColumnMapping, load_file, read_table, guess_mapping
@@ -98,7 +99,23 @@ def cmd_run(args: argparse.Namespace) -> None:
         print(f"saved run {run_id}")
 
 
+def _tailscale() -> tuple[str, list[str]]:
+    """(tailnet IPv4, host names to accept) from the local Tailscale client."""
+    import shutil
+    import subprocess
+
+    exe = shutil.which("tailscale") or str(Path("C:/Program Files/Tailscale/tailscale.exe"))
+    try:
+        ip = subprocess.run([exe, "ip", "-4"], capture_output=True, text=True, timeout=10).stdout.split()[0]
+        status = json.loads(subprocess.run([exe, "status", "--json"], capture_output=True, text=True, timeout=10).stdout)
+    except (OSError, IndexError, ValueError, subprocess.SubprocessError) as error:
+        raise RuntimeError(f"Tailscale is not available or not connected: {error}") from error
+    dns = status["Self"]["DNSName"].rstrip(".")
+    return ip, [ip, dns, dns.split(".")[0]]
+
+
 def cmd_serve(args: argparse.Namespace) -> None:
+    import socket
     import threading
     import webbrowser
 
@@ -108,11 +125,30 @@ def cmd_serve(args: argparse.Namespace) -> None:
     from tsfm_lab.api.build_css import ensure_css
 
     ensure_css()
-    url = f"http://127.0.0.1:{args.port}"
-    print(f"tsfm-lab at {url}  (local only; Ctrl+C to stop)")
+    hosts = ["127.0.0.1", "localhost", "[::1]"]
+    binds = ["127.0.0.1"]
+    urls = [f"http://127.0.0.1:{args.port}"]
+    if args.tailscale:
+        ip, names = _tailscale()
+        binds.append(ip)
+        hosts += names
+        urls += [f"http://{n}:{args.port}" for n in names[:2]]
+    sockets = []
+    for host in binds:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind((host, args.port))
+        sock.set_inheritable(True)
+        sockets.append(sock)
+    print("tsfm-lab reachable at:")
+    for url in urls:
+        print("  " + url)
+    print("Listening only on " + ", ".join(binds) + (" (your tailnet; no authentication: anyone on it can use the app)" if args.tailscale else " (this machine only)")
+          + ". Ctrl+C to stop.")
     if not args.no_browser:
-        threading.Timer(1.2, lambda: webbrowser.open(url)).start()
-    uvicorn.run(create_app(), host="127.0.0.1", port=args.port, log_level="warning")
+        threading.Timer(1.2, lambda: webbrowser.open(urls[0])).start()
+    server = uvicorn.Server(uvicorn.Config(create_app(allowed_hosts=tuple(hosts)), log_level="warning"))
+    server.run(sockets=sockets)
 
 
 def cmd_runs(_: argparse.Namespace) -> None:
@@ -151,6 +187,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("serve", help="start the local web app")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--no-browser", action="store_true")
+    p.add_argument("--tailscale", action="store_true", help="also listen on this PC's Tailscale address (tailnet only)")
     p.set_defaults(fn=cmd_serve)
     sub.add_parser("runs", help="list stored runs").set_defaults(fn=cmd_runs)
     p = sub.add_parser("show", help="print a stored run's metadata"); p.add_argument("run_id"); p.set_defaults(fn=cmd_show)

@@ -316,7 +316,7 @@ La domanda reale è Poisson(2). Sul 123M: 12,1 (worst 95,7) predefinito, 6,2 con
 **Benchmark CPU contro GPU (Timestral-5M, Ryzen 5 3600 / RTX 5060 Ti):** setup di Mistral 29,6 ms su CPU contro 50,9 ms su GPU a caldo; avvio a freddo 30 ms (CPU) e 129 ms (GPU); a batch 128 la GPU fa **2.232 serie/s contro 129** (17 volte). Previsioni CPU e GPU identiche entro `3e-5`. Misure singole sul 5M.
 
 **Deviazioni dal piano e limiti noti (onestà):**
-- L'inferenza gira **nello stesso processo del server** (thread), non in un processo worker separato come previsto: i job sono serializzati, ma un crash di PyTorch fermerebbe anche il server. Resta da fare.
+- ~~L'inferenza gira nello stesso processo del server~~ **Risolto dopo la Fase 2:** ora gira in un processo worker separato (vedi sotto).
 - **Dataset online** (Hugging Face) e badge di contaminazione per i dataset pubblici: Fase 4. Per ora i file caricati sono marcati "unknown".
 - L'upload di file è coperto dai test API, ma non l'ho provato cliccando nel browser (gli strumenti non consentono di scegliere un file).
 - Linux e macOS non testati; su Mac la GPU (MPS) resta disattivata per il bug upstream #6.
@@ -324,3 +324,7 @@ La domanda reale è Poisson(2). Sul 123M: 12,1 (worst 95,7) predefinito, 6,2 con
 
 ### Prossimi passi
 Fase 3: pagina di confronto tra run, ulteriori viste e rifiniture di visualizzazione. Fase 4: dataset online, badge di contaminazione, preset delle covariate. Fase 5: processo worker per l'inferenza, controllo di conformità del brand, CI su Windows/Linux/macOS, secondo adapter di prova (es. Chronos-2).
+
+### Isolamento dell'inferenza e accesso da Tailscale (2026-10-27)
+- **Worker separato:** previsioni, esperimenti, benchmark e download girano in un processo dedicato (avviato al primo uso con `spawn`, nessuno stato CUDA ereditato). Un crash nativo di PyTorch/CUDA ferma solo il worker: il server risponde con un errore chiaro e il worker riparte alla richiesta successiva. Avanzamento e annullamento passano per coda ed evento. Verificato con un test che simula un crash (`exit code 13`) e dal vivo su GPU: prima chiamata 6,2 s (avvio worker + caricamento), poi 40 ms; annullamento di un benchmark lungo dopo ~11 s (attende la fine della cella in corso).
+- **Tailscale:** `python -m tsfm_lab serve --tailscale` ascolta solo su loopback e sull'IP Tailscale del PC (non sulla LAN), accetta solo quei nomi host e rifiuta gli altri. Non c'è autenticazione: chiunque sia nella tailnet può usare l'app (eseguire job, caricare file, cancellare pesi). Non usare Funnel.

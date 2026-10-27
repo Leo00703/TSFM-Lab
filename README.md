@@ -78,6 +78,10 @@ Runs (every metric, calibration, per-step error, reproducibility), System (CPU v
 (CPU or CUDA) is selectable at any time, even when a GPU is present. The UI is built with Tailwind (standalone CLI
 installed by `bootstrap.py`) and plain JavaScript; `scripts/fetch_vendor.py` re-fetches the two vendored libraries.
 
+Inference runs in a separate worker process, so a PyTorch/CUDA crash cannot take the server down. To reach the app from
+your other devices over Tailscale: `python -m tsfm_lab serve --tailscale` (listens on loopback and your tailnet address only;
+there is no login, so anyone on your tailnet can use it).
+
 ## Command line
 
 ```bash
