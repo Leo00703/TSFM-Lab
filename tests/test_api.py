@@ -42,7 +42,8 @@ def test_models_datasets_and_system(client) -> None:
     models = {m["id"]: m for m in client.get("/api/models").json()}
     assert {"timestral-5m", "timestral-209m", "naive", "seasonal-naive", "drift"} <= set(models)
     t = models["timestral-5m"]
-    assert t["capabilities"]["max_context"] == 32768 and t["cache"]["downloaded"] and t["details"]["num_heads"]
+    assert t["capabilities"]["max_context"] == 32768 and isinstance(t["cache"]["downloaded"], bool)
+    assert not t["cache"]["downloaded"] or t["details"]["num_heads"]  # architecture details come from the downloaded config
     assert len(t["capabilities"]["quantile_levels"]) == 21 and t["notes"]
     datasets = client.get("/api/datasets").json()
     assert any(d["id"] == "flat_price_covariate" for d in datasets) and len(datasets) >= 16
