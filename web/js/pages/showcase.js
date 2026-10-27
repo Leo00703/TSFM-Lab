@@ -6,6 +6,9 @@ import { Chart, palette, baseOption, axisStyle, isNarrow } from '../charts.js';
 const nulls = (n) => Array(n).fill(null);
 const compact = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 const dayLabel = (v) => { const d = new Date(v); return Number.isNaN(d) ? String(v) : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); };
+const num2 = new Intl.NumberFormat('en', { maximumFractionDigits: 1 });
+const fmtV = (v, binary) => (v === null || v === undefined || Number.isNaN(v) ? '–' : binary ? (v >= 0.5 ? 'Yes' : 'No') : Math.abs(v) >= 100 ? compact.format(v) : num2.format(v));
+const fullDate = (v, hourly) => { const d = new Date(v); return Number.isNaN(d) ? String(v) : d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', ...(hourly ? { hour: '2-digit', minute: '2-digit' } : {}) }); };
 const longDate = (v) => new Date(v).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 
 // ------------------------------------------------------------------ charts
@@ -19,15 +22,15 @@ function mainOption(p, d, showActual) {
   const last = d.history[d.history.length - 1];
   return {
     ...baseOption(p),
-    grid: { left: 12, right: isNarrow() ? 40 : 52, top: 14, bottom: 26 },
-    xAxis: { type: 'category', data: x, boundaryGap: false, ...axisStyle(p, { splitLine: { show: false }, axisLine: { show: false } }), axisLabel: { color: p.muted, fontSize: 11, hideOverlap: true, formatter: dayLabel } },
+    grid: { left: 12, right: isNarrow() ? 40 : 52, top: 38, bottom: 28 },
+    xAxis: { type: 'category', data: x, boundaryGap: false, ...axisStyle(p, { splitLine: { show: false }, axisLine: { show: false } }), axisLabel: { color: p.text, fontSize: 12, hideOverlap: true, formatter: dayLabel }, axisPointer: { show: true, label: { show: false } } },
     yAxis: { type: 'value', position: 'right', scale: true, ...axisStyle(p, { axisLine: { show: false }, splitLine: { lineStyle: { color: p.grid, opacity: 0.5 } } }), axisLabel: { color: p.muted, fontSize: 11, formatter: (v) => compact.format(v) } },
-    tooltip: { ...baseOption(p).tooltip, valueFormatter: (v) => (v === null || v === undefined ? '' : compact.format(v)) },
+    tooltip: { trigger: 'axis', showContent: false, axisPointer: { type: 'line', lineStyle: { color: p.text, opacity: 0.55, width: 1 } } },
     series: [
       { name: 'History', type: 'line', data: [...d.history, ...nulls(nf)], showSymbol: false, lineStyle: { width: 1.6, color: p.text }, itemStyle: { color: p.text }, z: 3,
         markLine: { silent: true, symbol: 'none', label: { show: false }, lineStyle: { color: p.axis, type: 'solid', opacity: 0.8 }, data: [{ xAxis: nh - 1 }] },
         markArea: { silent: true, itemStyle: { color: p.brand, opacity: 0.04 }, data: [[{ xAxis: nh - 1 }, { xAxis: x.length - 1 }]] } },
-      ...(showActual ? [{ name: 'What really happened', type: 'line', data: [...nulls(nh - 1), last, ...d.actual], showSymbol: false, lineStyle: { width: 1.6, color: p.text, type: 'dashed', opacity: 0.85 }, itemStyle: { color: p.text }, z: 4 }] : []),
+      ...(showActual ? [{ name: 'What really happened', type: 'line', data: [...nulls(nh - 1), last, ...d.actual], showSymbol: false, lineStyle: { width: 1.5, color: p.muted, opacity: 0.8 }, itemStyle: { color: p.muted }, z: 4 }] : []),
       ...band(lo80, hi80, 'b80', 0.16), ...band(lo50, hi50, 'b50', 0.28),
       { name: 'Forecast', type: 'line', data: [...nulls(nh), ...med], showSymbol: false, lineStyle: { width: 2.4, color: p.brand }, itemStyle: { color: p.brand }, z: 5 },
     ],
@@ -38,7 +41,8 @@ function sparkOption(p, row, d) {
   const x = [...d.x_history, ...d.x_future], nh = d.x_history.length;
   const color = row.enabled ? p.text : p.muted;
   return {
-    animation: false, backgroundColor: 'transparent', tooltip: { show: false },
+    animation: false, backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', showContent: false, axisPointer: { type: 'line', lineStyle: { color: p.text, opacity: 0.55, width: 1 } } },
     grid: { left: 12, right: isNarrow() ? 40 : 52, top: 4, bottom: 4 },
     xAxis: { type: 'category', data: x, show: false, boundaryGap: false },
     yAxis: { type: 'value', show: false, scale: true, min: row.binary ? -0.15 : undefined, max: row.binary ? 1.15 : undefined },
@@ -85,7 +89,9 @@ export function Showcase() {
   const [reloadKey, setReloadKey] = useState(0);
   const [tab, setTab] = useState('sales');
   const [series, setSeries] = useState({}), [back, setBack] = useState(0), [on, setOn] = useState({});
-  const [model, setModel] = useState(null), [reveal, setReveal] = useState(false);
+  const [model, setModel] = useState(null), [reveal, setReveal] = useState(true);
+  const [geo, setGeo] = useState(null), [drag, setDrag] = useState(null), [hover, setHover] = useState(null);
+  const mainChart = useRef(null), wrap = useRef(null), dataRef = useRef(null), dragRef = useRef(null);
   const [data, setData] = useState(null), [err, setErr] = useState(null), [busy, setBusy] = useState(false), [wait, setWait] = useState('');
   const [impact, setImpact] = useState(null), [impLoading, setImpLoading] = useState(false), [prog, setProg] = useState({});
   const seq = useRef(0), impJob = useRef(null);
@@ -94,6 +100,7 @@ export function Showcase() {
   const sc = scs.find((s) => s.id === tab);
   const ready = (models.data || []).filter((m) => m.kind === 'foundation' && m.cache.downloaded);
   useEffect(() => { if (!model && ready.length) setModel((ready.find((m) => m.id === 'timestral-28m') || ready[0]).id); }, [models.data]);
+  dataRef.current = data;
   const sid = sc ? (series[sc.id] || sc.default_series) : null;
   const enabled = sc ? sc.covariates.filter((c) => on[sc.id + c.key] !== false).map((c) => c.key) : [];
   const stepDays = sc && sc.freq.endsWith('H') ? 24 : 1;
@@ -122,6 +129,40 @@ export function Showcase() {
     }, 220);
     return () => clearTimeout(t);
   }, [sc && sc.id, sc && sc.ready, sid, back, enabled.join(','), model, device]);
+
+  const measure = () => {
+    const c = mainChart.current, d = dataRef.current;
+    if (!c || !d || !wrap.current) return;
+    const n = d.x_history.length + d.x_future.length, at = (i) => c.convertToPixel({ xAxisIndex: 0 }, i);
+    const x0 = at(0), x1 = at(n - 1), xo = at(d.x_history.length - 1);
+    if ([x0, x1, xo].some((v) => typeof v !== 'number' || Number.isNaN(v))) return;
+    setGeo({ x: xo, per: (x1 - x0) / (n - 1), nh: d.x_history.length, n });
+  };
+  useEffect(() => { const t = setTimeout(measure, 60); return () => clearTimeout(t); }, [data, reveal]);
+  useEffect(() => { if (!wrap.current) return; const ro = new ResizeObserver(() => setTimeout(measure, 30)); ro.observe(wrap.current); return () => ro.disconnect(); }, [data && data.scenario]);
+
+  // the curtain: drag the handle to move where the forecast starts (left = what really happened, right = what is predicted)
+  const clampDelta = (dSteps) => Math.max(-(maxDays - back) * stepDays, Math.min(back * stepDays, dSteps));
+  const onDown = (e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { x0: e.clientX, d: 0 }; setDrag(0); };
+  const onMove = (e) => { if (!dragRef.current || !geo) return; const d = clampDelta(Math.round((e.clientX - dragRef.current.x0) / geo.per)); dragRef.current.d = d; setDrag(d); };
+  const onUp = () => { if (!dragRef.current) return; const d = dragRef.current.d; dragRef.current = null; setDrag(null); if (d !== 0) setBack(back - Math.round(d / stepDays)); };
+  const onKey = (e) => { const k = { ArrowLeft: 1, ArrowDown: 1, ArrowRight: -1, ArrowUp: -1, PageDown: 7, PageUp: -7 }[e.key]; if (k === undefined && e.key !== 'Home' && e.key !== 'End') return; e.preventDefault(); setBack(e.key === 'Home' ? maxDays : e.key === 'End' ? 0 : Math.max(0, Math.min(maxDays, back + k))); };
+
+  // hover read-out: date and values of the forecast and of every factor at the pointed time
+  const onChartReady = (c) => {
+    mainChart.current = c; c.group = 'showcase';
+    c.on('updateAxisPointer', (ev) => { const v = ev.axesInfo && ev.axesInfo[0] && ev.axesInfo[0].value; const d = dataRef.current; if (v === undefined || !d) return; const x = [...d.x_history, ...d.x_future]; setHover(typeof v === 'number' ? Math.round(v) : x.indexOf(v)); });
+    c.getZr().on('globalout', () => setHover(null));
+    setTimeout(() => { if (window.echarts) echarts.connect('showcase'); measure(); }, 80);
+  };
+  const readout = (() => {
+    if (hover === null || !data || data.scenario !== (sc && sc.id)) return null;
+    const x = [...data.x_history, ...data.x_future], nh = data.x_history.length, j = hover - nh;
+    if (hover < 0 || hover >= x.length) return null;
+    const real = hover < nh ? data.history[hover] : (reveal ? data.actual[j] : null);
+    return { when: fullDate(x[hover], stepDays === 24), future: j >= 0, real, med: j >= 0 ? data.bands['0.5'][j] : null, lo: j >= 0 ? data.bands['0.1'][j] : null, hi: j >= 0 ? data.bands['0.9'][j] : null,
+      covs: data.covariates.map((r) => ({ label: r.label, v: r.values[hover], binary: r.binary, on: r.enabled })) };
+  })();
 
   // measured effect over many windows (cached on disk after the first run)
   const firstShown = !!(data && sc && data.scenario === sc.id);
@@ -167,15 +208,26 @@ export function Showcase() {
 
         <div class="mt-4 grid gap-x-4 md:grid-cols-[11rem_minmax(0,1fr)_3.25rem]"><div class="hidden md:block"></div><div class="relative min-w-0">
           ${err && html`<${ErrorBox} error=${err} />`}
-          ${data && data.scenario === sc.id && html`<${Chart} build=${(p) => mainOption(p, data, reveal)} deps=${[data, reveal]} height=${isNarrow() ? 230 : 300} name=${sc.title + ' forecast'} />`}
+          <div ref=${wrap} class="relative">${data && data.scenario === sc.id && html`<${Chart} build=${(p) => mainOption(p, data, reveal)} deps=${[data, reveal]} height=${isNarrow() ? 250 : 320} name=${sc.title + ' forecast'} onInstance=${onChartReady} />`}
+          ${geo && data && data.scenario === sc.id && (() => { const x = geo.x + (drag || 0) * geo.per; const idx = geo.nh - 1 + (drag || 0); const xs = [...data.x_history, ...data.x_future];
+            return html`<div class="pointer-events-none absolute inset-y-0 z-10 w-0" style=${`left:${x}px`}>
+              <span class="absolute bottom-7 top-9 w-px -translate-x-1/2 bg-text-primary opacity-60"></span>
+              <button type="button" role="slider" tabindex="0" aria-label="Where the forecast starts: drag, or use the arrow keys" aria-valuemin="0" aria-valuemax=${maxDays} aria-valuenow=${maxDays - back} aria-valuetext=${longDate(data.start)}
+                class="pointer-events-auto absolute left-0 top-1 grid h-8 w-6 -translate-x-1/2 cursor-ew-resize touch-none place-items-center rounded-md bg-text-primary text-text-invert shadow-md" onPointerDown=${onDown} onPointerMove=${onMove} onPointerUp=${onUp} onPointerCancel=${onUp} onKeyDown=${onKey}>
+                <span class="h-3.5 w-0.5 bg-current"></span></button>
+              <span class="absolute left-4 top-2 whitespace-nowrap text-body-small font-medium text-surface-brand">${drag ? dayLabel(xs[Math.max(0, Math.min(xs.length - 1, idx + 1))]) : 'Forecast'}</span></div>`; })()}</div>
           ${(!data || data.scenario !== sc.id) && !err && html`<${Spinner} label="Forecasting…" />`}
           ${busy && data && html`<span class="absolute right-2 top-1 rounded-sm bg-surface-brand-tertiary px-2 py-0.5 font-mono text-[0.6875rem] uppercase text-text-muted">updating…</span>`}
         ${wait && html`<p class="mt-2 text-body-small text-text-muted">${wait}</p>`}
         <div class="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-body-small text-text-muted"><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-text-primary"></i>History</span><span class="inline-flex items-center gap-2"><i class="inline-block h-0.5 w-5 bg-surface-brand"></i>Forecast · ${sc.horizon_label}</span><span class="inline-flex items-center gap-2"><i class="inline-block h-3 w-5 rounded-sm bg-surface-brand opacity-30"></i>Likely range (50% and 80%)</span></div></div><div class="hidden md:block"></div></div>
 
-        <div class="mt-6 grid items-center gap-x-4 gap-y-1 border-t border-border-primary pt-5 md:grid-cols-[11rem_minmax(0,1fr)_3.25rem]">
+        <div class="mt-5 grid items-start gap-x-4 gap-y-2 border-t border-border-primary pt-4 md:grid-cols-[11rem_minmax(0,1fr)_3.25rem]">
           <div><div class="font-medium">Forecast starts</div><div class="num text-body-small text-text-muted">${data && data.scenario === sc.id ? longDate(data.start) : ''}</div></div>
-          <input type="range" class="h-10 w-full" min="0" max=${maxDays} value=${maxDays - back} aria-label="Forecast start date" onInput=${(e) => setBack(maxDays - Number(e.currentTarget.value))} /><div class="hidden md:block"></div></div>
+          <div class="min-h-[3.25rem] min-w-0 text-body-small">${readout ? html`<div class="flex flex-wrap items-baseline gap-x-5 gap-y-1"><b class="num">${readout.when}</b>
+              ${readout.real !== null && readout.real !== undefined && html`<span><span class="text-text-muted">${readout.future ? 'Really happened' : 'Real'}</span> <b class="num">${fmtV(readout.real)}</b></span>`}
+              ${readout.future && html`<span class="text-surface-brand"><span>Forecast</span> <b class="num">${fmtV(readout.med)}</b> <span class="num text-text-muted">(likely ${fmtV(readout.lo)}–${fmtV(readout.hi)})</span></span>`}</div>
+              <div class="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-text-muted">${readout.covs.map((c) => html`<span class=${c.on ? '' : 'opacity-50'}>${c.label} <b class="num text-text-primary">${fmtV(c.v, c.binary)}</b></span>`)}</div>`
+            : html`<span class="text-text-muted">Drag the handle on the chart (or use the arrow keys) to move where the forecast starts. Move the pointer over the chart to read the date and the values.</span>`}</div><div class="hidden md:block"></div></div>
 
         <div class="mt-6 grid gap-0 border-t border-border-primary">
           <div class="flex flex-wrap items-center justify-between gap-3 py-4"><span class="font-medium">Factors known in advance</span>
@@ -185,7 +237,7 @@ export function Showcase() {
           ${sc.covariates.map((c) => { const row = data && data.scenario === sc.id ? data.covariates.find((r) => r.key === c.key) : null; const g = impact && impact.gain_each[c.key];
             return html`<div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-t border-border-primary py-3 md:grid-cols-[11rem_minmax(0,1fr)_3.25rem]">
               <div class="order-1 min-w-0"><div class="font-medium">${c.label}</div><div class="truncate text-body-small text-text-muted" title=${c.hint}>${g === null || g === undefined ? c.hint : `alone: ${g >= 0 ? '+' : ''}${Math.round(g * 100)}%`}</div></div>
-              <div class="order-3 col-span-2 min-w-0 md:order-2 md:col-span-1">${row && html`<${Chart} build=${(p) => sparkOption(p, row, data)} deps=${[data]} height=${46} name=${c.label} />`}</div>
+              <div class="order-3 col-span-2 min-w-0 md:order-2 md:col-span-1">${row && html`<${Chart} build=${(p) => sparkOption(p, row, data)} deps=${[data]} height=${46} name=${c.label} onInstance=${(c2) => { c2.group = 'showcase'; setTimeout(() => window.echarts && echarts.connect('showcase'), 100); }} />`}</div>
               <div class="order-2 justify-self-end md:order-3"><${Switch} checked=${on[sc.id + c.key] !== false} onChange=${(v) => setOn({ ...on, [sc.id + c.key]: v })} label=${c.label} hideLabel /></div></div>`; })}</div>
       </div>`}
     </div>

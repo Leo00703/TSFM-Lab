@@ -350,3 +350,8 @@ Fase 3: pagina di confronto tra run, ulteriori viste e rifiniture di visualizzaz
 - **Stop vero:** se un calcolo lungo non guarda il segnale di annullamento, dopo 4 s il processo worker viene terminato e riparte alla richiesta successiva (provato dal vivo: benchmark fermato in 7,7 s). Il benchmark ora indica *prima* quale cella sta misurando.
 - **Modelli dal più grande al più piccolo** ovunque (209M, 123M, 28M, 5M): menu, schede, benchmark, CLI.
 - **Header:** link più compatti e selettore del dispositivo più stretto: a 1280 px il selettore del tema sta dentro il bordo.
+
+### Showcase: tenda trascinabile e timeline con valori (2026-10-27)
+- **Tenda come sul sito ufficiale:** una linea verticale con il quadratino bianco e l'etichetta «Forecast» sul grafico. A sinistra la realtà (bianca), a destra la previsione (arancio) con la realtà in **grigio chiaro** sotto. Si **trascina** (mouse e touch) per cambiare da dove parte la previsione, con la data che segue il quadratino; da tastiera con le frecce (Home/End per i limiti). Sostituisce il cursore separato.
+- **Timeline con i valori:** etichette dell'asse del tempo più leggibili e **cursore sincronizzato** su grafico e righe dei fattori; sotto compaiono data (con l'ora per i dati orari), valore reale, previsione con l'intervallo probabile e il valore di ogni fattore in quell'istante (Yes/No per quelli binari).
+- «Mostra cosa è successo davvero» è ora attivo di default.
