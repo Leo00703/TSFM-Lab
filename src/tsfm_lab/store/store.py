@@ -71,6 +71,7 @@ class RunStore:
         meta = {
             "id": run_id, "created": datetime.now(timezone.utc).isoformat(timespec="seconds"), "label": label,
             "dataset": result.dataset, "config": result.config, "environment": run_meta.get("environment"),
+            "request": run_meta.get("request"),
             "items": {"series": result.item_series, "window": result.item_window, "origin": result.item_origin,
                       "origin_time": result.item_origin_time},
             "models": models_meta,

@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from tsfm_lab.api.jobs import JobManager
+from tsfm_lab.eval import metrics as M
 from tsfm_lab.api.worker import WorkerClient, WorkerCrashed, axis
 from tsfm_lab.data.catalog import DatasetCatalog
 from tsfm_lab.eval.benchmark import SCENARIOS
@@ -379,6 +380,46 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
                 for mid in meta["models"]}
         return ok({"scatter": {"actual": actual[sel], "predicted": pred[sel], "n": int(actual.size)},
                    "residual_hist": hist, "distributions": dist})
+
+    @app.get("/api/compare")
+    def compare(runs: str):
+        ids = [r for r in runs.split(",") if r][:6]
+        if len(ids) < 2:
+            raise HTTPException(422, "choose at least two runs")
+        metas = [store.meta(r) for r in ids]
+        out = []
+        for m in metas:
+            out.append({"id": m["id"], "label": m.get("label"), "created": m["created"], "dataset": m["dataset"],
+                        "config": m["config"], "request": m.get("request"), "items": len(m["items"]["series"]),
+                        "models": {mid: {"name": mm.get("name", mid), "kind": mm.get("kind"), "device": mm["device"], "summary": mm["summary"],
+                                         "warmup_ms": mm.get("warmup_ms"), "compute_ms": sum(mm["batch_ms"]),
+                                         "peak_vram_mb": mm.get("peak_vram_mb"), "load": mm.get("load"), "warnings": len(mm["warnings"])}
+                                   for mid, mm in m["models"].items()}})
+        first = metas[0]
+        same_items = all(m["items"]["series"] == first["items"]["series"] and m["items"]["origin"] == first["items"]["origin"]
+                         for m in metas)
+        return ok({"runs": out, "comparable": {"same_dataset": all(m["dataset"]["id"] == first["dataset"]["id"] for m in metas),
+                                                "same_horizon": all(m["config"]["horizon"] == first["config"]["horizon"] for m in metas),
+                                                "same_items": same_items}})
+
+    @app.get("/api/compare/paired")
+    def compare_paired(a: str, b: str, metric: str = "mase"):
+        """Per-item comparison of two (run:model) entries over identical series/windows."""
+        def load(ref: str):
+            run_id, _, model = ref.partition(":")
+            meta, arrays = store.meta(run_id), store.arrays(run_id)
+            key = f"{model}/item/{metric}"
+            if key not in arrays:
+                raise HTTPException(404, f"{ref} has no metric '{metric}'")
+            return meta, arrays[key].mean(axis=1)
+        ma, xa = load(a)
+        mb, xb = load(b)
+        if ma["items"]["series"] != mb["items"]["series"] or ma["items"]["origin"] != mb["items"]["origin"]:
+            raise HTTPException(422, "these runs did not forecast the same series and windows: a paired comparison needs identical items")
+        ok_mask = np.isfinite(xa) & np.isfinite(xb)
+        wins_b = float((xb[ok_mask] < xa[ok_mask]).mean()) if ok_mask.any() else None
+        return ok({"metric": metric, "a": xa, "b": xb, "series": ma["items"]["series"], "window": ma["items"]["window"],
+                   "n": int(ok_mask.sum()), "b_better_share": wins_b, "skill_b_vs_a": M.skill_score(xb, xa)})
 
     @app.get("/api/runs/{run_id}/export.csv")
     def export_csv(run_id: str):

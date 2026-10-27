@@ -1,5 +1,5 @@
 import { html, useState } from '/vendor/htm-preact.js';
-import { api, useAsync, go, num, pct, pct0, ms, when, params as fmtParams } from '../core.js';
+import { api, useAsync, go, num, pct, pct0, ms, when, waitForJob } from '../core.js';
 import { Card, PageHeader, Section, Button, Tabs, Select, Field, Spinner, ErrorBox, Notice, Table, KV, Collapse, Tag, Eyebrow, download } from '../ui.js';
 import { Figure, barOption, linesOption, fanOption, baseOption, axisStyle, modelColors, quantileStats, isNarrow } from '../charts.js';
 
@@ -7,10 +7,13 @@ const METRICS = { mase: 'MASE', sql: 'SQL', wql: 'WQL' };
 
 function RunList() {
   const [s, reload] = useAsync(() => api('/api/runs'), []);
+  const [sel, setSel] = useState([]);
+  const toggle = (id) => setSel((x) => (x.includes(id) ? x.filter((i) => i !== id) : x.length < 6 ? [...x, id] : x));
   const del = async (r) => { if (confirm('Delete this run and its stored forecasts?')) { await api(`/api/runs/${r.id}`, { method: 'DELETE' }); reload(); } };
   return html`<div><${PageHeader} eyebrow="History" title="Runs">Every experiment is stored with its configuration, environment and raw forecasts, so any chart can be redrawn and any number traced back.<//>
     <${Section}>${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : !s.data.length ? html`<${Card}><p class="text-text-muted">No runs yet. <a class="underline" href="#/experiments">Start an experiment</a>.</p><//>` : html`
-      <${Card} class="!p-3 md:!p-5"><${Table} head=${['When', 'Dataset', 'Models', 'Device', 'Horizon', 'Items', 'MASE (main model)', '']} rows=${s.data.map((r) => [when(r.created), r.dataset_name, r.models.join(', '), r.devices.join(', '), r.horizon, r.n_items,
+      <div class="mb-3 flex flex-wrap items-center gap-3"><${Button} kind="brand" disabled=${sel.length < 2} onClick=${() => go('compare?runs=' + sel.join(','))}>Compare selected (${sel.length})<//><span class="text-body-small text-text-muted">Tick two or more runs of the same dataset and horizon (up to 6).</span></div>
+      <${Card} class="!p-3 md:!p-5"><${Table} head=${['', 'When', 'Dataset', 'Models', 'Device', 'Horizon', 'Items', 'MASE (main model)', '']} rows=${s.data.map((r) => [html`<input type="checkbox" class="size-4 accent-[var(--color-surface-brand)]" aria-label="Select run to compare" checked=${sel.includes(r.id)} onChange=${() => toggle(r.id)} />`, when(r.created), r.dataset_name, r.models.join(', '), r.devices.join(', '), r.horizon, r.n_items,
         num((r.headline[r.models[0]] || {}).mase), html`<span class="flex gap-2"><${Button} small kind="outline" onClick=${() => go('runs/' + r.id)}>Open<//><${Button} small kind="danger" icon="trash" aria-label="Delete run" onClick=${() => del(r)} /></span>`])} /><//>`}<//></div>`;
 }
 
@@ -45,6 +48,7 @@ function RunDetail({ id }) {
   const meta = m.data;
   const ids = meta ? Object.keys(meta.models) : [];
   const focus = ids[0];
+  const [rerun, setRerun] = useState(false);
   const [metric, setMetric] = useState('mase'), [hm, setHm] = useState('mase'), [dm, setDm] = useState('mase'), [aModel, setAModel] = useState(null);
   const model = aModel || focus;
   const [an] = useAsync(() => (meta ? api(`/api/runs/${id}/analysis?model=${model}`) : Promise.resolve(null)), [id, model, !!meta]);
@@ -79,6 +83,7 @@ function RunDetail({ id }) {
   return html`<div><${PageHeader} eyebrow=${`Run · ${when(meta.created)}`} title=${meta.label || meta.dataset.name}>
       ${meta.dataset.name} · ${meta.dataset.n_series} series · horizon ${horizonLen} · ${meta.config.n_windows} windows · ${meta.items.series.length} forecasts per model<//>
     <div class="mt-5 flex flex-wrap gap-2"><a class="btn btn-outline btn-small" href=${`/api/runs/${id}/export.csv`} download>Export CSV</a><a class="btn btn-outline btn-small" href=${`/api/runs/${id}`} target="_blank" rel="noopener">Raw JSON</a>
+      ${meta.request && html`<${Button} small kind="outline" icon="refresh" disabled=${rerun} onClick=${async () => { setRerun(true); try { const j = await api('/api/jobs/experiment', { method: 'POST', body: { ...meta.request, label: (meta.label || meta.dataset.name) + ' (re-run)' } }); const done = await waitForJob(j.id); if (done.status === 'done') go('runs/' + done.result.run_id); else alert(done.error || done.status); } catch (e) { alert(e.message); } setRerun(false); }}>${rerun ? 'Re-running…' : 'Re-run with the same settings'}<//>`}
       <${Button} small kind="danger" icon="trash" onClick=${async () => { if (confirm('Delete this run?')) { await api(`/api/runs/${id}`, { method: 'DELETE' }); go('runs'); } }}>Delete<//>
       <${Button} small kind="outline" onClick=${() => go('runs')}>All runs<//></div>
 

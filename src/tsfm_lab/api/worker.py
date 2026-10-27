@@ -128,7 +128,7 @@ def do_experiment(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
                          max_series=a["max_series"], use_covariates=a["use_covariates"], options=a["options"])
     svc.drop(a["model"])  # free the pooled copy: the experiment loads its own and times it cleanly
     _, run_id = run_experiment(a["model"], ds, cfg, a["device"], tuple(a["baselines"]), svc.store, svc.registry,
-                               a["label"], progress=progress)
+                               a["label"], progress=progress, request=a)
     return {"run_id": run_id}
 
 

@@ -178,3 +178,25 @@ def test_worker_crash_does_not_take_the_server_down(tmp_path, monkeypatch) -> No
         assert again.status_code == 200 and app.state.worker._proc.pid != first_pid
     finally:
         app.state.worker.stop()
+
+
+def test_compare_runs_and_paired_comparison_and_stored_request(client) -> None:
+    def run(model, **extra):
+        body = {"model": model, "dataset": SPEC, "horizon": 24, "windows": 2, "baselines": ["naive"], **extra}
+        done = wait(client, client.post("/api/jobs/experiment", json=body).json()["id"])
+        assert done["status"] == "done", done
+        return done["result"]["run_id"]
+
+    a, b = run("drift"), run("seasonal-naive", label="second")
+    meta = client.get(f"/api/runs/{a}").json()
+    assert meta["request"]["model"] == "drift" and meta["request"]["dataset"]["id"] == "multi_seasonality"
+    cmp = client.get(f"/api/compare?runs={a},{b}").json()
+    assert [r["id"] for r in cmp["runs"]] == [a, b] and cmp["comparable"] == {"same_dataset": True, "same_horizon": True, "same_items": True}
+    assert cmp["runs"][1]["label"] == "second" and "mase" in cmp["runs"][0]["models"]["drift"]["summary"]
+    assert client.get(f"/api/compare?runs={a}").status_code == 422
+    p = client.get(f"/api/compare/paired?a={a}:naive&b={b}:seasonal-naive&metric=mase").json()
+    assert p["n"] == 6 and len(p["a"]) == 6 and p["b_better_share"] is not None and p["skill_b_vs_a"]["skill"] > 0
+    other = {**SPEC, "params": {"n_series": 2, "length": 260}}
+    c = wait(client, client.post("/api/jobs/experiment", json={"model": "naive", "dataset": other, "horizon": 24, "windows": 2, "baselines": []}).json()["id"])["result"]["run_id"]
+    assert client.get(f"/api/compare?runs={a},{c}").json()["comparable"]["same_items"] is False
+    assert client.get(f"/api/compare/paired?a={a}:naive&b={c}:naive").status_code == 422

@@ -1,6 +1,6 @@
 # Resoconto pre-sviluppo — Timestral Sandbox
 
-Data: 2026-10-27 · Stato: **Fasi 0, 1 e 2 completate (§12); prossima: Fase 3**. Repository: `tsfm-lab` (privato)
+Data: 2026-10-27 · Stato: **Fasi 0-3 completate (§12); prossima: Fase 4**. Repository: `tsfm-lab` (privato)
 
 Questo documento riassume requisiti, ricerca (modello + identità visiva Mistral), architettura proposta, rischi e piano di lavoro. Ogni dato è marcato come **verificato** (letto da fonte primaria o misurato), **dichiarato dal vendor** o **inferenza/proposta**.
 
@@ -328,3 +328,8 @@ Fase 3: pagina di confronto tra run, ulteriori viste e rifiniture di visualizzaz
 ### Isolamento dell'inferenza e accesso da Tailscale (2026-10-27)
 - **Worker separato:** previsioni, esperimenti, benchmark e download girano in un processo dedicato (avviato al primo uso con `spawn`, nessuno stato CUDA ereditato). Un crash nativo di PyTorch/CUDA ferma solo il worker: il server risponde con un errore chiaro e il worker riparte alla richiesta successiva. Avanzamento e annullamento passano per coda ed evento. Verificato con un test che simula un crash (`exit code 13`) e dal vivo su GPU: prima chiamata 6,2 s (avvio worker + caricamento), poi 40 ms; annullamento di un benchmark lungo dopo ~11 s (attende la fine della cella in corso).
 - **Tailscale:** `python -m tsfm_lab serve --tailscale` ascolta solo su loopback e sull'IP Tailscale del PC (non sulla LAN), accetta solo quei nomi host e rifiuta gli altri. Non c'è autenticazione: chiunque sia nella tailnet può usare l'app (eseguire job, caricare file, cancellare pesi). Non usare Funnel.
+
+### Fase 3 — confronto tra run (2026-10-27)
+- **Pagina Confronto** (`#/compare?runs=A,B,…`, fino a 6 run, selezionabili dall'elenco Runs): tabella **«cosa è cambiato»** che evidenzia solo i campi diversi (modello, dispositivo, dataset, orizzonte, finestre, opzioni…), avvisi se i run non sono confrontabili (dataset, orizzonte o finestre diversi), barre per metrica, tabella con calcolo/avvio a freddo/VRAM e **confronto appaiato previsione per previsione** (dispersione con diagonale, quota di finestre vinte e guadagno tipico come media geometrica): una media può nascondere un modello che perde nella maggior parte delle finestre.
+- **Rilancia con le stesse impostazioni:** ogni run salva la richiesta originale; il dettaglio ha il pulsante per rieseguirla.
+- Provata sul caso CPU contro GPU dello stesso esperimento (28M, `regime_switching`): 36 finestre identiche, appaiate. Test API aggiunto (66 in totale).

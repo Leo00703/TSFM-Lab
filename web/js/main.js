@@ -10,6 +10,7 @@ import { Experiments } from './pages/experiments.js';
 import { Runs } from './pages/runs.js';
 import { System } from './pages/system.js';
 import { About } from './pages/about.js';
+import { Compare } from './pages/compare.js';
 
 const PAGES = [
   { id: 'overview', label: 'Overview', icon: 'home', C: Overview },
@@ -20,6 +21,7 @@ const PAGES = [
   { id: 'runs', label: 'Runs', icon: 'history', C: Runs },
   { id: 'system', label: 'System', icon: 'chip', C: System },
   { id: 'about', label: 'About', icon: 'info', C: About },
+  { id: 'compare', label: 'Compare', icon: 'chart', C: Compare, hidden: true },
 ];
 
 function ThemeSwitch() {
@@ -39,14 +41,14 @@ function Nav({ page }) {
   return html`<nav class="sticky top-0 z-30 border-b border-border-primary bg-surface-brand-primary/95 backdrop-blur" aria-label="Main">
     <div class="mx-auto flex h-12 max-w-6xl items-stretch border-x border-border-primary">
       <a href="#/overview" class="flex shrink-0 items-center gap-2.5 whitespace-nowrap px-4 font-mistral text-[1.0625rem] font-medium" aria-label="tsfm-lab home"><${Logo} size=${22} />tsfm-lab</a>
-      <div class="hidden items-stretch border-l border-border-primary xl:flex">${PAGES.filter((p) => p.id !== 'about').map((p) => html`<div class="border-r border-border-primary">${link(p)}</div>`)}</div>
+      <div class="hidden items-stretch border-l border-border-primary xl:flex">${PAGES.filter((p) => p.id !== 'about' && !p.hidden).map((p) => html`<div class="border-r border-border-primary">${link(p)}</div>`)}</div>
       <div class="ml-auto flex shrink-0 items-center gap-3 border-l border-border-primary px-3">
         <${DeviceSelect} compact class="hidden sm:flex" /><div class="hidden md:block"><${ThemeSwitch} /></div>
         <button type="button" class="btn btn-outline btn-small xl:hidden" aria-label=${open ? 'Close menu' : 'Open menu'} aria-expanded=${open} onClick=${() => setOpen(!open)}><${Icon} name=${open ? 'close' : 'menu'} size=${16} /></button>
       </div>
     </div>
     ${open && html`<div class="border-t border-border-primary bg-surface-brand-primary xl:hidden"><div class="mx-auto max-w-6xl border-x border-border-primary">
-      ${PAGES.map((p) => html`<div class="border-b border-border-primary last:border-0">${link(p, 'w-full')}</div>`)}
+      ${PAGES.filter((p) => !p.hidden).map((p) => html`<div class="border-b border-border-primary last:border-0">${link(p, 'w-full')}</div>`)}
       <div class="flex flex-wrap items-center justify-between gap-3 border-t border-border-primary p-4"><${DeviceSelect} class="sm:hidden w-full" /><${ThemeSwitch} /></div></div></div>`}
   </nav>`;
 }
@@ -71,7 +73,7 @@ function App() {
   const current = PAGES.find((p) => p.id === page) || PAGES[0];
   return html`<div class="min-h-dvh flex flex-col"><a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-surface-brand-primary focus:p-3">Skip to content</a>
     <${Nav} page=${current.id} />
-    <main id="main" class="mx-auto w-full max-w-6xl flex-1 border-x border-border-primary px-4 pb-16 md:px-8"><${current.C} route=${route} key=${current.id + (route.query.ds || '')} /></main>
+    <main id="main" class="mx-auto w-full max-w-6xl flex-1 border-x border-border-primary px-4 pb-16 md:px-8"><${current.C} route=${route} key=${current.id + (route.query.ds || '') + (route.query.runs || '')} /></main>
     <${Footer} /></div>`;
 }
 

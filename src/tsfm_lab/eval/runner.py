@@ -16,7 +16,8 @@ DEFAULT_BASELINES = ("naive", "seasonal-naive")
 def run_experiment(model_id: str, dataset: Dataset, cfg: BacktestConfig, device: str = "cpu",
                    baselines: tuple[str, ...] = DEFAULT_BASELINES, store: RunStore | None = None,
                    registry: Registry | None = None, label: str | None = None,
-                   progress: Callable[[int, int, str], None] | None = None) -> tuple[BacktestResult, str | None]:
+                   progress: Callable[[int, int, str], None] | None = None,
+                   request: dict[str, Any] | None = None) -> tuple[BacktestResult, str | None]:
     """Run ``model_id`` (on ``device``) plus the baselines on the same windows. Returns (result, run_id)."""
     registry = registry or default_registry()
     wanted = [model_id, *[b for b in baselines if b != model_id]]
@@ -33,7 +34,7 @@ def run_experiment(model_id: str, dataset: Dataset, cfg: BacktestConfig, device:
             adapter.unload()
     run_id = None
     if store is not None:
-        meta: dict[str, Any] = {"environment": environment_info(), "models": {}}
+        meta: dict[str, Any] = {"environment": environment_info(), "models": {}, "request": request}
         for mid in wanted:
             info = registry.info(mid)
             meta["models"][mid] = {"load": load_meta[mid], "name": info.name, "kind": info.kind,
