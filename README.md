@@ -7,7 +7,7 @@ measurements and configuration needed to judge it honestly.
 
 > **Unofficial.** This is an independent tool, not affiliated with or endorsed by Mistral AI.
 
-**Status:** Phases 0-1 done (isolated environment, model/dataset/metric core, CLI). The web app comes next.
+**Status:** Phases 0-2 done (isolated environment, model/dataset/metric core, CLI, local web app).
 The full plan, research notes and design decisions are in [`RESOCONTO.md`](RESOCONTO.md) (Italian).
 
 ## Quick start
@@ -65,6 +65,18 @@ before and after an install.
   git-ignored `web/assets/mistral/` for local private use only. Without them the UI falls back to Inter.
 - Inter and Space Mono (`web/fonts/`) are licensed under the SIL Open Font License.
 - Licence for this project's own code: not yet chosen.
+
+## Web app
+
+```bash
+.venv\Scripts\python -m tsfm_lab serve          # http://127.0.0.1:8765 (local only; .venv/bin/python on Linux/macOS)
+```
+
+Dark by default with a light theme switch, responsive down to phone width. Pages: Overview, Models (download weights,
+specs), Datasets (bundled scenarios, your own files), Playground (single forecast), Experiments (backtests),
+Runs (every metric, calibration, per-step error, reproducibility), System (CPU vs GPU benchmark). The compute device
+(CPU or CUDA) is selectable at any time, even when a GPU is present. The UI is built with Tailwind (standalone CLI
+installed by `bootstrap.py`) and plain JavaScript; `scripts/fetch_vendor.py` re-fetches the two vendored libraries.
 
 ## Command line
 

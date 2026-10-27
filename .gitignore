@@ -25,3 +25,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local tooling config
+/.claude/
+/web/dist/

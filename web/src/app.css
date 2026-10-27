@@ -1,0 +1,153 @@
+/*
+ * Design tokens replicate mistral.ai's published stylesheet (Tailwind v4, measured 2026-10-27), using the
+ * same token names so markup patterns carry over. Zinc steps are written as hex (Tailwind's own values)
+ * because the chart library cannot parse oklch(). Dark is the default; the light set was measured with
+ * the site's theme switch. Status colours for dark mode were not published and are derived here.
+ */
+@import "tailwindcss";
+@source "../index.html";
+@source "../js";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---- fonts: ALTMistral is Mistral's proprietary typeface, loaded only if present locally (git-ignored);
+        Inter and Space Mono are SIL OFL and ship with the project. ---- */
+@font-face { font-family: ALTMistral; src: url(/assets/mistral/fonts/ALTMistral-Regular.woff2) format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: ALTMistral; src: url(/assets/mistral/fonts/ALTMistral-Italic.woff2) format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: ALTMistral; src: url(/assets/mistral/fonts/ALTMistral-Medium.woff2) format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: ALTMistral; src: url(/assets/mistral/fonts/ALTMistral-MediumItalic.woff2) format("woff2"); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: ALTMistral; src: url(/assets/mistral/fonts/ALTMistral-Semibold.woff2) format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: ALTMistral; src: url(/assets/mistral/fonts/ALTMistral-SemiboldItalic.woff2) format("woff2"); font-weight: 600; font-style: italic; font-display: swap; }
+@font-face { font-family: "Space Mono"; src: url(/fonts/SpaceMono-Regular.woff2) format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: Inter; src: url(/fonts/Inter-VariableFont.woff2) format("woff2-variations"); font-weight: 100 900; font-style: normal; font-display: swap; font-optical-sizing: auto; }
+
+@theme static {
+  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mistral: "ALTMistral", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* type scale (mistral.ai tokens; the site enlarges h1/h2 on desktop) */
+  --text-display: 2.5rem;       --text-display--line-height: 3rem;
+  --text-h1: 2.5rem;            --text-h1--line-height: 3rem;     --text-h1--letter-spacing: -0.02em;
+  --text-h2: 1.75rem;           --text-h2--line-height: 2.5rem;
+  --text-h3: 1.5rem;            --text-h3--line-height: 1.75rem;
+  --text-h4: 1.25rem;           --text-h4--line-height: 1.5rem;
+  --text-h6: 1rem;              --text-h6--line-height: 1.5rem;
+  --text-body-large: 1rem;      --text-body-large--line-height: 1.5rem;
+  --text-body-small: 0.8125rem; --text-body-small--line-height: 1.25rem;
+  --text-button-large: 1rem;    --text-button-small: 0.8125rem;
+  --text-eyebrow: 0.75rem;      --text-eyebrow--line-height: 1rem;
+
+  /* palette */
+  --color-steel-50: #f9f9fa;  --color-steel-100: #f1f1f3; --color-steel-300: #ccccd1; --color-steel-400: #a1a1aa;
+  --color-steel-500: #6d6d78; --color-steel-600: #55555e; --color-steel-700: #3d3d43; --color-steel-800: #27272b;
+  --color-steel-900: #1a1a1e; --color-steel-950: #101013;
+  --color-cream-50: #fafaf4;  --color-cream-100: #f2f1e8; --color-cream-200: #e4e2d6; --color-cream-300: #e4e2d6;
+  --color-cream-400: #bfbcac; --color-cream-600: #8b8879;
+  --color-orange-50: #fff0eb; --color-orange-100: #ffdccf; --color-orange-200: #ffb598; --color-orange-400: #ff6529;
+  --color-orange-500: #ff5229; --color-orange-600: #fa500f;
+  --color-tangerine-500: #ff8204; --color-tangerine-700: #b75002;
+  --color-yellow-100: #fff4d2; --color-yellow-300: #ffdd73; --color-yellow-400: #fec63a; --color-yellow-500: #ffaf01; --color-yellow-700: #a77201;
+  --color-red-100: #ffe0de; --color-red-400: #ff6660; --color-red-600: #e51300; --color-red-700: #ad0e00;
+  --color-blue-100: #e0efff; --color-blue-400: #55b3fb; --color-blue-600: #0082e6; --color-blue-700: #0262bf;
+  --color-green-100: #ddf8ee; --color-green-400: #6cd2a7; --color-green-600: #3aa475; --color-green-700: #318e68;
+  --color-lavender-400: #c86ee2; --color-lavender-500: #b442d7; --color-pink-400: #ff56c6;
+  --color-zinc-50: #fafafa; --color-zinc-100: #f4f4f5; --color-zinc-200: #e4e4e7; --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa; --color-zinc-500: #71717a; --color-zinc-700: #3f3f46; --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b; --color-zinc-950: #09090b;
+
+  /* semantic tokens: LIGHT values (overridden under .dark) */
+  --color-surface-brand-primary: #fbfbf8;
+  --color-surface-brand-secondary: #f5f4ef;
+  --color-surface-brand-tertiary: #ebe9e0;
+  --color-surface-brand: #ff5229;
+  --color-border-primary: #e4e3de;
+  --color-border-secondary: #c9c9c4;
+  --color-text-primary: #18181b;
+  --color-text-secondary: #27272a;
+  --color-text-tertiary: #3f3f46;
+  --color-text-muted: #71717a;
+  --color-text-invert: #fafafa;
+  --color-action-primary: #09090b;
+  --color-action-secondary: #18181b;
+  --color-action-ghost-1: #07070b0d;
+  --color-action-ghost-2: #07070b1a;
+  --color-surface-success: #ddf8ee;  --color-text-success: #318e68;
+  --color-surface-warning: #fff4d2;  --color-text-warning: #a77201;
+  --color-surface-destructive: #ffe0de; --color-text-destructive: #ad0e00;
+  --color-surface-informative: #e0efff; --color-text-informative: #0262bf;
+
+  /* chart tokens (names as on mistral.ai) */
+  --color-chart-brand-1: #ff5229; --color-chart-brand-2: #ff8204; --color-chart-brand-3: #ffaf01;
+  --color-chart-brand-4: #c4001d; --color-chart-brand-5: #ffdd73;
+  --color-chart-blue: #0082e6; --color-chart-green: #3aa475; --color-chart-lavender: #b442d7; --color-chart-pink: #ff56c6;
+  --color-chart-neutral-1: #bfbcac; --color-chart-neutral-2: #8b8879; --color-chart-neutral-3: #6d6d78;
+  --color-chart-grid: #e4e3de; --color-chart-axis: #c9c9c4; --color-chart-label: #71717a;
+}
+
+.dark {
+  --color-surface-brand-primary: #101013;
+  --color-surface-brand-secondary: #1a1a1e;
+  --color-surface-brand-tertiary: #27272b;
+  --color-border-primary: #27272b;
+  --color-border-secondary: #474754;
+  --color-text-primary: #fafaf4;
+  --color-text-secondary: #f2f1e8;
+  --color-text-tertiary: #a1a1aa;
+  --color-text-muted: #a1a1aa;
+  --color-text-invert: #1a1a1e;
+  --color-action-primary: #f4f4f5;
+  --color-action-secondary: #fafafa;
+  --color-action-ghost-1: #f9f9fb0d;
+  --color-action-ghost-2: #f9f9fb1a;
+  --color-surface-success: #11291f;  --color-text-success: #6cd2a7;
+  --color-surface-warning: #2c2410;  --color-text-warning: #fec63a;
+  --color-surface-destructive: #331513; --color-text-destructive: #ff6660;
+  --color-surface-informative: #11202f; --color-text-informative: #55b3fb;
+  --color-chart-brand-4: #ff6660; --color-chart-blue: #55b3fb; --color-chart-green: #6cd2a7; --color-chart-lavender: #c86ee2;
+  --color-chart-neutral-1: #ccccd1; --color-chart-neutral-2: #6d6d78; --color-chart-neutral-3: #55555e;
+  --color-chart-grid: #27272b; --color-chart-axis: #474754; --color-chart-label: #a1a1aa;
+  color-scheme: dark;
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: 4rem; }
+  body { @apply bg-surface-brand-primary text-text-primary font-inter antialiased; -webkit-font-smoothing: antialiased; }
+  /* A bare `grid` must never grow to its widest child (charts/tables) on narrow screens; utilities override this. */
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  ::selection { background: #ff522944; }
+  :focus-visible { outline: 2px solid var(--color-surface-brand); outline-offset: 2px; }
+  input[type="range"] { accent-color: var(--color-surface-brand); }
+  h1, h2, h3, h4, .font-heading { font-family: var(--font-mistral); font-weight: 500; }
+}
+
+@layer components {
+  .eyebrow { @apply font-mono uppercase text-eyebrow text-text-muted; letter-spacing: .02em; }
+  .page-title { @apply font-mistral text-h2 md:text-[2.75rem] md:leading-[3.25rem] font-medium; }
+  .section-title { @apply font-mistral text-h3 font-medium; }
+
+  .btn { @apply inline-flex items-center justify-center gap-2 h-10 min-w-10 px-3 rounded-md text-button-large select-none
+                transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none; }
+  .btn-small { @apply h-8 min-w-8 px-2.5 text-button-small; }
+  .btn-primary { @apply bg-action-primary text-text-invert hover:bg-action-secondary; }
+  .btn-brand { @apply bg-surface-brand text-white hover:brightness-110; }
+  .btn-ghost { @apply bg-action-ghost-1 hover:bg-action-ghost-2 text-text-primary; }
+  .btn-outline { @apply border border-border-primary text-text-primary hover:bg-action-ghost-1; }
+  .btn-danger { @apply border border-border-primary text-text-destructive hover:bg-action-ghost-1; }
+
+  .card { @apply rounded-xl border border-border-primary bg-surface-brand-secondary p-5 md:p-8; }
+  .card-tight { @apply rounded-xl border border-border-primary bg-surface-brand-secondary p-4 md:p-5; }
+  .input { @apply h-10 w-full rounded-md border border-border-primary bg-surface-brand-primary px-3 text-text-primary
+                  placeholder:text-text-muted; }
+  .label { @apply block mb-1.5 text-body-small text-text-muted; }
+  .tag { @apply inline-flex items-center rounded-sm bg-surface-brand-tertiary px-2 py-0.5 font-mono text-[0.6875rem] uppercase text-text-secondary; letter-spacing: .02em; }
+  .tabs { @apply inline-flex flex-wrap gap-2; }
+  .tab { @apply rounded-md px-4 h-10 text-button-large bg-surface-brand-secondary border border-border-primary text-text-primary cursor-pointer transition-colors hover:bg-action-ghost-1; }
+  .tab[aria-selected="true"] { @apply bg-action-primary text-text-invert border-transparent; }
+  .data-table { @apply w-full text-left text-body-small; }
+  .data-table th { @apply font-mono uppercase text-[0.6875rem] text-text-muted font-normal px-3 py-2 border-b border-border-primary whitespace-nowrap; letter-spacing: .02em; }
+  .data-table td { @apply px-3 py-2.5 border-b border-border-primary whitespace-nowrap; }
+  .data-table tr:last-child td { border-bottom: 0; }
+  .num { font-variant-numeric: tabular-nums; }
+}

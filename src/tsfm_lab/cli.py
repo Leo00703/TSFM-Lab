@@ -98,6 +98,23 @@ def cmd_run(args: argparse.Namespace) -> None:
         print(f"saved run {run_id}")
 
 
+def cmd_serve(args: argparse.Namespace) -> None:
+    import threading
+    import webbrowser
+
+    import uvicorn
+
+    from tsfm_lab.api.app import create_app
+    from tsfm_lab.api.build_css import ensure_css
+
+    ensure_css()
+    url = f"http://127.0.0.1:{args.port}"
+    print(f"tsfm-lab at {url}  (local only; Ctrl+C to stop)")
+    if not args.no_browser:
+        threading.Timer(1.2, lambda: webbrowser.open(url)).start()
+    uvicorn.run(create_app(), host="127.0.0.1", port=args.port, log_level="warning")
+
+
 def cmd_runs(_: argparse.Namespace) -> None:
     rows = [[r["id"], r["dataset_id"], ",".join(r["models"]), ",".join(r["devices"]), str(r["horizon"]),
              str(r["n_items"])] for r in RunStore().list_runs()]
@@ -131,6 +148,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-store", action="store_true")
     p.add_argument("--label")
     p.set_defaults(fn=cmd_run)
+    p = sub.add_parser("serve", help="start the local web app")
+    p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--no-browser", action="store_true")
+    p.set_defaults(fn=cmd_serve)
     sub.add_parser("runs", help="list stored runs").set_defaults(fn=cmd_runs)
     p = sub.add_parser("show", help="print a stored run's metadata"); p.add_argument("run_id"); p.set_defaults(fn=cmd_show)
     args = parser.parse_args(argv)

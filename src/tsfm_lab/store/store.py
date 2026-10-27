@@ -114,3 +114,34 @@ class RunStore:
         shutil.rmtree(self.root / run_id, ignore_errors=True)
         with sqlite3.connect(self.db) as con:
             con.execute("DELETE FROM runs WHERE id = ?", (run_id,))
+
+
+class BenchmarkStore:
+    """Benchmark results as JSON files under ``runs/benchmarks/``."""
+
+    def __init__(self, root: Path | None = None) -> None:
+        self.root = (Path(root) if root else find_root() / "runs") / "benchmarks"
+        self.root.mkdir(parents=True, exist_ok=True)
+
+    def save(self, result: dict[str, Any]) -> str:
+        bench_id = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + result["model"]
+        result = {**result, "id": bench_id}
+        (self.root / f"{bench_id}.json").write_text(json.dumps(to_jsonable(result), indent=1), encoding="utf-8")
+        return bench_id
+
+    def list(self) -> list[dict[str, Any]]:
+        out = []
+        for path in sorted(self.root.glob("*.json"), reverse=True):
+            d = json.loads(path.read_text(encoding="utf-8"))
+            out.append({"id": d["id"], "model": d["model"], "name": d["name"], "created": d["created"],
+                        "devices": list(d["devices"]), "repeats": d["repeats"]})
+        return out
+
+    def get(self, bench_id: str) -> dict[str, Any]:
+        path = self.root / f"{Path(bench_id).name}.json"
+        if not path.is_file():
+            raise KeyError(f"unknown benchmark '{bench_id}'")
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def delete(self, bench_id: str) -> None:
+        (self.root / f"{Path(bench_id).name}.json").unlink(missing_ok=True)

@@ -1,6 +1,6 @@
 # Resoconto pre-sviluppo — Timestral Sandbox
 
-Data: 2026-10-27 · Stato: **Fasi 0 e 1 completate (§12); prossima: Fase 2 (API + interfaccia)**. Repository: `tsfm-lab` (privato)
+Data: 2026-10-27 · Stato: **Fasi 0, 1 e 2 completate (§12); prossima: Fase 3**. Repository: `tsfm-lab` (privato)
 
 Questo documento riassume requisiti, ricerca (modello + identità visiva Mistral), architettura proposta, rischi e piano di lavoro. Ogni dato è marcato come **verificato** (letto da fonte primaria o misurato), **dichiarato dal vendor** o **inferenza/proposta**.
 
@@ -287,5 +287,40 @@ Il modello, pre-addestrato soprattutto su dati sintetici, può trovare "facili" 
 
 **Bug upstream #7:** lo scenario `flat_price_covariate` è pronto e la mitigazione (`mask_flat_covariates`) funziona (q99 massimo 23,3 → 7,0, contro 6,6 senza covariate). Con il **28M non si riproduce l'esplosione** (coerente con quanto riportato upstream, dove i casi estremi erano sul 209M). Riprodurre sul 209M richiede il download dei suoi pesi (837 MB): in attesa del tuo ok.
 
+### Fase 2 — completata (2026-10-27)
+**Pesi:** scaricati tutti e 4 i checkpoint Timestral nella cache del progetto (5M 20 MB, 28M 106 MB, 123M 468 MB, 209M 798 MB), come da tuo ok.
+
+**Costruito:** API FastAPI locale (solo 127.0.0.1, rifiuta Host e Origin diversi da localhost) e interfaccia web **HTML + Tailwind v4 + JavaScript** (Preact/htm e ECharts inclusi, senza CDN né Node). Comando: `python -m tsfm_lab serve`. Pagine: **Overview**, **Models** (specifiche reali dai checkpoint, download/rimozione pesi, avvisi su licenza e problemi noti, benchmark del vendor *etichettati come non misurati*), **Datasets** (16 scenari, anteprima, caricamento di file con mappatura colonne e rapporto di validazione), **Playground** (previsione singola con ventaglio di intervalli 50/80/90/98%, covariate, confronto con baseline), **Experiments** (backtest in background con avanzamento e annullamento), **Runs** (riepilogo, accuratezza, errore per passo, calibrazione, copertura, distribuzione, dispersione, residui, navigatore delle singole previsioni, esportazione CSV/JSON, blocco di riproducibilità), **System** (hardware, dispositivi, disco, **benchmark CPU contro GPU** con avvio a freddo separato), **About** (licenze e glossario delle metriche).
+
+**Design Mistral:** token estratti dal loro CSS con gli stessi nomi (superfici, bordi, testo, azioni, palette dei grafici), font ALTMistral/Inter/Space Mono, navbar a celle con linee sottili, card da 12 px, etichette mono maiuscole, icone pixel disegnate da noi, barre dei grafici da zero (arancio per il modello principale). **Tema scuro di default** con selettore Sistema/Chiaro/Scuro come sul loro sito (il chiaro è stato verificato a schermo).
+
+**Mobile:** viewport corretto, navbar che diventa menu a comparsa sotto 1280 px, griglie a colonna singola, tabelle con scorrimento interno, grafici più compatti, bersagli touch da 40 px, salto automatico al risultato dopo una previsione. Verificato a 375 px: **nessuna pagina ha scorrimento orizzontale** (controllo automatico su tutte le 9 pagine).
+
+**Selettore CPU/GPU:** nella barra superiore (e nei form), sempre disponibile anche con la GPU presente; i dispositivi non supportati compaiono disattivati con la motivazione.
+
+**Verifica:** 64 test (CPU e GPU), compresi quelli dell'API (sicurezza locale, flusso esperimento→run→analisi→CSV, upload e mappatura, benchmark, annullamento) e uno che verifica che l'interfaccia e le librerie vengano servite. Interfaccia provata nel browser integrato (desktop scuro e chiaro, mobile): nessun errore in console. `leakcheck` ripetuto: nulla fuori dal progetto.
+
+**Difetti trovati provando davvero l'app e corretti:** `/api/system` scorreva 40.000 file a ogni apertura (ora il disco è un endpoint a parte); dimensioni dei pesi "0 B" su Windows (gli snapshot HF non usano symlink); navbar che sforava a 1024 px; colonne di griglia implicite che si allargavano al grafico (regola base per tutte le griglie); navigazione tra Dataset e Playground che non cambiava dataset; fan chart che mostrava tutta la storia invece della previsione.
+
+**Bug upstream #7, riprodotto in app e con i numeri (209M, CUDA, 16 serie, scenario `flat_price_covariate`):**
+
+| Configurazione | q99 massimo mediano sulle serie a rischio | Serie con q99 > 50 (su 32) | SQL |
+|---|---|---|---|
+| Predefinita (symmetric on) | **7.265** | 17 | 13,25 |
+| `mask_flat_covariates` | 6,5 | 0 | 0,483 |
+| `symmetric_averaging` off | 16,7 (worst 4.199) | 7 | 0,627 |
+| Senza covariate | 6,6 | 0 | 0,482 |
+
+La domanda reale è Poisson(2). Sul 123M: 12,1 (worst 95,7) predefinito, 6,2 con la maschera. Il 28M non esplode. Disattivare solo la simmetria **non basta**. Nell'app si vede aprendo il run: avvisi espliciti, SQL 7,7 contro 0,77 della baseline, pur con MASE buono (+27,9%) perché la mediana resta sensata.
+
+**Benchmark CPU contro GPU (Timestral-5M, Ryzen 5 3600 / RTX 5060 Ti):** setup di Mistral 29,6 ms su CPU contro 50,9 ms su GPU a caldo; avvio a freddo 30 ms (CPU) e 129 ms (GPU); a batch 128 la GPU fa **2.232 serie/s contro 129** (17 volte). Previsioni CPU e GPU identiche entro `3e-5`. Misure singole sul 5M.
+
+**Deviazioni dal piano e limiti noti (onestà):**
+- L'inferenza gira **nello stesso processo del server** (thread), non in un processo worker separato come previsto: i job sono serializzati, ma un crash di PyTorch fermerebbe anche il server. Resta da fare.
+- **Dataset online** (Hugging Face) e badge di contaminazione per i dataset pubblici: Fase 4. Per ora i file caricati sono marcati "unknown".
+- L'upload di file è coperto dai test API, ma non l'ho provato cliccando nel browser (gli strumenti non consentono di scegliere un file).
+- Linux e macOS non testati; su Mac la GPU (MPS) resta disattivata per il bug upstream #6.
+- ALTMistral e logo funzionano solo in locale (file ignorati da git); senza di essi l'interfaccia ripiega su Inter.
+
 ### Prossimi passi
-Fase 2: API FastAPI e interfaccia web con i token Mistral (tema scuro di default, chiaro opzionale), **responsive e adattiva per mobile**, pagine Modelli, Playground, Sistema (selettore CPU/GPU) ed Esperimenti.
+Fase 3: pagina di confronto tra run, ulteriori viste e rifiniture di visualizzazione. Fase 4: dataset online, badge di contaminazione, preset delle covariate. Fase 5: processo worker per l'inferenza, controllo di conformità del brand, CI su Windows/Linux/macOS, secondo adapter di prova (es. Chronos-2).
