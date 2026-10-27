@@ -7,7 +7,7 @@ measurements and configuration needed to judge it honestly.
 
 > **Unofficial.** This is an independent tool, not affiliated with or endorsed by Mistral AI.
 
-**Status:** Phase 0 (isolated environment, CPU/CUDA smoke test). The web app comes next.
+**Status:** Phases 0-1 done (isolated environment, model/dataset/metric core, CLI). The web app comes next.
 The full plan, research notes and design decisions are in [`RESOCONTO.md`](RESOCONTO.md) (Italian).
 
 ## Quick start
@@ -65,3 +65,16 @@ before and after an install.
   git-ignored `web/assets/mistral/` for local private use only. Without them the UI falls back to Inter.
 - Inter and Space Mono (`web/fonts/`) are licensed under the SIL Open Font License.
 - Licence for this project's own code: not yet chosen.
+
+## Command line
+
+```bash
+.venv\Scripts\python -m tsfm_lab models        # registered models (use .venv/bin/python on Linux/macOS)
+.venv\Scripts\python -m tsfm_lab devices       # CPU / CUDA devices
+.venv\Scripts\python -m tsfm_lab datasets      # bundled synthetic scenarios
+.venv\Scripts\python -m tsfm_lab run --model timestral-5m --dataset multi_seasonality --device cuda --horizon 48
+.venv\Scripts\python -m tsfm_lab run --model timestral-28m --dataset file:my_data.csv --targets sales
+```
+
+`run` backtests the model and the baselines on identical rolling windows and stores the run under `runs/`.
+To add a model, write one `ModelAdapter` and register it (see `src/tsfm_lab/models/`).

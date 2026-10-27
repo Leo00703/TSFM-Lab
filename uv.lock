@@ -79,7 +79,7 @@ resolution-markers = [
     "sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cuda-pathfinder", marker = "extra == 'extra-8-tsfm-lab-cu128' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "cuda-pathfinder", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/b2/8cef7e30e02e7ec3bf157ec192c0522546ed807c262752e884c693813494/cuda_bindings-12.9.10-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:aa1e07b12ae190a01ba3e0c85253be6ec1bfa13545a88eac5fd45ae4b0c04333", size = 7063851, upload-time = "2026-10-15T14:12:01.26Z" },
@@ -98,7 +98,7 @@ resolution-markers = [
     "sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cuda-pathfinder", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "cuda-pathfinder", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d7/38/87909f62598d02d9e5c536326aed1755f6bfa190285507b962bb601e0005/cuda_bindings-13.4.4-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b346bfe1dda49537537c06cc4727b2210d949d8aee883cb591bca46581629d00", size = 6488222, upload-time = "2026-10-14T12:35:20.703Z" },
@@ -132,37 +132,37 @@ wheels = [
 
 [package.optional-dependencies]
 cublas = [
-    { name = "nvidia-cublas-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cublas-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cudart = [
-    { name = "nvidia-cuda-runtime-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cufft = [
-    { name = "nvidia-cufft-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cufft-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cufile = [
     { name = "nvidia-cufile-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cuda-cupti-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 curand = [
-    { name = "nvidia-curand-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-curand-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cusolver = [
-    { name = "nvidia-cusolver-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cusolver-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cusparse-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 nvjitlink = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-nvtx-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 
 [[package]]
@@ -178,37 +178,46 @@ wheels = [
 
 [package.optional-dependencies]
 cublas = [
-    { name = "nvidia-cublas", marker = "(sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cublas", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cudart = [
-    { name = "nvidia-cuda-runtime", marker = "(sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cuda-runtime", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cufft = [
-    { name = "nvidia-cufft", marker = "(sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cufft", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cufile = [
     { name = "nvidia-cufile", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti", marker = "(sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cuda-cupti", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 curand = [
-    { name = "nvidia-curand", marker = "(sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-curand", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cusolver = [
-    { name = "nvidia-cusolver", marker = "(sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cusolver", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse", marker = "(sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cusparse", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 nvjitlink = [
-    { name = "nvidia-nvjitlink", marker = "(sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-nvjitlink", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc", marker = "(sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx", marker = "(sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-nvtx", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
+]
+
+[[package]]
+name = "et-xmlfile"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/38/af70d7ab1ae9d4da450eeec1fa3918940a5fafb9055e934af8d6eb0c2313/et_xmlfile-2.0.0.tar.gz", hash = "sha256:dab3f4764309081ce75662649be815c4c9081e88f0837825f90fd28317d4da54", size = 17234, upload-time = "2024-10-25T17:25:40.039Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/8b/5fe2cc11fee489817272089c4203e679c63b570a5aaeb18d852ae3cbba6a/et_xmlfile-2.0.0-py3-none-any.whl", hash = "sha256:7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa", size = 18059, upload-time = "2024-10-25T17:25:39.051Z" },
 ]
 
 [[package]]
@@ -536,7 +545,7 @@ name = "nvidia-cudnn-cu12"
 version = "9.19.0.56"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-8-tsfm-lab-cu128' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cublas-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/09/b8/277c51962ee46fa3e5b203ac5f76107c650f781d6891e681e28e6f3e9fe6/nvidia_cudnn_cu12-9.19.0.56-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:08caaf27fe556aca82a3ee3b5aa49a77e7de0cfcb7ff4e5c29da426387a8267e", size = 656910700, upload-time = "2026-02-03T20:40:25.508Z" },
@@ -549,7 +558,7 @@ name = "nvidia-cudnn-cu13"
 version = "9.19.0.56"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cublas", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/84/26025437c1e6b61a707442184fa0c03d083b661adf3a3eecfd6d21677740/nvidia_cudnn_cu13-9.19.0.56-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:6ed29ffaee1176c612daf442e4dd6cfeb6a0caa43ddcbeb59da94953030b1be4", size = 433781201, upload-time = "2026-02-03T20:40:53.805Z" },
@@ -562,7 +571,7 @@ name = "nvidia-cufft"
 version = "12.0.0.61"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/ae/f417a75c0259e85c1d2f83ca4e960289a5f814ed0cea74d18c353d3e989d/nvidia_cufft-12.0.0.61-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:2708c852ef8cd89d1d2068bdbece0aa188813a0c934db3779b9b1faa8442e5f5", size = 214053554, upload-time = "2025-09-04T08:31:38.196Z" },
@@ -575,7 +584,7 @@ name = "nvidia-cufft-cu12"
 version = "11.3.3.83"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-8-tsfm-lab-cu128' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/60/bc/7771846d3a0272026c416fbb7e5f4c1f146d6d80704534d0b187dd6f4800/nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:848ef7224d6305cdb2a4df928759dca7b1201874787083b6e7550dd6765ce69a", size = 193109211, upload-time = "2025-03-07T01:44:56.873Z" },
@@ -626,9 +635,9 @@ name = "nvidia-cusolver"
 version = "12.0.4.66"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
-    { name = "nvidia-cusparse", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
-    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cublas", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cusparse", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/c3/b30c9e935fc01e3da443ec0116ed1b2a009bb867f5324d3f2d7e533e776b/nvidia_cusolver-12.0.4.66-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:02c2457eaa9e39de20f880f4bd8820e6a1cfb9f9a34f820eb12a155aa5bc92d2", size = 223467760, upload-time = "2025-09-04T08:33:04.222Z" },
@@ -641,9 +650,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.3.90"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-8-tsfm-lab-cu128' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
-    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-8-tsfm-lab-cu128' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-8-tsfm-lab-cu128' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cublas-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-cusparse-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/32/f7cd6ce8a7690544d084ea21c26e910a97e077c9b7f07bf5de623ee19981/nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:db9ed69dbef9715071232caa9b69c52ac7de3a95773c2db65bdba85916e4e5c0", size = 267229841, upload-time = "2025-03-07T01:46:54.356Z" },
@@ -656,7 +665,7 @@ name = "nvidia-cusparse"
 version = "12.6.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/94/5c26f33738ae35276672f12615a64bd008ed5be6d1ebcb23579285d960a9/nvidia_cusparse-12.6.3.3-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:80bcc4662f23f1054ee334a15c72b8940402975e0eab63178fc7e670aa59472c", size = 162155568, upload-time = "2025-09-04T08:33:42.864Z" },
@@ -669,7 +678,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.8.93"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-8-tsfm-lab-cu128' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-8-tsfm-lab-cu128') or (sys_platform == 'emscripten' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (sys_platform == 'win32' and extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bc/f7/cd777c4109681367721b00a106f491e0d0d15cfa1fd59672ce580ce42a97/nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9b6c161cb130be1a07a27ea6923df8141f3c295852f4b260c65f18f3e0a091dc", size = 288117129, upload-time = "2025-03-07T01:47:40.407Z" },
@@ -771,6 +780,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/10/c0/1b303feea90d296f6176f32a2a70b5ef230f9bdeb3a72bddb0dc922dc137/nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d7ad891da111ebafbf7e015d34879f7112832fc239ff0d7d776b6cb685274615", size = 91161, upload-time = "2025-03-07T01:42:23.922Z" },
     { url = "https://files.pythonhosted.org/packages/a2/eb/86626c1bbc2edb86323022371c39aa48df6fd8b0a1647bc274577f72e90b/nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:5b17e2001cc0d751a5bc2c6ec6d26ad95913324a4adb86788c944f8ce9ba441f", size = 89954, upload-time = "2025-03-07T01:42:44.131Z" },
     { url = "https://files.pythonhosted.org/packages/9f/99/4c9c0c329bf9fc125008c3b54c7c94c0023518d06fc025ae36431375e1fe/nvidia_nvtx_cu12-12.8.90-py3-none-win_amd64.whl", hash = "sha256:619c8304aedc69f02ea82dd244541a83c3d9d40993381b3b590f1adaed3db41e", size = 56492, upload-time = "2025-03-07T01:52:24.69Z" },
+]
+
+[[package]]
+name = "openpyxl"
+version = "3.1.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "et-xmlfile" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3d/f9/88d94a75de065ea32619465d2f77b29a0469500e99012523b91cc4141cd1/openpyxl-3.1.5.tar.gz", hash = "sha256:cf0e3cf56142039133628b5acffe8ef0c12bc902d2aadd3e0fe5878dc08d1050", size = 186464, upload-time = "2024-06-28T14:03:44.161Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c0/da/977ded879c29cbd04de313843e76868e6e13408a94ed6b987245dc7c8506/openpyxl-3.1.5-py2.py3-none-any.whl", hash = "sha256:5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2", size = 250910, upload-time = "2024-06-28T14:03:41.161Z" },
 ]
 
 [[package]]
@@ -1143,18 +1164,18 @@ resolution-markers = [
 dependencies = [
     { name = "cuda-bindings", version = "13.4.4", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
     { name = "cuda-toolkit", version = "13.0.2", source = { registry = "https://pypi.org/simple" }, extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
-    { name = "filelock" },
-    { name = "fsspec" },
-    { name = "jinja2" },
-    { name = "networkx" },
+    { name = "filelock", marker = "extra == 'extra-8-tsfm-lab-pypi' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128')" },
+    { name = "fsspec", marker = "extra == 'extra-8-tsfm-lab-pypi' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128')" },
+    { name = "jinja2", marker = "extra == 'extra-8-tsfm-lab-pypi' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128')" },
+    { name = "networkx", marker = "extra == 'extra-8-tsfm-lab-pypi' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128')" },
     { name = "nvidia-cudnn-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
     { name = "nvidia-cusparselt-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
     { name = "nvidia-nccl-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
     { name = "nvidia-nvshmem-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
-    { name = "setuptools" },
-    { name = "sympy" },
+    { name = "setuptools", marker = "extra == 'extra-8-tsfm-lab-pypi' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128')" },
+    { name = "sympy", marker = "extra == 'extra-8-tsfm-lab-pypi' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128')" },
     { name = "triton", marker = "(sys_platform == 'linux' and extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-pypi') or (extra == 'extra-8-tsfm-lab-cu128' and extra == 'extra-8-tsfm-lab-pypi')" },
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "extra == 'extra-8-tsfm-lab-pypi' or (extra == 'extra-8-tsfm-lab-cpu' and extra == 'extra-8-tsfm-lab-cu128') or (extra != 'extra-8-tsfm-lab-cpu' and extra != 'extra-8-tsfm-lab-cu128')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6f/8b/69e3008d78e5cee2b30183340cc425081b78afc5eff3d080daab0adda9aa/torch-2.11.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:4b5866312ee6e52ea625cd211dcb97d6a2cdc1131a5f15cc0d87eec948f6dd34", size = 80606338, upload-time = "2026-03-23T18:11:34.781Z" },
@@ -1283,6 +1304,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "huggingface-hub" },
     { name = "numpy" },
+    { name = "openpyxl" },
     { name = "pandas" },
     { name = "psutil" },
     { name = "pyarrow" },
@@ -1314,6 +1336,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
     { name = "huggingface-hub", specifier = ">=0.23" },
     { name = "numpy", specifier = ">=1.24" },
+    { name = "openpyxl", specifier = ">=3.1" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "psutil", specifier = ">=6" },
     { name = "pyarrow", specifier = ">=17" },

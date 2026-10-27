@@ -13,6 +13,7 @@ dependencies = [
     "safetensors>=0.4",
     "fastapi>=0.115",
     "uvicorn>=0.30",
+    "openpyxl>=3.1",
     "timestral",
 ]
 
@@ -25,6 +26,9 @@ cu128 = ["torch==2.11.0"]
 cpu = ["torch==2.11.0"]
 pypi = ["torch==2.11.0"]
 
+[project.scripts]
+tsfm-lab = "tsfm_lab.cli:main"
+
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]
 
@@ -35,8 +39,12 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+tsfm_lab = ["models/manifests/*.toml"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["model: loads real model weights (slow, may download the 21 MB Timestral-5M checkpoint)"]
 # Keep pytest's temp dirs and cache inside the project (nothing in the system temp folder).
 addopts = "--basetemp=.cache/pytest"
 cache_dir = ".cache/pytest_cache"

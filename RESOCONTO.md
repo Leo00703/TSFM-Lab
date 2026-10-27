@@ -1,6 +1,6 @@
 # Resoconto pre-sviluppo — Timestral Sandbox
 
-Data: 2026-10-27 · Stato: **Fase 0 completata (§12); prossima: Fase 1 (core)**. Repository: `tsfm-lab` (privato)
+Data: 2026-10-27 · Stato: **Fasi 0 e 1 completate (§12); prossima: Fase 2 (API + interfaccia)**. Repository: `tsfm-lab` (privato)
 
 Questo documento riassume requisiti, ricerca (modello + identità visiva Mistral), architettura proposta, rischi e piano di lavoro. Ogni dato è marcato come **verificato** (letto da fonte primaria o misurato), **dichiarato dal vendor** o **inferenza/proposta**.
 
@@ -267,5 +267,25 @@ Macchina di sviluppo: Windows 11, Python 3.13.15 / 3.14, uv 0.12.18, Node 22, gi
 
 **Scoperte utili per le fasi successive:** la prima esecuzione su CUDA ricompila kernel per la Blackwell (cache in `.cache/cuda`), quindi il tempo di caricamento a freddo va mostrato separato da quello a caldo; il bootstrap risolve e blocca 87 pacchetti in ~2 s.
 
+### Fase 1 — completata (2026-10-27)
+**Costruito** (`src/tsfm_lab/`): contratto `ModelAdapter` indipendente dal modello (capacità, quantili dichiarati dall'adapter, dispositivi) e registro con entry point `tsfm_lab.models`; adapter **Timestral** per le 4 taglie (manifest TOML, caricamento su CPU o CUDA scelto a runtime, suddivisione automatica in blocchi, controlli sulle covariate, specifiche lette dal `config.json` reale); baseline **naive / seasonal-naive / drift**; 16 scenari sintetici (le 8 caratteristiche strutturali + 8 casi limite); caricamento di CSV/TSV/Parquet/Excel con mappatura colonne e rapporto di validazione; metriche (MASE, SQL, WQL, copertura 50/80/90/98, interval score, bias, calibrazione, skill score) con definizioni documentate; backtest a origine mobile con finestre identiche per tutti i modelli; salvataggio dei run (SQLite + array compressi + JSON rigoroso); sonda hardware/software; CLI `tsfm-lab` (`models`, `devices`, `datasets`, `inspect`, `run`, `runs`, `show`).
+
+**Verifica:** **52 test superati** (CPU e GPU), compreso un test che dimostra la promessa di estensibilità (un modello finto si aggiunge con un solo adapter, senza toccare altro) e uno che verifica che la suddivisione in blocchi non cambia le previsioni. `leakcheck` ripetuto dopo tutto il lavoro: nulla fuori dal progetto.
+
+**Difetti trovati dai test e corretti:** il generatore `negative_values` produceva valori in parte positivi; la mediana delle baseline non coincideva con la previsione puntuale (residui non centrati). Sono emersi anche due problemi di misura: il tempo su CUDA includeva l'avvio a freddo (16,7 s contro ~50 ms a caldo), quindi il backtest ora fa un passaggio di riscaldamento non misurato e riporta il tempo a freddo a parte.
+
+**Primi risultati (Timestral-5M, dati sintetici: indicano che il motore funziona, non che il modello è "migliore"):**
+
+| Scenario | Modello | MASE | Copertura 80% / 90% | Skill vs seasonal-naive |
+|---|---|---|---|---|
+| Doppia stagionalità (CPU) | Timestral-5M | 0,256 | 0,77 / 0,88 | +78,9% |
+| | seasonal-naive | 1,263 | 0,75 / 0,85 | – |
+| Dipendenza tra variate (CUDA) | Timestral-5M | 0,920 | 0,81 / 0,91 | +20,1% |
+| | seasonal-naive | 1,165 | 0,77 / 0,87 | – |
+
+Il modello, pre-addestrato soprattutto su dati sintetici, può trovare "facili" questi scenari: i risultati su dati reali vanno letti a parte.
+
+**Bug upstream #7:** lo scenario `flat_price_covariate` è pronto e la mitigazione (`mask_flat_covariates`) funziona (q99 massimo 23,3 → 7,0, contro 6,6 senza covariate). Con il **28M non si riproduce l'esplosione** (coerente con quanto riportato upstream, dove i casi estremi erano sul 209M). Riprodurre sul 209M richiede il download dei suoi pesi (837 MB): in attesa del tuo ok.
+
 ### Prossimi passi
-Fase 1: interfaccia `ModelAdapter`, adapter Timestral, baseline, dataset locali e sintetici, metriche, backtest, storage, CLI e test.
+Fase 2: API FastAPI e interfaccia web con i token Mistral (tema scuro di default, chiaro opzionale), **responsive e adattiva per mobile**, pagine Modelli, Playground, Sistema (selettore CPU/GPU) ed Esperimenti.

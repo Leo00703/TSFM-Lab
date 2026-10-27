@@ -1,0 +1,28 @@
+# Vendor-reported numbers come from the Hugging Face model cards (2026-10-27); they are NOT measured here.
+id = "timestral-28m"
+family = "timestral"
+name = "Timestral-28M"
+repo = "mistralai/Timestral-28M"
+params = 27800000
+description = "Mistral's time-series foundation model: probabilistic multivariate zero-shot forecasts with past-only and known-future covariates."
+license = "Modified MIT (weights); Apache-2.0 (code)"
+license_url = "https://huggingface.co/mistralai/Timestral-209M/blob/main/LICENSE"
+source_url = "https://github.com/mistralai/timestral"
+max_context = 32768
+max_horizon_per_pass = 1024
+quantile_levels = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
+
+[details]
+layers = 12
+d_model = 384
+patch_size = 32
+weights_mb_fp32 = 111
+
+[reported]
+source = "vendor model card (Mistral AI)"
+gift_eval_mase = 0.678
+gift_eval_crps = 0.461
+time_mase = 0.638
+time_crps = 0.534
+fev_bench_sql_skill = 48.42
+fev_bench_mase_skill = 37.27
