@@ -103,7 +103,7 @@ export function Showcase({ route }) {
   const [model, setModel] = useState(null), [reveal, setReveal] = useState(true), [dragging, setDragging] = useState(false), [hover, setHover] = useState(null);
   const [data, setData] = useState(null), [err, setErr] = useState(null), [busy, setBusy] = useState(false), [wait, setWait] = useState('');
   const [impact, setImpact] = useState(null), [impLoading, setImpLoading] = useState(false), [prog, setProg] = useState({});
-  const seq = useRef(0), impJob = useRef(null), box = useRef(null), dataRef = useRef(null);
+  const seq = useRef(0), flight = useRef(Promise.resolve()), impJob = useRef(null), box = useRef(null), dataRef = useRef(null);
 
   const scs = fresh.data || list.data || [];
   const sc = scs.find((s) => s.id === tab);
@@ -117,16 +117,21 @@ export function Showcase({ route }) {
   const setCut = (k) => sc && setCuts((c) => ({ ...c, [sc.id]: Math.max(sc.k_min, Math.min(sc.k_max, Math.round(k))) }));
 
   // interactive forecast: follows the divider while it is dragged (short debounce), ignores stale answers, and waits
-  // politely while a measurement job holds the compute
+  // politely while a measurement job holds the compute; one request at a time, because an answer nobody wants any more
+  // still holds the compute and would make the next request look like a busy machine
   useEffect(() => {
     if (!sc || !sc.ready || !model) return;
     const mine = ++seq.current;
     const t = setTimeout(async () => {
       setBusy(true);
       try {
+        await flight.current;
+        if (mine !== seq.current) return;
         for (let attempt = 0; attempt < 40; attempt++) {
           try {
-            const r = await api('/api/showcase/forecast', { method: 'POST', body: { scenario: sc.id, series: sid, cut, model, device, covariates: enabled } });
+            const call = api('/api/showcase/forecast', { method: 'POST', body: { scenario: sc.id, series: sid, cut, model, device, covariates: enabled } });
+            flight.current = call.catch(() => {});
+            const r = await call;
             if (mine === seq.current) { setData(r); setErr(null); setWait(''); }
             return;
           } catch (e) {
