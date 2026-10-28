@@ -36,7 +36,7 @@ KNOWN_ISSUES = (
     "Runs here with its pure-PyTorch kernels (the fused CUDA kernels need a compiler): same numbers, but slower than NXAI's "
     "optimised path. The Apple GPU (MPS) has not been verified: compare it with the CPU first (scripts/check_device_parity.py). "
     "A GPU that fails continues on the CPU.",
-    "Context is limited to the most recent 2048 steps; horizons beyond 320 are produced in several passes by the model itself.",
+    "Context is limited to the most recent 2048 steps; the package cuts a longer horizon to 320 steps, so beyond that this app forecasts in several passes, each continuing from the median of the previous one (the later intervals then tend to be too narrow).",
     "Several variables of one series are forecast together, so each one can use the others as context. Categorical "
     "covariates are not used.",
     "Quantiles are the nine deciles; where the model returns crossing quantiles they are put back in order and a warning says so.",
