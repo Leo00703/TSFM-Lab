@@ -42,12 +42,12 @@ class Services:
     def __init__(self, root: Path) -> None:
         from tsfm_lab.data.catalog import DatasetCatalog
         from tsfm_lab.models.registry import default_registry
-        from tsfm_lab.store.store import BenchmarkStore, RunStore
+        from tsfm_lab.store.store import BenchmarkStore, RunStore, SuiteStore
 
         self.root = root
         self.registry = default_registry()
         self.catalog = DatasetCatalog(root / "data" / "user")
-        self.store, self.bench = RunStore(root / "runs"), BenchmarkStore(root / "runs")
+        self.store, self.bench, self.suites = RunStore(root / "runs"), BenchmarkStore(root / "runs"), SuiteStore(root / "runs")
         self._pool: OrderedDict[tuple[str, str], Any] = OrderedDict()
 
     def pooled(self, model_id: str, device: str):
@@ -132,6 +132,20 @@ def do_experiment(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
     return {"run_id": run_id}
 
 
+def do_suite(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
+    from tsfm_lab.data import hub_catalog
+    from tsfm_lab.eval.suite import SuiteConfig, run_suite
+
+    for model in a["models"]:
+        svc.drop(model)  # the suite loads its own copies and times them cleanly
+    entries = [hub_catalog.entry(i) for i in a["datasets"]]
+    cfg = SuiteConfig(max_series=a["max_series"], max_windows=a["max_windows"], max_context=a["max_context"],
+                      use_covariates=a["use_covariates"])
+    load = lambda e, n: svc.catalog.resolve({"source": "hub", "id": e["id"], "params": {"max_series": n}})  # noqa: E731
+    result = run_suite(entries, a["models"], a["device"], cfg, svc.registry, load, progress)
+    return {"suite_id": svc.suites.save({**result, "request": a}, a["label"])}
+
+
 def do_benchmark(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
     from tsfm_lab.eval.benchmark import run_benchmark
 
@@ -199,7 +213,7 @@ def do_showcase_impact(svc: Services, a: dict[str, Any], progress) -> dict[str, 
 
 
 OPS: dict[str, Callable] = {"catalog_download": do_catalog_download, "showcase_prepare": do_showcase_prepare, "showcase_forecast": do_showcase_forecast,
-                            "showcase_impact": do_showcase_impact,"forecast": do_forecast, "experiment": do_experiment, "benchmark": do_benchmark,
+                            "showcase_impact": do_showcase_impact,"forecast": do_forecast, "experiment": do_experiment, "suite": do_suite, "benchmark": do_benchmark,
                             "download": do_download, "remove": do_remove}
 if os.environ.get("TSFM_LAB_TEST_OPS") == "1":
     OPS["crash"] = do_selftest_crash

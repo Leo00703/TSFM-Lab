@@ -21,4 +21,4 @@ def test_the_dialog_module_is_mounted_and_used_by_every_destructive_action() -> 
     main = (WEB_JS / "main.js").read_text(encoding="utf-8")
     assert "DialogHost" in main
     users = [p.name for p in (WEB_JS / "pages").glob("*.js") if "confirmDialog(" in p.read_text(encoding="utf-8")]
-    assert sorted(users) == ["catalog.js", "datasets.js", "models.js", "runs.js"]
+    assert sorted(users) == ["catalog.js", "datasets.js", "leaderboard.js", "models.js", "runs.js"]

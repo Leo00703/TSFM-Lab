@@ -9,6 +9,7 @@ import { Datasets } from './pages/datasets.js';
 import { Playground } from './pages/playground.js';
 import { Experiments } from './pages/experiments.js';
 import { Runs } from './pages/runs.js';
+import { Leaderboard } from './pages/leaderboard.js';
 import { System } from './pages/system.js';
 import { About } from './pages/about.js';
 import { Compare } from './pages/compare.js';
@@ -22,6 +23,7 @@ const PAGES = [
   { id: 'datasets', label: 'Datasets', icon: 'data', C: Datasets },
   { id: 'playground', label: 'Playground', icon: 'play', C: Playground },
   { id: 'experiments', label: 'Experiments', icon: 'chart', C: Experiments },
+  { id: 'leaderboard', label: 'Leaderboard', icon: 'chart', C: Leaderboard },
   { id: 'runs', label: 'Runs', icon: 'history', C: Runs },
   { id: 'system', label: 'System', icon: 'chip', C: System },
   { id: 'about', label: 'About', icon: 'info', C: About },

@@ -25,7 +25,7 @@ from tsfm_lab.eval.runner import DEFAULT_BASELINES
 from tsfm_lab.isolation import find_root
 from tsfm_lab.models import cache as weights
 from tsfm_lab.models.registry import Registry, default_registry
-from tsfm_lab.store.store import BenchmarkStore, RunStore, to_jsonable
+from tsfm_lab.store.store import BenchmarkStore, RunStore, SuiteStore, to_jsonable
 from tsfm_lab.system.devices import list_devices
 from tsfm_lab.system.probe import environment_info
 
@@ -65,6 +65,17 @@ class ExperimentBody(BaseModel):
     max_context: int | None = Field(None, ge=8, le=200_000)
     use_covariates: bool = True
     options: dict[str, Any] = Field(default_factory=dict)
+    label: str | None = Field(None, max_length=80)
+
+
+class SuiteBody(BaseModel):
+    datasets: list[str] = Field(min_length=1, max_length=200)  # catalog ids
+    models: list[str] = Field(min_length=1, max_length=8)
+    device: str = "cpu"
+    max_series: int = Field(20, ge=1, le=200)
+    max_windows: int = Field(3, ge=1, le=20)
+    max_context: int | None = Field(2048, ge=8, le=200_000)
+    use_covariates: bool = True
     label: str | None = Field(None, max_length=80)
 
 
@@ -125,7 +136,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     root = Path(root) if root else find_root()
     registry = registry or default_registry()
     catalog = DatasetCatalog(root / "data" / "user")
-    store, bench_store = RunStore(root / "runs"), BenchmarkStore(root / "runs")
+    store, bench_store, suite_store = RunStore(root / "runs"), BenchmarkStore(root / "runs"), SuiteStore(root / "runs")
     compute_lock = threading.Lock()
     jobs = JobManager(compute_lock)
     worker = WorkerClient(root)
@@ -336,6 +347,25 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         return ok(jobs.submit("experiment", label, lambda j: worker.call(
             "experiment", payload, lambda d, t, m: j.update(d, t, m), j.cancel.is_set)).to_dict(), 202)
 
+    @app.post("/api/jobs/suite")
+    def start_suite(body: SuiteBody):
+        from tsfm_lab.data import hub_catalog
+
+        known = hub_catalog.entries()
+        unknown = [i for i in dict.fromkeys(body.datasets) if i not in known]
+        if unknown:
+            raise HTTPException(404, f"unknown catalog dataset(s): {unknown[:5]}")
+        missing = [i for i in dict.fromkeys(body.datasets) if hub_catalog.file_paths(known[i]) is None]
+        if missing:
+            raise HTTPException(422, f"{len(missing)} dataset(s) are not downloaded yet: {missing[:5]}")
+        ranked = [m for m in dict.fromkeys(body.models) if registry.info(m).kind != "baseline"]
+        if not ranked:
+            raise HTTPException(422, "pick at least one model (baselines are always included as the reference)")
+        payload = {**body.model_dump(), "datasets": list(dict.fromkeys(body.datasets)), "models": ranked}
+        names = ", ".join(registry.info(m).name for m in ranked)
+        return ok(jobs.submit("suite", f"Leaderboard: {names} on {len(payload['datasets'])} datasets · {body.device}", lambda j: worker.call(
+            "suite", payload, lambda d, t, m: j.update(d, t, m), j.cancel.is_set)).to_dict(), 202)
+
     @app.post("/api/jobs/benchmark")
     def start_benchmark(body: BenchmarkBody):
         registry.info(body.model)
@@ -375,6 +405,21 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     def delete_benchmark(bench_id: str):
         bench_store.delete(bench_id)
         return ok({"deleted": bench_id})
+
+    # ------------------------------------------------------------------ leaderboard runs
+    @app.get("/api/suites")
+    def suites():
+        return ok(suite_store.list())
+
+    @app.get("/api/suites/{suite_id}")
+    def suite(suite_id: str):
+        return ok(suite_store.get(suite_id))
+
+    @app.delete("/api/suites/{suite_id}")
+    def delete_suite(suite_id: str):
+        suite_store.get(suite_id)
+        suite_store.delete(suite_id)
+        return ok({"deleted": suite_id})
 
     # ------------------------------------------------------------------ runs
     @app.get("/api/runs")

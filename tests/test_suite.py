@@ -1,0 +1,103 @@
+"""The leaderboard: scoring and aggregation, a full run with baselines only, the store and the API guards."""
+
+from __future__ import annotations
+
+import math
+
+import numpy as np
+import pytest
+from fastapi.testclient import TestClient
+
+from tsfm_lab.api.app import create_app
+from tsfm_lab.data.schema import Dataset, Series
+from tsfm_lab.eval import suite
+from tsfm_lab.models.registry import build_default_registry
+from tsfm_lab.store.store import SuiteStore
+
+
+def test_skill_is_the_geometric_mean_of_clipped_error_ratios() -> None:
+    assert suite.skill([0.5, 0.5]) == pytest.approx(50.0) and suite.skill([2.0, 0.5]) == pytest.approx(0.0)
+    assert suite.skill([]) is None
+    assert suite.clipped_ratio(1.0, 0.0) is None and suite.clipped_ratio(float("nan"), 1.0) is None
+    assert suite.clipped_ratio(1e-9, 1.0) == 0.01 and suite.clipped_ratio(1e9, 1.0) == 100.0  # one dataset cannot dominate
+
+
+def _row(id_, group, **models):
+    return {"id": id_, "group": group, "models": {m: {"sql": v, "mase": v, "wql": v, "total_s": 1.0} for m, v in models.items()}}
+
+
+def test_only_datasets_every_ranked_model_completed_are_counted() -> None:
+    rows = [_row("a", "fev", **{"seasonal-naive": 1.0, "x": 0.5, "y": 0.8}), _row("b", "gift", **{"seasonal-naive": 1.0, "x": 0.5, "y": 0.8}),
+            _row("c", "gift", **{"seasonal-naive": 1.0, "x": 0.1})]  # y could not run on c (multivariate): c is left out of the ranking
+    board = suite.aggregate(rows, ["x", "y"])
+    assert board["common_datasets"] == 2 and board["total_datasets"] == 3
+    assert board["overall"]["x"]["sql_skill"] == pytest.approx(50.0) and board["overall"]["y"]["sql_skill"] == pytest.approx(20.0)
+    assert board["overall"]["x"]["wins"] == 2 and board["overall"]["y"]["wins"] == 0 and set(board["by_group"]) == {"fev", "gift"}
+    assert board["by_group"]["gift"]["x"]["datasets"] == 1
+
+
+def _dataset(n_series: int, length: int, seed: int) -> Dataset:
+    rng = np.random.default_rng(seed)
+    t = np.arange(length)
+    ts = np.arange(np.datetime64("2024-01-01", "ms"), np.datetime64("2024-01-01", "ms") + length * np.timedelta64(3_600_000, "ms"),
+                   np.timedelta64(3_600_000, "ms"))
+    series = [Series(f"s{i}", (10 + np.sin(2 * np.pi * t / 24) + 0.1 * rng.normal(size=length))[None, :], ts, None, None) for i in range(n_series)]
+    return Dataset(id=f"toy{seed}", name=f"toy{seed}", series=series, freq="h", seasonal_period=24, target_names=["y"], source="hub",
+                   license="test", description="", tags=[], extra={})
+
+
+def _entry(i: str, source: str = "fev") -> dict:
+    return {"id": i, "title": i, "source": source, "pandas_freq": "h", "task": {"horizon": 12, "num_windows": 5, "seasonality": 24}}
+
+
+def test_a_run_with_baselines_only_ranks_them_on_identical_windows_and_survives_a_short_dataset() -> None:
+    data = {"fev1": _dataset(4, 200, 1), "gift1": _dataset(3, 300, 2), "tiny": _dataset(2, 10, 3)}
+    seen = []
+
+    def load(e, n):
+        seen.append((e["id"], n))
+        return data[e["id"]]
+
+    entries = [_entry("fev1"), _entry("gift1", "gift"), _entry("tiny")]
+    out = suite.run_suite(entries, ["drift", "naive"], "cpu", suite.SuiteConfig(max_series=3, max_windows=2, max_context=64), build_default_registry(), load)
+    assert seen == [("fev1", 3), ("gift1", 3), ("tiny", 3)]
+    a, b, tiny = out["datasets"]
+    assert a["windows"] == 2 and a["horizon"] == 12 and a["items"] == 3 * 2 and set(a["models"]) == {"drift", "naive", "seasonal-naive"}
+    assert tiny["error"] and not tiny["models"]  # too short for the task: recorded, the run goes on
+    board = out["leaderboard"]
+    assert board["common_datasets"] == 2 and board["total_datasets"] == 3 and board["ranked"] == ["drift", "naive"]
+    assert math.isfinite(board["overall"]["naive"]["sql_skill"]) and set(board["by_group"]) == {"fev", "gift"}
+    assert out["models"]["seasonal-naive"]["kind"] == "baseline" and out["config"]["max_context"] == 64
+
+
+def test_the_store_lists_saves_and_deletes(tmp_path) -> None:
+    store = SuiteStore(tmp_path)
+    rows = [_row("a", "fev", **{"seasonal-naive": 1.0, "x": 0.5})]
+    result = {"config": {}, "device": "cpu", "models": {}, "datasets": rows, "elapsed_s": 1.0, "leaderboard": suite.aggregate(rows, ["x"])}
+    sid = store.save(result, "first")
+    (item,) = store.list()
+    assert item["id"] == sid and item["label"] == "first" and item["best"] == "x" and item["common"] == 1
+    assert store.get(sid)["leaderboard"]["overall"]["x"]["sql_skill"] == pytest.approx(50.0)
+    store.delete(sid)
+    assert store.list() == []
+    with pytest.raises(KeyError):
+        store.get(sid)
+
+
+def test_the_api_refuses_a_run_over_datasets_that_are_unknown_or_not_downloaded(tmp_path, monkeypatch) -> None:
+    from tsfm_lab.data import hub_catalog as H
+
+    monkeypatch.setattr(H, "_cache_dir", lambda e: tmp_path / "empty")
+    app = create_app(root=tmp_path, allowed_hosts=("testserver",))
+    client = TestClient(app)
+    try:
+        post = lambda body: client.post("/api/jobs/suite", json={"device": "cpu", **body})  # noqa: E731
+        assert post({"datasets": ["nope"], "models": ["timestral-5m"]}).status_code == 404
+        r = post({"datasets": ["hospital"], "models": ["timestral-5m"]})
+        assert r.status_code == 422 and "not downloaded" in r.text
+        r = post({"datasets": ["hospital"], "models": ["naive"]})
+        assert r.status_code in (404, 422) and ("not downloaded" in r.text or "at least one model" in r.text)
+        assert client.get("/api/suites").json() == [] or client.get("/api/suites").json().get("data") == []
+        assert client.get("/api/suites/missing").status_code == 404
+    finally:
+        app.state.worker.stop()

@@ -44,12 +44,13 @@ const detail = (j) => (j.kind === 'download' ? j.label.replace(/^Download /, '')
   : j.kind === 'showcase' ? j.label.split(' · ').slice(1).join(' · ') : j.label);
 // The server says where each job's outcome lives (`link`, e.g. 'models?focus=timestral-209m'); a finished backtest leads to its run.
 // A button is only offered when it would take you somewhere else, and it lands on the exact thing, not just the page.
-const WHERE = { benchmark: 'system', experiment: 'experiments', download: 'models', showcase: 'showcase' };
-const target = (j) => (j.kind === 'experiment' && j.status === 'done' && j.result && j.result.run_id ? `runs/${j.result.run_id}` : j.link || WHERE[j.kind] || 'system');
+const WHERE = { benchmark: 'system', suite: 'leaderboard', experiment: 'experiments', download: 'models', showcase: 'showcase' };
+const target = (j) => (j.kind === 'experiment' && j.status === 'done' && j.result && j.result.run_id ? `runs/${j.result.run_id}` : j.kind === 'suite' && j.status === 'done' && j.result && j.result.suite_id ? `leaderboard/${j.result.suite_id}` : j.link || WHERE[j.kind] || 'system');
 const pageOf = (path) => path.split('?')[0];
 const OPEN_LABEL = (j) => {
   const done = j.status === 'done', page = pageOf(target(j)).split('/')[0];
   if (j.kind === 'experiment') return done ? 'Open the run' : 'Go to Experiments';
+  if (j.kind === 'suite') return done ? 'Open the leaderboard' : 'Go to the leaderboard';
   if (j.kind === 'benchmark') return done ? 'See the results' : 'Go to the benchmark';
   if (j.kind === 'download') return page === 'datasets' ? 'Show the dataset' : page === 'showcase' ? 'Go to Showcase' : 'Show the model';
   return 'Go to Showcase';

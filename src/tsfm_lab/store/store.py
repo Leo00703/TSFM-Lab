@@ -146,3 +146,38 @@ class BenchmarkStore:
 
     def delete(self, bench_id: str) -> None:
         (self.root / f"{Path(bench_id).name}.json").unlink(missing_ok=True)
+
+
+class SuiteStore:
+    """Leaderboard runs as JSON files under ``runs/suites/``."""
+
+    def __init__(self, root: Path | None = None) -> None:
+        self.root = (Path(root) if root else find_root() / "runs") / "suites"
+        self.root.mkdir(parents=True, exist_ok=True)
+
+    def save(self, result: dict[str, Any], label: str | None = None) -> str:
+        suite_id = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(2)
+        result = {**result, "id": suite_id, "label": label, "created": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+        (self.root / f"{suite_id}.json").write_text(json.dumps(to_jsonable(result), indent=1), encoding="utf-8")
+        return suite_id
+
+    def list(self) -> list[dict[str, Any]]:
+        out = []
+        for path in sorted(self.root.glob("*.json"), reverse=True):
+            d = json.loads(path.read_text(encoding="utf-8"))
+            board = d["leaderboard"]
+            best = max(board["ranked"], key=lambda m: (board["overall"][m]["sql_skill"] is not None, board["overall"][m]["sql_skill"] or 0),
+                       default=None) if board["common_datasets"] else None
+            out.append({"id": d["id"], "created": d["created"], "label": d.get("label"), "models": board["ranked"], "device": d["device"],
+                        "datasets": board["total_datasets"], "common": board["common_datasets"], "best": best,
+                        "best_skill": None if best is None else board["overall"][best]["sql_skill"], "elapsed_s": d["elapsed_s"]})
+        return out
+
+    def get(self, suite_id: str) -> dict[str, Any]:
+        path = self.root / f"{Path(suite_id).name}.json"
+        if not path.is_file():
+            raise KeyError(f"unknown leaderboard run '{suite_id}'")
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def delete(self, suite_id: str) -> None:
+        (self.root / f"{Path(suite_id).name}.json").unlink(missing_ok=True)
