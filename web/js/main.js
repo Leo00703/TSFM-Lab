@@ -41,19 +41,19 @@ function Nav({ page }) {
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [page]);
   const link = (p, cls = '') => html`<a href=${'#/' + p.id} aria-current=${page === p.id ? 'page' : undefined}
-    class=${`flex h-12 items-center gap-2 px-3 text-button-large font-medium transition-colors hover:bg-action-ghost-1 ${page === p.id ? 'bg-surface-brand-secondary' : ''} ${cls}`}>${p.label}</a>`;
+    class=${`flex h-12 items-center gap-2 text-[0.9375rem] font-medium transition-colors hover:bg-action-ghost-1 ${page === p.id ? 'bg-surface-brand-secondary' : ''} ${cls}`}>${p.label}</a>`;
   return html`<nav class="sticky top-0 z-30 border-b border-border-primary bg-surface-brand-primary/95 backdrop-blur" aria-label="Main">
     <div class="mx-auto flex h-12 max-w-6xl items-stretch border-x border-border-primary">
-      <a href="#/showcase" class="flex shrink-0 items-center gap-2.5 whitespace-nowrap px-4 font-mistral text-[1.0625rem] font-medium" aria-label="TSFM-Lab home"><${Logo} size=${22} />TSFM-Lab</a>
-      <div class="hidden min-w-0 items-stretch overflow-hidden border-l border-border-primary xl:flex">${PAGES.filter((p) => p.id !== 'about' && !p.hidden).map((p) => html`<div class="border-r border-border-primary">${link(p)}</div>`)}</div>
+      <a href="#/showcase" class="flex shrink-0 items-center gap-2.5 whitespace-nowrap px-3 font-mistral text-[1.0625rem] font-medium" aria-label="TSFM-Lab home"><${Logo} size=${22} />TSFM-Lab</a>
+      <div class="hidden min-w-0 items-stretch overflow-hidden border-l border-border-primary xl:flex">${PAGES.filter((p) => p.id !== 'about' && !p.hidden).map((p) => html`<div class="border-r border-border-primary">${link(p, 'px-2')}</div>`)}</div>
       <div class="ml-auto flex shrink-0 items-stretch">
-        <div class="hidden items-center border-l border-border-primary px-3 sm:flex"><${DeviceSelect} compact /></div>
-        <div class="hidden items-center border-l border-border-primary px-3 md:flex"><${ThemeSwitch} /></div>
+        <div class="hidden items-center border-l border-border-primary px-2 sm:flex"><${DeviceSelect} compact /></div>
+        <div class="hidden items-center border-l border-border-primary px-2 md:flex"><${ThemeSwitch} /></div>
         <div class="flex items-center border-l border-border-primary px-3 xl:hidden"><button type="button" class="btn btn-outline btn-small" aria-label=${open ? 'Close menu' : 'Open menu'} aria-expanded=${open} onClick=${() => setOpen(!open)}><${Icon} name=${open ? 'close' : 'menu'} size=${16} /></button></div>
       </div>
     </div>
     ${open && html`<div class="border-t border-border-primary bg-surface-brand-primary xl:hidden"><div class="mx-auto max-w-6xl border-x border-border-primary">
-      ${PAGES.filter((p) => !p.hidden).map((p) => html`<div class="border-b border-border-primary last:border-0">${link(p, 'w-full')}</div>`)}
+      ${PAGES.filter((p) => !p.hidden).map((p) => html`<div class="border-b border-border-primary last:border-0">${link(p, 'w-full px-3')}</div>`)}
       <div class="flex flex-wrap items-center justify-between gap-3 border-t border-border-primary p-4"><${DeviceSelect} class="sm:hidden w-full" /><${ThemeSwitch} /></div></div></div>`}
   </nav>`;
 }
