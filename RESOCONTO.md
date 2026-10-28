@@ -501,3 +501,23 @@ Cautele: Moirai-2.0 ha **28 dei 100 task nei propri dati di addestramento** (col
 **Perché aggiungerlo comunque.** È il miglior modello con licenza Apache-2.0 nella classifica (49,4 contro 47,3 di Chronos-2 e 45,5 di TiRex-2) ed è nel gruppo di testa anche nella mia verifica; usa **gli stessi 21 livelli di quantile** e le stesse covariate di Timestral (confronti diretti, senza interpolazioni); sicurezza verificata. In questo strumento serve proprio a confrontare, non a eleggere un vincitore. Va però presentato per quello che è: **giovane, con un risultato dichiarato dagli autori, con dati di addestramento non elencati**: la scheda del modello e le note lo dicono.
 
 **Integrazione.** `models/t0.py` + `manifests/t0-gamma.toml` sulla base `TorchAdapter`. La traduzione di una richiesta segue la costruzione pubblicata dagli autori nella loro valutazione (Apache-2.0): ogni variabile è una serie a sé con le stesse covariate, le covariate note vanno nella regione da prevedere, quelle solo passate sono righe «storiche» mancanti nell'orizzonte, con le quattro correzioni raccomandate (rimozione dei vuoti iniziali, media simmetrica, non-negatività, arrotondamento degli interi). Contesto limitato a 8192 passi (come nella loro valutazione), orizzonti oltre 1024 in modo autoregressivo, covariate note mancanti nell'orizzonte lette come 0 dal modello (avviso). Parità CPU/GPU 1,5·10⁻⁷. **Test:** 6 nuovi (manifesto e cautele, costruzione delle righe per ogni serie con modello di prova, tetto di contesto e suddivisione, avviso sulle covariate mancanti, messaggio senza pesi, previsione reale con il checkpoint se presente); 112 test in totale.
+
+### Monash e GIFT-Eval nel catalogo online (2026-10-28)
+**Cosa c'è ora:** 187 dataset (fev-bench 100, GIFT-Eval 55, archivio Monash 32), con le stesse garanzie di prima: download solo su richiesta, controllo SHA-256, conferma di licenza e dimensione, nota di contaminazione, marchio «also in» quando due benchmark condividono gli stessi dati.
+
+**Come sono stati costruiti.** A differenza di fev-bench, questi due non si possono ispezionare a distanza (file Arrow e zip di testo non hanno un indice con le lunghezze), quindi `scripts/build_catalog_ext.py` scarica ogni file una volta, lo legge per intero (numero di serie, lunghezze, valori mancanti, serie costanti, asse temporale), lo cancella e registra lo SHA-256 pubblicato da Hugging Face. Revisioni fissate: GiftEval `30841734ac`, monash_tsf `58aafbe271`, regole di GIFT-Eval `38d068b769`. Totale circa 1,2 GB (GIFT-Eval) e 0,6 GB (Monash).
+
+**Regole dei task.** GIFT-Eval: orizzonte per frequenza (M 12, W 8, D 30, H 48, minuti 48, secondi 60; M4 ha i suoi), finestre = ceil(10% della serie più corta / orizzonte) con tetto 20, e per i dati sub-giornalieri anche i termini medio e lungo (10× e 15×). Monash: orizzonte dichiarato nel file, altrimenti il valore predefinito del loader di Hugging Face (indicato nella scheda: «il file non ne dichiara»).
+
+**Problemi trovati leggendo i dati (non fidandomi dei metadati).**
+- Le cartelle di GIFT-Eval contengono anche copie `cache-*.arrow` lasciate da `datasets.map`: `electricity/15T` risultava 1110 serie invece di 370. Ora i file dati si prendono da `state.json`.
+- `jena_weather` e `jena_weather/10T` hanno gli stessi byte: elencato una volta.
+- `dataset_info.json` di `restaurant` dichiara 809 serie, i file e l'articolo 807: uso i file.
+- Le date di partenza settimanali di GIFT-Eval non cadono sempre sull'ancora della frequenza: la frequenza settimanale segue il giorno reale di partenza.
+- Le serie multivariate (ETT, Jena, Bitbrains) sono salvate come liste a dimensione fissa: convertite al volo.
+
+**Sovrapposizioni.** Riconosciute per numero di serie e di osservazioni identici, solo fra benchmark diversi (es. `hospital` è nei tre, `solar` settimanale in tre, M-DENSE e SZ-taxi fra fev e GIFT). Verificate a mano: tutte corrette.
+
+**Contaminazione.** Sono dati pubblici molto presenti nei corpora di pre-addestramento (il corpus di Chronos `autogluon/chronos_datasets` contiene dataset Monash) e i dati di Timestral non sono elencati: i punteggi sono indicazioni, non prova di abilità fuori campione. Lo dice la scheda di ogni voce.
+
+**Verifica.** 10 dataset campione scaricati davvero (hash controllato), letti e passati in un backtest con il seasonal naive; pagina controllata nel browser. **Test:** 8 nuovi, 120 in totale.
