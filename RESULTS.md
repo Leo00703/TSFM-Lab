@@ -108,7 +108,8 @@ the declaration, not the shape of the error, is the evidence. The two datasets o
 
 ## Training data
 
-What the makers state, checked on 28 October 2026:
+What the makers state, checked on 28–29 October 2026 (the fev-bench result files were read again at the latest commit, `193e4fc`:
+the declarations are the same):
 
 - **Timestral** (Mistral AI): "the majority of the training data was synthetic"; real data only in a second stage, with a
   context four times longer; no real source is named; Mistral says nothing it backtests was seen in pre-training, which is a
@@ -118,9 +119,16 @@ What the makers state, checked on 28 October 2026:
   `favorita_transactions_1W`, `fred_md_2025--cee`, `fred_md_2025--macro`, `kdd_cup_2022_10T`, `m5_1D`, `m5_1W`, `proenfo_gfc12`,
   `proenfo_gfc14`, `proenfo_gfc17`. Declared overlap did not always give an advantage: only the `kdd_cup_2022_10T` and `proenfo_gfc*`
   datasets show a large one; on `m5_*`, `favorita_*` and `fred_md_*` it ranks with the others or behind.
-- **Chronos-2, TimesFM 3.0, t0-gamma, TiRex-2**: their result files declare no overlap (Chronos-2 small has no file of its own, so nothing is declared for it). That is a self-declaration and not proof of
+- **Chronos-2** (Amazon; its small variant says nothing of its own, and has no result file): the real data are univariate series from
+  the Chronos and GIFT-Eval pretraining corpora (electricity, M4, solar, taxi, Uber TLC, Weatherbench, Wiki, USHCN, LargeST,
+  Q-Traffic, Buildings 900K…); multivariate and covariate tasks are entirely synthetic; no share of synthetic data is given. The
+  authors say the corpus was built not to overlap the *test* portions of any GIFT-Eval task, and note a partial overlap with the
+  *training* portions of some GIFT-Eval datasets; for fev-bench and Chronos Benchmark II they state that no dataset or task was seen
+  in training, without describing a check. Its fev-bench result file declares no overlap.
+- **TimesFM 3.0, t0-gamma, TiRex-2**: their result files declare no overlap. That is a self-declaration and not proof of
   absence; t0-gamma's authors describe the training data only as curated public datasets plus synthetic series, and TiRex-2's
   as two public corpora (LOTSA and the Chronos datasets) that overlap many benchmark datasets.
+- **Not available yet**: Timestral's technical report (announced as coming soon; no report was found on 29 October 2026).
 - **GIFT-Eval and Monash datasets**: nobody declares anything for them. Two results beyond the others remain unexplained and are
   not excluded: `monash.oikolab_weather` (TimesFM 2.5 at 0.34 times the median error of the other nine) and `gift.solar.H`
   (t0-gamma at 0.49). Excluding a model's best datasets on a suspicion alone would penalise it without evidence, and the

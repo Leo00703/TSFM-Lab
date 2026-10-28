@@ -12,7 +12,12 @@ from typing import Any
 import numpy as np
 
 from tsfm_lab.models import cache
-from tsfm_lab.models.base import Capabilities, ForecastRequest, ForecastResult, ModelInfo
+from tsfm_lab.models.base import (
+    Capabilities,
+    ForecastRequest,
+    ForecastResult,
+    ModelInfo,
+)
 from tsfm_lab.models.covariates import inspect_known_covariates, mask_flat_rows
 from tsfm_lab.models.torch_adapter import TorchAdapter
 
@@ -24,8 +29,8 @@ LICENSE_NOTE = ("Weights license (Modified MIT): all rights are withheld if your
                 "consolidated MONTHLY revenue exceeds US$20 million; the restriction extends to derivatives. "
                 "Read it before use.")
 KNOWN_ISSUES = (
-    "Apple GPU (MPS) needs a timestral build that runs its float64 statistics on the CPU (issue #6); the official "
-    "package does not, so the device is listed as unavailable there.",
+    ("Apple GPU (MPS) needs a timestral build that runs its float64 statistics on the CPU (issue #6); the official "
+    "package does not, so the device is listed as unavailable there."),
     "Flat-in-context known covariates (e.g. constant prices) can blow up upper quantiles (issue #7).",
     "Memory grows roughly quadratically with series x (1 + covariates) per call: batches are chunked automatically.",
 )
@@ -117,11 +122,10 @@ class TimestralAdapter(TorchAdapter):
         for lo in range(0, request.batch, chunk):
             hi = min(lo + chunk, request.batch)
 
-            def part(arr):
+            def part(arr, lo=lo, hi=hi):
                 return None if arr is None else arr[lo:hi]
 
-            kwargs: dict[str, Any] = dict(prediction_length=request.horizon, symmetric_averaging=symmetric,
-                                          clip_nonnegative=clip_nonneg)
+            kwargs: dict[str, Any] = {"prediction_length": request.horizon, "symmetric_averaging": symmetric, "clip_nonnegative": clip_nonneg}
             for name, arr in (("past_covariates", part(request.past_covariates)),
                               ("known_covariates", part(known)),
                               ("categorical_past_covariates", part(request.categorical_past_covariates)),

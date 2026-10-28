@@ -45,7 +45,7 @@ def is_ready(sc: Scenario) -> bool:
 
 def dataset_for(sc: Scenario) -> Dataset:
     if sc.id not in _CACHE:
-        ids = list(sc.series) if sc.id != "sales" else list(sc.series)
+        ids = list(sc.series)
         _CACHE[sc.id] = read_fev(sc.name, sc.freq, sc.target, sc.covariates, ids, title=sc.title)
     return _CACHE[sc.id]
 

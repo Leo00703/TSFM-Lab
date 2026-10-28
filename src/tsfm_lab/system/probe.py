@@ -55,7 +55,7 @@ def environment_info() -> dict[str, Any]:
     except Exception:  # noqa: BLE001 - a broken CUDA driver must not take the System page down: it is only a report
         info["cuda_available"] = False
     try:
-        sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=5)
+        sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=5, check=False)
         info["tsfm_lab_commit"] = sha.stdout.strip() or None
     except Exception:  # noqa: BLE001
         info["tsfm_lab_commit"] = None

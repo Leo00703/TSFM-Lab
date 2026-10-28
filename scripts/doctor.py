@@ -63,7 +63,7 @@ def main() -> None:
     if not py.exists():
         line(".venv", "MISSING: run python scripts/bootstrap.py")
     else:
-        result = subprocess.run([str(py), "-c", PROBE], env=project_env(), capture_output=True, text=True, cwd=ROOT)
+        result = subprocess.run([str(py), "-c", PROBE], env=project_env(), capture_output=True, text=True, cwd=ROOT, check=False)
         payload = next((ln[2:] for ln in result.stdout.splitlines() if ln.startswith("@@")), None)
         if payload is None:
             line("probe", "failed: " + (result.stderr.strip().splitlines() or ["no output"])[-1])

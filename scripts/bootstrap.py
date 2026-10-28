@@ -39,7 +39,7 @@ def detect_device(choice: str) -> str:
     if platform.system() == "Darwin":
         return "pypi"  # standard wheel (CPU; MPS is not enabled by default, see README)
     if shutil.which("nvidia-smi"):
-        probe = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True)
+        probe = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True, check=False)
         if probe.returncode == 0 and "GPU" in probe.stdout:
             return "cuda"
     return "cpu"

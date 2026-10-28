@@ -93,7 +93,7 @@ def load_dataframe(frame: pd.DataFrame, mapping: ColumnMapping, name: str = "loc
         frame[c] = pd.to_numeric(frame[c], errors="coerce")
 
     groups = [(str(k), g) for k, g in frame.groupby(mapping.id, sort=True)] if mapping.id else [("series", frame)]
-    report: dict[str, Any] = {"rows": int(len(frame)), "unparseable_timestamps": bad_ts, "series": []}
+    report: dict[str, Any] = {"rows": len(frame), "unparseable_timestamps": bad_ts, "series": []}
     freq = mapping.freq
     series: list[Series] = []
     for sid, group in groups:
@@ -105,7 +105,7 @@ def load_dataframe(frame: pd.DataFrame, mapping: ColumnMapping, name: str = "loc
         gaps = 0
         if f:
             full = pd.date_range(group.index[0], group.index[-1], freq=f)
-            gaps = int(len(full.difference(group.index)))
+            gaps = len(full.difference(group.index))
             group = group.reindex(full)
         tgt = group[mapping.targets].to_numpy(dtype=float).T
         past = group[mapping.past_covariates].to_numpy(dtype=float).T if mapping.past_covariates else None

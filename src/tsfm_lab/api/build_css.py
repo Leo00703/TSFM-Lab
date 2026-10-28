@@ -26,7 +26,7 @@ def ensure_css(force: bool = False) -> bool:
         return out.exists()
     out.parent.mkdir(parents=True, exist_ok=True)
     result = subprocess.run([str(binary), "-i", str(src), "-o", str(out), "--minify"], cwd=root / "web",
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, check=False)
     if result.returncode != 0:
         print(result.stderr, file=sys.stderr)
         return False

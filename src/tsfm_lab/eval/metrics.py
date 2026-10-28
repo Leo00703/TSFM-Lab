@@ -85,7 +85,7 @@ def _item_metrics(y, q, levels, scale):
             if idx is None:
                 continue
             lo, hi = q[..., idx[0]], q[..., idx[1]]
-            tag = f"{int(round(c * 100))}"
+            tag = f"{round(c * 100)}"
             observed = np.isfinite(y)
             inside = (y >= lo) & (y <= hi)
             out[f"coverage_{tag}"] = np.where(observed.any(-1), (inside & observed).sum(-1) / observed.sum(-1), np.nan)
@@ -113,7 +113,7 @@ def horizon_metrics(y: np.ndarray, q: np.ndarray, levels, scale: np.ndarray) -> 
                 continue
             observed = np.isfinite(y)
             inside = ((y >= q[..., idx[0]]) & (y <= q[..., idx[1]])) & observed
-            out[f"coverage_{int(round(c * 100))}"] = inside.sum(axis=(0, 1)) / observed.sum(axis=(0, 1))
+            out[f"coverage_{round(c * 100)}"] = inside.sum(axis=(0, 1)) / observed.sum(axis=(0, 1))
     return out
 
 

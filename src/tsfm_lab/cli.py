@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from tsfm_lab.data import synthetic
-from tsfm_lab.data.local import ColumnMapping, load_file, read_table, guess_mapping
+from tsfm_lab.data.local import ColumnMapping, guess_mapping, load_file, read_table
 from tsfm_lab.eval.backtest import BacktestConfig
 from tsfm_lab.eval.runner import DEFAULT_BASELINES, run_experiment
 from tsfm_lab.models.registry import default_registry
@@ -106,8 +106,8 @@ def _tailscale() -> tuple[str, list[str]]:
 
     exe = shutil.which("tailscale") or str(Path("C:/Program Files/Tailscale/tailscale.exe"))
     try:
-        ip = subprocess.run([exe, "ip", "-4"], capture_output=True, text=True, timeout=10).stdout.split()[0]
-        status = json.loads(subprocess.run([exe, "status", "--json"], capture_output=True, text=True, timeout=10).stdout)
+        ip = subprocess.run([exe, "ip", "-4"], capture_output=True, text=True, timeout=10, check=False).stdout.split()[0]
+        status = json.loads(subprocess.run([exe, "status", "--json"], capture_output=True, text=True, timeout=10, check=False).stdout)
     except (OSError, IndexError, ValueError, subprocess.SubprocessError) as error:
         raise RuntimeError(f"Tailscale is not available or not connected: {error}") from error
     dns = status["Self"]["DNSName"].rstrip(".")

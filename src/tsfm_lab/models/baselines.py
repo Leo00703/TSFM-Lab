@@ -8,12 +8,18 @@ empirical construction, not a fitted statistical model.
 from __future__ import annotations
 
 import time
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 
-from tsfm_lab.models.base import (Capabilities, DeviceInfo, ForecastRequest, ForecastResult, ModelAdapter,
-                                  ModelInfo)
+from tsfm_lab.models.base import (
+    Capabilities,
+    DeviceInfo,
+    ForecastRequest,
+    ForecastResult,
+    ModelAdapter,
+    ModelInfo,
+)
 from tsfm_lab.system.devices import cpu_name
 
 LEVELS = (0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85,
@@ -109,8 +115,8 @@ def _info(id_: str, name: str, description: str) -> ModelInfo:
     return ModelInfo(id=id_, family="baseline", name=name, params=None, description=description,
                      license="n/a (part of tsfm-lab)", license_url=None, source_url=None, capabilities=caps,
                      kind="baseline",
-                     notes=("Covariates are ignored. Quantiles come from empirical in-sample errors, "
-                            "widened with sqrt(steps ahead).",))
+                     notes=(("Covariates are ignored. Quantiles come from empirical in-sample errors, "
+                            "widened with sqrt(steps ahead)."),))
 
 
 BASELINES = {

@@ -33,7 +33,7 @@ ASSETS = [
     ("https://raw.githubusercontent.com/mistralai/timestral/main/assets/timestral-banner.jpg",
      "logos/timestral-banner.jpg", b"\xff\xd8\xff"),
 ]
-UNSAFE_SVG = re.compile(rb"<script|\bon\w+\s*=|javascript:|<foreignObject|href\s*=\s*[\"']https?:", re.I)
+UNSAFE_SVG = re.compile(rb"<script|\bon\w+\s*=|javascript:|<foreignObject|href\s*=\s*[\"']https?:", re.IGNORECASE)
 
 
 def fetch(url: str) -> bytes:

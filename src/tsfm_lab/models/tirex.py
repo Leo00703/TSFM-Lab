@@ -19,26 +19,31 @@ from typing import Any
 import numpy as np
 
 from tsfm_lab.models import cache
-from tsfm_lab.models.base import Capabilities, ForecastRequest, ForecastResult, ModelInfo
+from tsfm_lab.models.base import (
+    Capabilities,
+    ForecastRequest,
+    ForecastResult,
+    ModelInfo,
+)
 from tsfm_lab.models.torch_adapter import TorchAdapter
 
 MANIFEST_PACKAGE = "tsfm_lab.models.manifests"
 SERIES_PER_CALL = {"cuda": 64, "cpu": 16, "mps": 16}
 
 KNOWN_ISSUES = (
-    "Licence: the model and its package are Apache-2.0, but one of the libraries it runs on (mlstm_kernels) is under the NXAI "
+    ("Licence: the model and its package are Apache-2.0, but one of the libraries it runs on (mlstm_kernels) is under the NXAI "
     "Community Licence: free for research and for organisations below EUR 100 million annual revenue, otherwise a commercial "
     "licence from NXAI is needed to use it in a commercial product or service, and 'Built with technology from NXAI' must be "
-    "shown when redistributing. Check it before commercial use.",
-    "On the public fev-bench it ranks below Timestral, t0-gamma, TimesFM 3.0 and Chronos-2 (45.5 against 47-50 skill); the "
+    "shown when redistributing. Check it before commercial use."),
+    ("On the public fev-bench it ranks below Timestral, t0-gamma, TimesFM 3.0 and Chronos-2 (45.5 against 47-50 skill); the "
     "result was submitted by its own authors. Its training data are two public corpora (LOTSA and the Chronos datasets), which "
-    "overlap many benchmark datasets: treat results on public data as possibly optimistic.",
-    "Runs here with its pure-PyTorch kernels (the fused CUDA kernels need a compiler): same numbers, but slower than NXAI's "
+    "overlap many benchmark datasets: treat results on public data as possibly optimistic."),
+    ("Runs here with its pure-PyTorch kernels (the fused CUDA kernels need a compiler): same numbers, but slower than NXAI's "
     "optimised path. The Apple GPU (MPS) has not been verified: compare it with the CPU first (scripts/check_device_parity.py). "
-    "A GPU that fails continues on the CPU.",
+    "A GPU that fails continues on the CPU."),
     "Context is limited to the most recent 2048 steps; the package cuts a longer horizon to 320 steps, so beyond that this app forecasts in several passes, each continuing from the median of the previous one (the later intervals then tend to be too narrow).",
-    "Several variables of one series are forecast together, so each one can use the others as context. Categorical "
-    "covariates are not used.",
+    ("Several variables of one series are forecast together, so each one can use the others as context. Categorical "
+    "covariates are not used."),
     "Quantiles are the nine deciles; where the model returns crossing quantiles they are put back in order and a warning says so.",
 )
 

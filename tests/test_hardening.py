@@ -7,7 +7,7 @@ import re
 import pytest
 from fastapi.testclient import TestClient
 
-from tsfm_lab.api.app import CONTENT_SECURITY_POLICY, csv_cell, create_app
+from tsfm_lab.api.app import CONTENT_SECURITY_POLICY, create_app, csv_cell
 from tsfm_lab.data import hub_catalog
 from tsfm_lab.data.catalog import MAX_UPLOAD_BYTES, DatasetCatalog
 from tsfm_lab.store.store import RunStore, SuiteStore
@@ -133,7 +133,7 @@ def test_a_dataset_a_ranked_model_lists_as_its_training_data_is_left_out_of_the_
     from tsfm_lab.eval.suite import aggregate
 
     def row(dataset_id: str, a: float, b: float) -> dict:
-        errors = lambda sql: {"sql": sql, "mase": sql, "wql": sql, "total_s": 1.0}  # noqa: E731
+        errors = lambda sql: {"sql": sql, "mase": sql, "wql": sql, "total_s": 1.0}
         return {"id": dataset_id, "title": dataset_id, "group": "fev", "freq": "h", "freq_label": "hourly", "horizon": 8, "windows": 1, "series": 2,
                 "targets": 1, "covariates": False, "skipped": {}, "error": None,
                 "models": {"timesfm-2-5": errors(a), "b": errors(b), "seasonal-naive": errors(1.0)}}

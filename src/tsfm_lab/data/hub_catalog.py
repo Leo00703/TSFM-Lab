@@ -314,7 +314,9 @@ def _read_fev(e, paths, keep):
                 ts = np.array(data["timestamp"][i], dtype="datetime64[ms]")
                 mats = {g: [_numbers(data[c][i], kinds[c]) for c in cols] for g, cols in groups}
                 ts = _regular(ts, mats, offset)
-                stack = lambda g: np.stack(mats[g]) if mats[g] else None  # noqa: E731
+                def stack(g, mats=mats):
+                    return np.stack(mats[g]) if mats[g] else None
+
                 series.append(Series(str(data["id"][i]), stack("targets"), ts, stack("past"), stack("known")))
             row += 1
     return series, pf.metadata.num_rows, {c for c in e["known"] if kinds[c] == "list-text"}

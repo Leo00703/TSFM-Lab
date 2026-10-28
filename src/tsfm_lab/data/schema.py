@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
-
-import re
 
 # Steps per natural seasonal cycle for one step of each pandas frequency unit.
 _CYCLE = {"min": 1440, "t": 1440, "h": 24, "d": 7, "w": 52, "m": 12, "ms": 12, "me": 12, "q": 4, "qs": 4,

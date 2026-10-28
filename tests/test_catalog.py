@@ -11,11 +11,10 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-
-from tsfm_lab.data import hub_catalog as H
 from fastapi.testclient import TestClient
 
 from tsfm_lab.api.app import create_app
+from tsfm_lab.data import hub_catalog as H
 from tsfm_lab.data.catalog import DatasetCatalog
 
 
@@ -23,7 +22,7 @@ def test_every_entry_is_complete_and_consistent() -> None:
     entries = list(H.entries().values())
     assert collections.Counter(e["source"] for e in entries) == {"fev": 100, "gift": 55, "monash": 32}
     assert len(H._catalog()["entries"]) == len(entries)  # ids are unique
-    for key, src in H.sources().items():
+    for src in H.sources().values():
         assert len(src["revision"]) == 40 and len(src["rules_ref"]) == 40 and src["card_license"] and src["name"] and src["contamination"]
     assert {k: v["card_license"] for k, v in H.sources().items()} == {"fev": "other", "gift": "apache-2.0", "monash": "cc-by-4.0"}
     labels = [(e["source"], H.title(e), H.freq_label(e["pandas_freq"])) for e in entries]
@@ -117,7 +116,7 @@ def test_reader_regularises_gaps_turns_text_into_flags_and_samples_reproducibly(
     assert a.known_covariates[1, :4].tolist() == [0, 1, 0, 1]            # None -> no event, a name -> event
     assert ds.series[2].known_covariates[1].sum() == 0                   # "0" means no event
     assert b.length == 40 and np.isnan(b.target[0, 10:12]).all() and not np.isnan(b.target[0, 12])  # the gap became NaN
-    assert not e["size_bytes"] == 0 and ds.extra["sampled"] is False and ds.extra["static_columns_ignored"] == ["shop"]
+    assert e["size_bytes"] != 0 and ds.extra["sampled"] is False and ds.extra["static_columns_ignored"] == ["shop"]
     few = H.read(e, max_series=2)
     again = H.read(e, max_series=2)
     assert len(few.series) == 2 and few.extra["sampled"] and [s.id for s in few.series] == [s.id for s in again.series]

@@ -18,9 +18,9 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from tsfm_lab.api.jobs import JobManager
-from tsfm_lab.eval import metrics as M
 from tsfm_lab.api.worker import WorkerClient, WorkerCrashed, axis
 from tsfm_lab.data.catalog import MAX_UPLOAD_BYTES, DatasetCatalog
+from tsfm_lab.eval import metrics as M
 from tsfm_lab.eval.benchmark import SCENARIOS
 from tsfm_lab.eval.runner import DEFAULT_BASELINES
 from tsfm_lab.isolation import find_root
@@ -182,9 +182,8 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         if host not in allowed_hosts:
             return JSONResponse({"detail": "this server only answers to localhost"}, status_code=403)
         origin = request.headers.get("origin")
-        if request.method not in ("GET", "HEAD", "OPTIONS") and origin:
-            if origin.split("://", 1)[-1] != request.headers.get("host"):
-                return JSONResponse({"detail": "cross-origin request rejected"}, status_code=403)
+        if request.method not in ("GET", "HEAD", "OPTIONS") and origin and origin.split("://", 1)[-1] != request.headers.get("host"):
+            return JSONResponse({"detail": "cross-origin request rejected"}, status_code=403)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -218,7 +217,9 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
 
     @app.get("/api/system/disk")
     def system_disk():
-        from tsfm_lab.system.disk import usage  # walks tens of thousands of files: only on demand
+        from tsfm_lab.system.disk import (
+            usage,  # walks tens of thousands of files: only on demand
+        )
 
         return ok(usage(root))
 

@@ -28,17 +28,17 @@ from _common import ROOT
 
 sys.path.insert(0, str(ROOT / "src"))
 
-from tsfm_lab import isolation  # noqa: E402
+from tsfm_lab import isolation
 
 isolation.apply(ROOT)
 
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
-import pyarrow as pa  # noqa: E402
-import pyarrow.compute as pc  # noqa: E402
-from huggingface_hub import HfApi, hf_hub_download  # noqa: E402
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import pyarrow.compute as pc
+from huggingface_hub import HfApi, hf_hub_download
 
-from tsfm_lab.data import tsf  # noqa: E402
+from tsfm_lab.data import tsf
 
 warnings.filterwarnings("ignore")
 DATA = ROOT / "src" / "tsfm_lab" / "data"
@@ -116,7 +116,7 @@ def seasonality(freq: str) -> int:
 def gift_task(name: str, freq: str, min_length: int) -> dict:
     unit = re.sub(r"^\d+", "", freq).split("-")[0]
     base = (M4_PRED if name.startswith("m4") else PRED)[unit]
-    windows = lambda h: 1 if name.startswith("m4") else min(max(1, int(np.ceil(TEST_SPLIT * min_length / h))), MAX_WINDOW)  # noqa: E731
+    windows = lambda h: 1 if name.startswith("m4") else min(max(1, int(np.ceil(TEST_SPLIT * min_length / h))), MAX_WINDOW)
     terms = ["short", "medium", "long"] if unit in ("T", "H", "S") and not name.startswith("m4") else ["short"]
     out = [{"term": t, "horizon": base * TERMS[t], "num_windows": windows(base * TERMS[t])} for t in terms]
     return {"horizon": out[0]["horizon"], "num_windows": out[0]["num_windows"], "seasonality": seasonality(freq), "terms": out}

@@ -91,7 +91,7 @@ def test_a_run_with_baselines_only_ranks_them_on_identical_windows_and_survives_
     entries = [_entry("fev1"), _entry("gift1", "gift"), _entry("tiny")]
     out = suite.run_suite(entries, ["drift", "naive"], "cpu", suite.SuiteConfig(max_series=3, max_windows=2, max_context=64), build_default_registry(), load)
     assert seen == [("fev1", 3), ("gift1", 3), ("tiny", 3)]
-    a, b, tiny = out["datasets"]
+    a, _, tiny = out["datasets"]
     assert a["windows"] == 2 and a["horizon"] == 12 and a["items"] == 3 * 2 and set(a["models"]) == {"drift", "naive", "seasonal-naive"}
     assert tiny["error"] and not tiny["models"]  # too short for the task: recorded, the run goes on
     board = out["leaderboard"]
@@ -121,7 +121,7 @@ def test_the_api_refuses_a_run_over_datasets_that_are_unknown_or_not_downloaded(
     app = create_app(root=tmp_path, allowed_hosts=("testserver",))
     client = TestClient(app)
     try:
-        post = lambda body: client.post("/api/jobs/suite", json={"device": "cpu", **body})  # noqa: E731
+        post = lambda body: client.post("/api/jobs/suite", json={"device": "cpu", **body})
         assert post({"datasets": ["nope"], "models": ["timestral-5m"]}).status_code == 404
         every_model = [m["id"] for m in client.get("/api/models").json() if m["kind"] == "foundation"]
         assert len(every_model) > 8 and post({"datasets": ["nope"], "models": every_model}).status_code == 404  # a run may take every model

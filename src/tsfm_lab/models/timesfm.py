@@ -20,19 +20,24 @@ from typing import Any
 import numpy as np
 
 from tsfm_lab.models import cache
-from tsfm_lab.models.base import Capabilities, ForecastRequest, ForecastResult, ModelInfo
+from tsfm_lab.models.base import (
+    Capabilities,
+    ForecastRequest,
+    ForecastResult,
+    ModelInfo,
+)
 from tsfm_lab.models.torch_adapter import TorchAdapter
 
 MANIFEST_PACKAGE = "tsfm_lab.models.manifests"
 BATCH_BY_DEVICE = {"cuda": 16, "cpu": 8, "mps": 4}  # series per model call (the checkpoints are large)
 
 COMMON_ISSUES = (
-    "Produces nine quantile levels (0.1 ... 0.9): there is no 5%/95% or 1%/99% tail, so coverage of the 90% and 98% "
-    "intervals is not available and a multi-model backtest scores every model on the levels they share.",
-    "Timestral's options map as follows: symmetric averaging -> flip invariance / symmetric averaging, clip non-negative -> "
-    "keep non-negative inputs non-negative. Masking of flat covariates is ignored.",
-    "The Apple GPU (MPS) has not been verified for TimesFM: compare it with the CPU first (scripts/check_device_parity.py). "
-    "A GPU that fails continues on the CPU.",
+    ("Produces nine quantile levels (0.1 ... 0.9): there is no 5%/95% or 1%/99% tail, so coverage of the 90% and 98% "
+    "intervals is not available and a multi-model backtest scores every model on the levels they share."),
+    ("Timestral's options map as follows: symmetric averaging -> flip invariance / symmetric averaging, clip non-negative -> "
+    "keep non-negative inputs non-negative. Masking of flat covariates is ignored."),
+    ("The Apple GPU (MPS) has not been verified for TimesFM: compare it with the CPU first (scripts/check_device_parity.py). "
+    "A GPU that fails continues on the CPU."),
 )
 
 
@@ -60,8 +65,8 @@ def info_from_manifest(manifest: dict[str, Any]) -> ModelInfo:
     if manifest.get("restriction"):
         own.append(manifest["restriction_note"])
     if not v3:
-        own += ["Covariates are ignored: TimesFM 2.5 has them only through an external regression (XReg) that needs JAX, "
-                "which this project does not install.",
+        own += [("Covariates are ignored: TimesFM 2.5 has them only through an external regression (XReg) that needs JAX, "
+                "which this project does not install."),
                 "Several variables of one series are forecast one at a time (no joint modelling)."]
     return ModelInfo(
         id=manifest["id"], family=manifest["family"], name=manifest["name"], params=manifest["params"],

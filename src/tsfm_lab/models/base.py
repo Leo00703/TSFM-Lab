@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Self
 
 import numpy as np
 
@@ -119,7 +119,7 @@ class ForecastResult:
 SAFE_ABS_RANGE = (1e-12, 1e15)
 
 
-def rescale_extreme(request: "ForecastRequest") -> tuple["ForecastRequest", np.ndarray | None, str | None]:
+def rescale_extreme(request: ForecastRequest) -> tuple[ForecastRequest, np.ndarray | None, str | None]:
     """Divide every target (and covariate) series whose values are outside what float32 handles safely by its largest absolute value.
 
     The models are scale-equivariant by design, so this changes nothing for them except removing the overflow; the forecast of a
@@ -185,7 +185,7 @@ class ModelAdapter(ABC):
     def is_loaded(self) -> bool:
         return self.device is not None
 
-    def __enter__(self) -> "ModelAdapter":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc) -> None:

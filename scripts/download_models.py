@@ -6,8 +6,9 @@ r"""Download Timestral checkpoints into the project cache (.cache/huggingface).
 import sys
 import time
 
-import tsfm_lab  # noqa: F401  (cache isolation)
 from timestral.loading import resolve_checkpoint
+
+import tsfm_lab  # noqa: F401  (cache isolation)
 
 SIZES = {"5m": "5M", "28m": "28M", "123m": "123M", "209m": "209M"}
 

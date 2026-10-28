@@ -25,7 +25,7 @@ from pathlib import Path
 from _common import CACHE, dir_stats, human
 
 MARK_FILE = CACHE / "leakcheck-mark.json"
-SUSPECT_TEMP_NAME = re.compile(r"(torch|pip-|uv|huggingface|hf_|tsfm|triton|inductor|cuda|numba|^\.tmp)", re.I)
+SUSPECT_TEMP_NAME = re.compile(r"(torch|pip-|uv|huggingface|hf_|tsfm|triton|inductor|cuda|numba|^\.tmp)", re.IGNORECASE)
 
 
 def _home() -> Path:

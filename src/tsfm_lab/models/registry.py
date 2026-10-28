@@ -5,8 +5,8 @@ callable), so a new model never requires touching this code base.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from importlib.metadata import entry_points
-from typing import Callable
 
 from tsfm_lab.models.base import ModelAdapter, ModelInfo
 

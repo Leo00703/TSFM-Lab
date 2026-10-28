@@ -17,7 +17,12 @@ from typing import Any
 import numpy as np
 
 from tsfm_lab.models import cache
-from tsfm_lab.models.base import Capabilities, ForecastRequest, ForecastResult, ModelInfo
+from tsfm_lab.models.base import (
+    Capabilities,
+    ForecastRequest,
+    ForecastResult,
+    ModelInfo,
+)
 from tsfm_lab.models.torch_adapter import TorchAdapter
 
 MANIFEST_PACKAGE = "tsfm_lab.models.manifests"
@@ -25,8 +30,8 @@ DEFAULT_MAX_PACKED_ROWS = 256  # target + covariate rows per model call (the pip
 MPS_MAX_PACKED_ROWS = 64  # unified memory is shared with the system
 
 KNOWN_ISSUES = (
-    "The Apple GPU (MPS) has not been verified for Chronos-2: if you use it, compare it with the CPU first "
-    "(scripts/check_device_parity.py). A GPU that fails continues on the CPU.",
+    ("The Apple GPU (MPS) has not been verified for Chronos-2: if you use it, compare it with the CPU first "
+    "(scripts/check_device_parity.py). A GPU that fails continues on the CPU."),
     "Categorical covariates are not passed to Chronos-2 here: only numeric (and 0/1) covariates are used.",
     "Options that belong to Timestral (symmetric averaging, clipping, masking of flat covariates) are ignored.",
     "Horizons longer than 1024 steps are produced by unrolling the model autoregressively.",

@@ -16,13 +16,13 @@ Nothing is downloaded into the project cache. Run it again only to move to a new
 from __future__ import annotations
 
 import argparse
-import warnings
 import hashlib
 import json
 import re
 import sys
 import time
 import urllib.request
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -30,19 +30,19 @@ from _common import ROOT
 
 sys.path.insert(0, str(ROOT / "src"))
 
-from tsfm_lab import isolation  # noqa: E402
+from tsfm_lab import isolation
 
 isolation.apply(ROOT)
 
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
-import pyarrow as pa  # noqa: E402
-import pyarrow.compute as pc  # noqa: E402
-import pyarrow.parquet as pq  # noqa: E402
-import yaml  # noqa: E402
-from huggingface_hub import HfApi, HfFileSystem, hf_hub_download  # noqa: E402
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import pyarrow.compute as pc
+import pyarrow.parquet as pq
+import yaml
+from huggingface_hub import HfApi, HfFileSystem, hf_hub_download
 
-from tsfm_lab.data.hub import FEV_REPO, FEV_REVISION, alias  # noqa: E402
+from tsfm_lab.data.hub import FEV_REPO, FEV_REVISION, alias
 
 TASKS_REPO = "autogluon/fev"
 TASKS_REF = "4367c673ce9cc4c2077f78b3046954258fadb63a"  # last commit that changed benchmarks/fev_bench/tasks.yaml
@@ -114,7 +114,7 @@ def inspect_file(fs: HfFileSystem, path: str, wanted: dict[str, list[str]], freq
         rows = [np.asarray(batch[c][i], dtype=np.float64) for c in target_cols]
         constant += int(all(np.nanmax(r) == np.nanmin(r) for r in rows if np.isfinite(r).any()))
     return {
-        "pandas_freq": pandas_freq, "n_series": int(len(lengths)),
+        "pandas_freq": pandas_freq, "n_series": len(lengths),
         "length": {"min": int(lengths.min()), "median": int(np.median(lengths)), "max": int(lengths.max()),
                    "total_points": int(lengths.sum())},
         "columns": columns,

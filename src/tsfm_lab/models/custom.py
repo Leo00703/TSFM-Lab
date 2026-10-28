@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,10 +28,10 @@ FILE = ("data", "user", "custom_models.json")
 RISKY_SUFFIXES = (".bin", ".pt", ".pth", ".ckpt", ".pkl", ".pickle", ".py", ".onnx")
 
 CUSTOM_NOTES = (
-    "A custom checkpoint from a third party, not reviewed by this app: its weights were inspected only for format (one "
-    "safetensors file, no code is ever downloaded or run), not for quality, safety of the output or training-data provenance.",
-    "Its context length, quantile levels and covariate support are those of the base model it runs on: right for a fine-tune of "
-    "that model, wrong for a different architecture.",
+    ("A custom checkpoint from a third party, not reviewed by this app: its weights were inspected only for format (one "
+    "safetensors file, no code is ever downloaded or run), not for quality, safety of the output or training-data provenance."),
+    ("Its context length, quantile levels and covariate support are those of the base model it runs on: right for a fine-tune of "
+    "that model, wrong for a different architecture."),
 )
 
 
@@ -124,7 +124,7 @@ def add(root: Path, registry: Registry, repo: str, base_id: str, name: str | Non
         raise ValueError("This repository is already added.")
     entry = {"id": model_id, "name": (name or found["repo"].split("/")[1]).strip()[:60] or model_id, "repo": found["repo"], "base": base_id,
              "revision": found["sha"], "params": found.get("params"), "license": found.get("license"), "author": found.get("author"),
-             "size_bytes": found.get("size_bytes"), "added": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+             "size_bytes": found.get("size_bytes"), "added": datetime.now(UTC).isoformat(timespec="seconds")}
     _write(root, [*entries, entry])
     sync(registry, root)
     return entry

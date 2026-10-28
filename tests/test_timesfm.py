@@ -10,7 +10,13 @@ from tsfm_lab.data import synthetic
 from tsfm_lab.eval import metrics as M
 from tsfm_lab.eval.backtest import BacktestConfig, run_backtest
 from tsfm_lab.models import cache, timesfm
-from tsfm_lab.models.base import Capabilities, ForecastRequest, ForecastResult, ModelAdapter, ModelInfo
+from tsfm_lab.models.base import (
+    Capabilities,
+    ForecastRequest,
+    ForecastResult,
+    ModelAdapter,
+    ModelInfo,
+)
 from tsfm_lab.models.registry import build_default_registry
 
 DECILES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]

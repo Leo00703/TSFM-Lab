@@ -51,7 +51,7 @@ def test_long_horizon_is_flagged_and_still_finite(model) -> None:
 
 def test_flat_covariate_mitigation_changes_the_input_and_is_reported(model) -> None:
     ds = synthetic.build("flat_price_covariate", n_series=4, length=300)
-    cfg = dict(horizon=28, n_windows=1, history_tail=64)
+    cfg = {"horizon": 28, "n_windows": 1, "history_tail": 64}
     plain, _ = run_experiment("timestral-5m", ds, BacktestConfig(**cfg), baselines=())
     masked, _ = run_experiment("timestral-5m", ds, BacktestConfig(**cfg, options={"mask_flat_covariates": True}),
                                baselines=())

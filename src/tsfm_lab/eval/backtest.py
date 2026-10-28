@@ -7,8 +7,9 @@ model. Series of different lengths are left-padded with NaN (missing) inside a b
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 
@@ -168,7 +169,7 @@ def run_backtest(dataset: Dataset, adapters: list[ModelAdapter], cfg: BacktestCo
         if caps.max_context and L > caps.max_context:
             notes.append(f"context longer than {caps.max_context}: the model keeps only the most recent steps")
 
-        def request_for(lo: int, hi: int) -> ForecastRequest:
+        def request_for(lo: int, hi: int, m_past=m_past, m_known=m_known) -> ForecastRequest:
             return ForecastRequest(
                 context=context[lo:hi], horizon=h,
                 past_covariates=None if m_past is None else m_past[lo:hi],

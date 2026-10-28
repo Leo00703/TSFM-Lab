@@ -13,7 +13,7 @@ import re
 import secrets
 import shutil
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -74,7 +74,7 @@ class RunStore:
                 **run_meta.get("models", {}).get(mid, {}),
             }
         meta = {
-            "id": run_id, "created": datetime.now(timezone.utc).isoformat(timespec="seconds"), "label": label,
+            "id": run_id, "created": datetime.now(UTC).isoformat(timespec="seconds"), "label": label,
             "dataset": result.dataset, "config": result.config, "environment": run_meta.get("environment"),
             "request": run_meta.get("request"),
             "items": {"series": result.item_series, "window": result.item_window, "origin": result.item_origin,
@@ -171,7 +171,7 @@ class SuiteStore:
         """Write (or rewrite) a run. A run in progress is saved after every dataset with status 'running'."""
         suite_id = suite_id or self.new_id()
         path = self.root / f"{Path(suite_id).name}.json"
-        created = json.loads(path.read_text(encoding="utf-8"))["created"] if path.is_file() else datetime.now(timezone.utc).isoformat(timespec="seconds")
+        created = json.loads(path.read_text(encoding="utf-8"))["created"] if path.is_file() else datetime.now(UTC).isoformat(timespec="seconds")
         result = {**result, "id": suite_id, "label": label, "created": created, "status": status}
         tmp = path.with_suffix(".tmp")
         tmp.write_text(json.dumps(to_jsonable(result), indent=1), encoding="utf-8")

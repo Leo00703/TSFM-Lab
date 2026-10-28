@@ -7,9 +7,10 @@ import secrets
 import threading
 import time
 import traceback
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 
 class JobCancelled(Exception):

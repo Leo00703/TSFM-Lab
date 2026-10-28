@@ -14,7 +14,13 @@ from typing import Any
 
 import numpy as np
 
-from tsfm_lab.models.base import DeviceInfo, ForecastRequest, ForecastResult, ModelAdapter, rescale_extreme
+from tsfm_lab.models.base import (
+    DeviceInfo,
+    ForecastRequest,
+    ForecastResult,
+    ModelAdapter,
+    rescale_extreme,
+)
 from tsfm_lab.system.devices import list_devices, pick_device
 
 
@@ -51,7 +57,7 @@ class TorchAdapter(ModelAdapter):
         try:
             meta = self._load_on(device)
             self._synchronize(device)
-        except Exception as exc:  # noqa: BLE001 - driver, memory or an unsupported operation on the GPU
+        except Exception as exc:
             if device == "cpu" or self.strict_device:
                 raise
             self._model = None
@@ -83,7 +89,7 @@ class TorchAdapter(ModelAdapter):
                 torch.cuda.empty_cache()
             elif device == "mps":
                 torch.mps.empty_cache()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110 - freeing the cache is best effort
             pass
 
     @staticmethod

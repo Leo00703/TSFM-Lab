@@ -18,7 +18,13 @@ from pathlib import Path
 from typing import Any
 
 from tsfm_lab.data import hub_catalog, synthetic
-from tsfm_lab.data.local import READERS, ColumnMapping, guess_mapping, load_dataframe, read_table
+from tsfm_lab.data.local import (
+    READERS,
+    ColumnMapping,
+    guess_mapping,
+    load_dataframe,
+    read_table,
+)
 from tsfm_lab.data.schema import Dataset
 from tsfm_lab.isolation import find_root
 
@@ -72,7 +78,7 @@ class DatasetCatalog:
             params = spec.get("params") or {}
             unknown = set(params) - {"max_series"}
             if unknown:
-                raise ValueError(f"parameter '{sorted(unknown)[0]}' is not valid for online datasets")
+                raise ValueError(f"parameter '{min(unknown)}' is not valid for online datasets")
             limit = int(params.get("max_series", hub_catalog.DEFAULT_MAX_SERIES))
             if not 1 <= limit <= hub_catalog.MAX_SERIES_LIMIT:
                 raise ValueError(f"max_series must be between 1 and {hub_catalog.MAX_SERIES_LIMIT}")
@@ -131,7 +137,7 @@ class DatasetCatalog:
                 shutil.rmtree(folder, ignore_errors=True)
             raise ValueError(f"could not read '{name}': {error}") from error
         mapping = guess_mapping(frame)
-        return {"file_id": file_id, "filename": name, "rows": int(len(frame)), "columns": list(map(str, frame.columns)),
+        return {"file_id": file_id, "filename": name, "rows": len(frame), "columns": list(map(str, frame.columns)),
                 "dtypes": {str(c): str(t) for c, t in frame.dtypes.items()},
                 "head": json.loads(frame.head(8).to_json(orient="records", date_format="iso")),
                 "guessed_mapping": asdict(mapping)}

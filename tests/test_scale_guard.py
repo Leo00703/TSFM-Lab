@@ -5,7 +5,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from tsfm_lab.models.base import DeviceInfo, ForecastRequest, ForecastResult, rescale_extreme
+from tsfm_lab.models.base import (
+    ForecastRequest,
+    ForecastResult,
+    rescale_extreme,
+)
 from tsfm_lab.models.torch_adapter import TorchAdapter
 
 

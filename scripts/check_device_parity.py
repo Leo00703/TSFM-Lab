@@ -19,15 +19,15 @@ from _common import ROOT
 
 sys.path.insert(0, str(ROOT / "src"))
 
-from tsfm_lab import isolation  # noqa: E402
+from tsfm_lab import isolation
 
 isolation.apply(ROOT)
 
-import numpy as np  # noqa: E402
+import numpy as np
 
-from tsfm_lab.models.base import ForecastRequest  # noqa: E402
-from tsfm_lab.models.registry import default_registry  # noqa: E402
-from tsfm_lab.system.devices import list_devices  # noqa: E402
+from tsfm_lab.models.base import ForecastRequest
+from tsfm_lab.models.registry import default_registry
+from tsfm_lab.system.devices import list_devices
 
 
 def main() -> None:

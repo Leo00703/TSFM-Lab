@@ -23,8 +23,8 @@ def cpu_name() -> str:
                         return line.split(":", 1)[1].strip()
         if platform.system() == "Darwin":
             return subprocess.run(["sysctl", "-n", "machdep.cpu.brand_string"],
-                                  capture_output=True, text=True, timeout=5).stdout.strip()
-    except Exception:  # noqa: BLE001 - purely informational
+                                  capture_output=True, text=True, timeout=5, check=False).stdout.strip()
+    except Exception:  # noqa: BLE001, S110 - purely informational
         pass
     return platform.processor() or platform.machine()
 

@@ -66,11 +66,7 @@ def _grocery() -> dict[str, str]:
 
 def _retail() -> dict[str, str]:
     """The 30 best-selling items of the California stores that have the full 280 weeks."""
-    ids = ("FOODS_3_090_CA_3 FOODS_3_586_CA_3 FOODS_3_090_CA_1 FOODS_3_586_CA_1 FOODS_3_252_CA_3 FOODS_3_541_CA_3 FOODS_3_635_CA_3 "
-           "FOODS_3_252_CA_1 FOODS_3_808_CA_3 FOODS_3_586_CA_2 FOODS_3_555_CA_3 FOODS_3_252_CA_2 FOODS_3_090_CA_2 FOODS_3_681_CA_3 "
-           "FOODS_3_714_CA_1 FOODS_3_090_CA_4 FOODS_3_714_CA_3 FOODS_3_587_CA_1 FOODS_3_202_CA_3 FOODS_3_808_CA_1 FOODS_3_723_CA_3 "
-           "FOODS_3_318_CA_3 FOODS_3_752_CA_3 HOUSEHOLD_1_118_CA_3 FOODS_2_197_CA_3 FOODS_3_694_CA_3 FOODS_3_234_CA_3 "
-           "FOODS_2_197_CA_1 FOODS_3_501_CA_3 FOODS_2_360_CA_3").split()
+    ids = ["FOODS_3_090_CA_3", "FOODS_3_586_CA_3", "FOODS_3_090_CA_1", "FOODS_3_586_CA_1", "FOODS_3_252_CA_3", "FOODS_3_541_CA_3", "FOODS_3_635_CA_3", "FOODS_3_252_CA_1", "FOODS_3_808_CA_3", "FOODS_3_586_CA_2", "FOODS_3_555_CA_3", "FOODS_3_252_CA_2", "FOODS_3_090_CA_2", "FOODS_3_681_CA_3", "FOODS_3_714_CA_1", "FOODS_3_090_CA_4", "FOODS_3_714_CA_3", "FOODS_3_587_CA_1", "FOODS_3_202_CA_3", "FOODS_3_808_CA_1", "FOODS_3_723_CA_3", "FOODS_3_318_CA_3", "FOODS_3_752_CA_3", "HOUSEHOLD_1_118_CA_3", "FOODS_2_197_CA_3", "FOODS_3_694_CA_3", "FOODS_3_234_CA_3", "FOODS_2_197_CA_1", "FOODS_3_501_CA_3", "FOODS_2_360_CA_3"]
     out = {}
     for sid in ids:
         cat, dept, item, _, store = sid.split("_")
@@ -100,8 +96,8 @@ SCENARIOS: dict[str, Scenario] = {s.id: s for s in (
             Covariate("temperature", "Temperature", "temperature", hint="Air temperature"),
             Covariate("sun", "Sunshine", "radiation_direct_horizontal", hint="Direct sunlight reaching the ground"),
         ),
-        caveats=("The factors are the values that were actually measured, not forecasts. In real life you would only have forecasts "
-                 "of solar, wind and temperature, so the benefit shown here is an upper bound.",
+        caveats=(("The factors are the values that were actually measured, not forecasts. In real life you would only have forecasts "
+                 "of solar, wind and temperature, so the benefit shown here is an upper bound."),
                  "The dataset does not state the unit of demand, so the values are shown as they are."),
         max_offset_steps=24 * 60),
     Scenario(
@@ -117,8 +113,8 @@ SCENARIOS: dict[str, Scenario] = {s.id: s for s in (
             Covariate("school", "School holiday", "SchoolHoliday", binary=True, hint="Whether schools are on holiday"),
             Covariate("public", "Public holiday", "StateHoliday", transform="nonzero_str", binary=True, hint="Whether it is a public holiday"),
         ),
-        caveats=("Opening days, promotions and holidays are genuinely known ahead of time, so this scenario is a fair test of "
-                 "what covariates can add.",),
+        caveats=(("Opening days, promotions and holidays are genuinely known ahead of time, so this scenario is a fair test of "
+                 "what covariates can add."),),
         max_offset_steps=28 * 6),
     Scenario(
         id="solar", tab="Solar power", title="Solar power output", subtitle="Hourly output of a solar installation", unit="power units of the dataset",
@@ -150,10 +146,10 @@ SCENARIOS: dict[str, Scenario] = {s.id: s for s in (
             Covariate("holiday", "Public holiday", "holiday", binary=True, hint="Whether it is a public holiday"),
             Covariate("winter", "Winter school break", "winter_school_holidays", binary=True, hint="Whether schools are on winter break"),
         ),
-        caveats=("Product names are anonymised in the dataset. The 40 products shown are simply the best sellers with a complete recent "
-                 "history; the choice does not look at the factors.",
-                 "Discounts are rare for most of these products, so the gain from \"Discount\" comes from the few that have them. A discount "
-                 "that never appeared in the history is hidden from the model, which avoids a known flaw of the model.",
+        caveats=(("Product names are anonymised in the dataset. The 40 products shown are simply the best sellers with a complete recent "
+                 "history; the choice does not look at the factors."),
+                 ("Discounts are rare for most of these products, so the gain from \"Discount\" comes from the few that have them. A discount "
+                 "that never appeared in the history is hidden from the model, which avoids a known flaw of the model."),
                  "Stock availability is left out on purpose: it is not known in advance."),
         ),
     Scenario(
@@ -168,10 +164,10 @@ SCENARIOS: dict[str, Scenario] = {s.id: s for s in (
             Covariate("oil", "Oil price", "oil_price", hint="The world market price of oil"),
         ),
         caveats=("Holidays are matched to the store's own region, as published with the data.",
-                 "The oil price is not known in advance: the value used is the one that was recorded. It is included on purpose, "
-                 "as an example of a factor that adds nothing. Not every factor helps, and the measured effect shows it.",
-                 "How much the holidays help depends on the model: the larger ones use them clearly better. With the smaller ones, "
-                 "all factors together can even make the forecast slightly worse. Switch the model above to see it.",
+                 ("The oil price is not known in advance: the value used is the one that was recorded. It is included on purpose, "
+                 "as an example of a factor that adds nothing. Not every factor helps, and the measured effect shows it."),
+                 ("How much the holidays help depends on the model: the larger ones use them clearly better. With the smaller ones, "
+                 "all factors together can even make the forecast slightly worse. Switch the model above to see it."),
                  "The data are the daily purchase counts of 51 stores of one supermarket chain, from 2013 to 2017."),
         ),
     Scenario(
@@ -189,10 +185,10 @@ SCENARIOS: dict[str, Scenario] = {s.id: s for s in (
             Covariate("cultural", "Cultural events", "event_Cultural", hint="Cultural events in the week"),
             Covariate("sporting", "Sporting events", "event_Sporting", hint="Major sporting events in the week"),
         ),
-        caveats=("The price is the one the store really set. Prices are decided in advance, so this is a fair test of what a planned price "
-                 "can add.",
-                 "More factors is not always better: with everything switched on the gain can be smaller than with the price alone, "
-                 "because the other factors add little and the model has more to weigh.",
+        caveats=(("The price is the one the store really set. Prices are decided in advance, so this is a fair test of what a planned price "
+                 "can add."),
+                 ("More factors is not always better: with everything switched on the gain can be smaller than with the price alone, "
+                 "because the other factors add little and the model has more to weigh."),
                  "The 30 items shown are the best sellers of the California stores; the choice does not look at the factors."),
         ),
 )}

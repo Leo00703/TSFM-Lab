@@ -20,22 +20,27 @@ from typing import Any
 import numpy as np
 
 from tsfm_lab.models import cache
-from tsfm_lab.models.base import Capabilities, ForecastRequest, ForecastResult, ModelInfo
+from tsfm_lab.models.base import (
+    Capabilities,
+    ForecastRequest,
+    ForecastResult,
+    ModelInfo,
+)
 from tsfm_lab.models.torch_adapter import TorchAdapter
 
 MANIFEST_PACKAGE = "tsfm_lab.models.manifests"
 ROWS_PER_CALL = {"cuda": 64, "cpu": 32, "mps": 32}  # target + covariate rows per model call
 
 KNOWN_ISSUES = (
-    "A young model: released on 2026-10-12, with no independent evaluation yet. Its fev-bench result was submitted by its own "
+    ("A young model: released on 2026-10-12, with no independent evaluation yet. Its fev-bench result was submitted by its own "
     "authors, and the training data are described only as curated public datasets plus synthetic series, without a list: "
-    "treat results on public data as possibly optimistic and judge it on your own backtests.",
-    "The authors' published benchmark forecast 64 unrelated series jointly on the tasks without covariates; this app "
-    "forecasts every series on its own, so measured scores can differ from the published ones.",
+    "treat results on public data as possibly optimistic and judge it on your own backtests."),
+    ("The authors' published benchmark forecast 64 unrelated series jointly on the tasks without covariates; this app "
+    "forecasts every series on its own, so measured scores can differ from the published ones."),
     "Several variables of one series are forecast one at a time, each with the same covariates.",
     "Known covariates that are missing over the forecast region are read by the model as 0.",
-    "Categorical covariates are not used here. The Apple GPU (MPS) has not been verified: compare it with the CPU first "
-    "(scripts/check_device_parity.py). A GPU that fails continues on the CPU.",
+    ("Categorical covariates are not used here. The Apple GPU (MPS) has not been verified: compare it with the CPU first "
+    "(scripts/check_device_parity.py). A GPU that fails continues on the CPU."),
 )
 
 

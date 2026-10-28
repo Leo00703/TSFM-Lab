@@ -2,7 +2,11 @@ import numpy as np
 import pytest
 
 from tsfm_lab.models.base import ForecastRequest
-from tsfm_lab.models.covariates import flat_context_rows, inspect_known_covariates, mask_flat_rows
+from tsfm_lab.models.covariates import (
+    flat_context_rows,
+    inspect_known_covariates,
+    mask_flat_rows,
+)
 from tsfm_lab.models.registry import build_default_registry
 
 
@@ -82,7 +86,13 @@ def test_binary_covariates_do_not_trigger_the_sign_warning() -> None:
 def test_new_model_plugs_in_without_touching_the_core() -> None:
     from tsfm_lab.data import synthetic
     from tsfm_lab.eval.backtest import BacktestConfig, run_backtest
-    from tsfm_lab.models.base import Capabilities, DeviceInfo, ForecastResult, ModelAdapter, ModelInfo
+    from tsfm_lab.models.base import (
+        Capabilities,
+        DeviceInfo,
+        ForecastResult,
+        ModelAdapter,
+        ModelInfo,
+    )
     from tsfm_lab.models.registry import Registry
 
     class MeanModel(ModelAdapter):

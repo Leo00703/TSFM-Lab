@@ -14,8 +14,9 @@ import queue
 import threading
 import time
 from collections import OrderedDict
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 
@@ -141,9 +142,9 @@ def do_suite(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
     entries = hub_catalog.run_entries(a["datasets"])
     cfg = SuiteConfig(max_series=a["max_series"], max_windows=a["max_windows"], max_context=a["max_context"],
                       use_covariates=a["use_covariates"])
-    load = lambda e, n: svc.catalog.resolve({"source": "hub", "id": e["id"], "params": {"max_series": n}})  # noqa: E731
+    load = lambda e, n: svc.catalog.resolve({"source": "hub", "id": e["id"], "params": {"max_series": n}})
     sid = a["suite_id"]
-    save = lambda r, status="running": svc.suites.save({**r, "request": a}, a["label"], sid, status)  # noqa: E731
+    save = lambda r, status="running": svc.suites.save({**r, "request": a}, a["label"], sid, status)
     result = run_suite(entries, a["models"], a["device"], cfg, svc.registry, load, progress, checkpoint=save)
     save(result, "done")
     return {"suite_id": sid}
@@ -236,7 +237,7 @@ def worker_main(root: str, requests, responses, cancel) -> None:
         custom.sync(svc.registry, svc.root)  # custom checkpoints added or removed since the last job
         cancel.clear()
 
-        def progress(done: int, total: int, message: str) -> None:
+        def progress(done: int, total: int, message: str, call_id: int = call_id) -> None:
             if cancel.is_set():
                 raise JobCancelled()
             responses.put(("progress", call_id, (done, total, message), None))
@@ -326,7 +327,7 @@ class WorkerClient:
                 if self._proc.is_alive():
                     self._req.put((0, "stop", None))
                     self._proc.join(timeout=5)
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, S110 - the process is stopped below either way
                 pass
             if self._proc.is_alive():
                 self._proc.terminate()
