@@ -142,8 +142,11 @@ def do_suite(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
     cfg = SuiteConfig(max_series=a["max_series"], max_windows=a["max_windows"], max_context=a["max_context"],
                       use_covariates=a["use_covariates"])
     load = lambda e, n: svc.catalog.resolve({"source": "hub", "id": e["id"], "params": {"max_series": n}})  # noqa: E731
-    result = run_suite(entries, a["models"], a["device"], cfg, svc.registry, load, progress)
-    return {"suite_id": svc.suites.save({**result, "request": a}, a["label"])}
+    sid = a["suite_id"]
+    save = lambda r, status="running": svc.suites.save({**r, "request": a}, a["label"], sid, status)  # noqa: E731
+    result = run_suite(entries, a["models"], a["device"], cfg, svc.registry, load, progress, checkpoint=save)
+    save(result, "done")
+    return {"suite_id": sid}
 
 
 def do_benchmark(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:

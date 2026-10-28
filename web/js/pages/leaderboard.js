@@ -6,6 +6,7 @@ import { confirmDialog } from '../dialog.js';
 
 const SIZE_LIMITS = [['5', 'Under 5 MB'], ['50', 'Under 50 MB'], ['any', 'Any size']];
 const params = (n) => (!n ? '–' : n >= 1e6 ? `${Math.round(n / 1e6)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n));
+const STATUS = { done: 'complete', running: 'running', stopped: 'stopped', interrupted: 'interrupted' };
 const skillText = (x) => (x === null || x === undefined ? '–' : `${x >= 0 ? '+' : ''}${x.toFixed(1)}%`);
 
 function SkillBar({ value }) {
@@ -79,7 +80,7 @@ function Form() {
     <div class="min-w-0 grid grid-cols-[minmax(0,1fr)] content-start gap-4">
       ${error && html`<${ErrorBox} error=${error} />`}
       ${job && html`<${Card}><span class="eyebrow">${job.status}${active ? ' · keeps running if you leave this page' : ''}</span><h3 class="mt-1 font-mistral text-h4">${job.label}</h3><div class="mt-4"><${Progress} done=${job.done} total=${job.total} message=${job.message} /></div>
-        ${job.status === 'cancelled' && html`<p class="mt-3 text-text-muted">Cancelled: nothing was saved.</p>`}<//>`}
+        ${job.status === 'cancelled' && html`<p class="mt-3 text-text-muted">Stopped. What was finished is kept: <a class="underline" href=${'#/' + job.link}>see the partial leaderboard</a>.</p>`}<//>`}
       <${Card} tight><span class="eyebrow">How it is scored</span>
         <ol class="mt-3 list-decimal space-y-2 pl-5 text-body-small text-text-muted"><li>Every model is loaded once and forecasts exactly the same windows of every dataset, with the horizon of the benchmark's own task.</li><li>Per dataset the error is the mean over series and windows. The score is the geometric mean, over datasets, of the model's error divided by seasonal naive's: 0% matches seasonal naive, +30% means 30% lower error.</li><li>Only datasets that every ranked model completed count towards the ranking, so a model that cannot take multivariate data is not compared on an easier set. Models with different quantile levels are scored on the levels they share.</li></ol><//>
       <${Notice} kind="warning" title="Read it as an indication">Public benchmark data may overlap what a model was trained on, and a sample of ${c.maxSeries} series per dataset is noisy. Use this to compare models with each other on the same footing, not as proof of out-of-sample skill.<//>
@@ -94,21 +95,27 @@ function History() {
     if (ok) reload();
   };
   return html`<${Section} title="Previous runs">${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : html`<${Card} tight>
-    <${Table} head=${['When', 'Label', 'Models', 'Datasets', 'Best (SQL skill)', '']} empty="No leaderboard runs yet." rows=${s.data.map((r) => [when(r.created), r.label || '–', r.models.join(', '), `${r.common} of ${r.datasets}`, r.best ? `${r.best} ${skillText(r.best_skill)}` : '–',
+    <${Table} head=${['When', 'Label', 'Models', 'Datasets', 'Best (SQL skill)', 'Status', '']} empty="No leaderboard runs yet." rows=${s.data.map((r) => [when(r.created), r.label || '–', r.models.join(', '), r.status === 'done' ? `${r.common} of ${r.datasets}` : `${r.datasets} of ${r.planned} run`, r.best ? `${r.best} ${skillText(r.best_skill)}` : '–', html`<${Tag}>${STATUS[r.status] || r.status}<//>`,
       html`<span class="flex gap-2"><${Button} small kind="outline" onClick=${() => go('leaderboard/' + r.id)}>Open<//><${Button} small kind="danger" icon="trash" aria-label="Delete run" onClick=${() => del(r)} /></span>`])} /><//>`}<//>`;
 }
 
 function Detail({ id }) {
-  const [s] = useAsync(() => api(`/api/suites/${id}`), [id]);
+  const [s, reload] = useAsync(() => api(`/api/suites/${id}`), [id]);
   const [view, setView] = useState('overall');
-  if (s.loading) return html`<${Spinner} />`;
+  const running = !!s.data && s.data.status === 'running';
+  useEffect(() => { if (!running) return undefined; const t = setInterval(reload, 4000); return () => clearInterval(t); }, [running]);
+  if (s.loading && !s.data) return html`<${Spinner} />`;
   if (s.error) return html`<${ErrorBox} error=${s.error} />`;
   const r = s.data, board = r.leaderboard, name = (m) => (r.models[m] || {}).name || m;
   const rowsOf = (table) => board.ranked.slice().sort((a, b) => (table[b].sql_skill ?? -1e9) - (table[a].sql_skill ?? -1e9));
   const table = view === 'overall' ? board.overall : board.by_group[view];
   const groups = Object.keys(board.by_group), all = [...board.ranked, 'seasonal-naive'];
   const problems = r.datasets.filter((d) => d.error || Object.keys(d.skipped).length);
+  const partial = { running: 'This run is still going: the ranking below counts the datasets finished so far and updates by itself.',
+    stopped: 'This run was stopped before the end: the ranking below counts only the datasets finished before that.',
+    interrupted: 'This run was cut short (the server stopped or the computation failed): the ranking below counts only the datasets finished before that.' }[r.status];
   return html`<div><${PageHeader} eyebrow="Leaderboard" title=${r.label || 'Leaderboard run'}>${when(r.created)} · ${deviceLabel(r.device)} · ${board.total_datasets} datasets (${board.common_datasets} counted) · ${Math.round(r.elapsed_s)} s<//>
+    ${partial && html`<div class="mt-6"><${Notice} kind=${r.status === 'running' ? 'info' : 'warning'} title=${`${board.total_datasets} of ${r.planned || board.total_datasets} datasets run`}>${partial}<//></div>`}
     <${Section} title="Ranking" aside=${html`<${Button} small kind="ghost" onClick=${() => go('leaderboard')}>Back<//>`}>
       <div class="mb-3"><${Tabs} value=${view} onChange=${setView} label="Group" items=${[{ value: 'overall', label: 'All datasets' }, ...groups.map((g) => ({ value: g, label: g }))]} /></div>
       <${Card} tight><${Table} head=${['#', 'Model', 'SQL skill', 'MASE skill', 'Wins', 'Datasets', 'Time']} empty="Nothing completed." rows=${rowsOf(table).map((m, i) => [i + 1, html`<b>${name(m)}</b>`, html`<${SkillBar} value=${table[m].sql_skill} />`, skillText(table[m].mase_skill), table[m].wins, table[m].datasets, `${table[m].total_s} s`])} /><//>

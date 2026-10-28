@@ -101,3 +101,45 @@ def test_the_api_refuses_a_run_over_datasets_that_are_unknown_or_not_downloaded(
         assert client.get("/api/suites/missing").status_code == 404
     finally:
         app.state.worker.stop()
+
+
+def test_a_run_is_checkpointed_after_every_dataset_and_can_be_cut_short(tmp_path) -> None:
+    data = {"a": _dataset(3, 200, 1), "b": _dataset(3, 200, 2), "c": _dataset(3, 200, 3)}
+    store = SuiteStore(tmp_path)
+    sid, snapshots = store.new_id(), []
+
+    def checkpoint(result):
+        store.save(result, "cut", sid, "running")
+        snapshots.append(len(store.get(sid)["datasets"]))
+
+    def progress(done, total, message):
+        if message == "c":  # the user presses Stop while the third dataset is about to start
+            raise RuntimeError("stopped")
+
+    entries = [_entry(i) for i in "abc"]
+    with pytest.raises(RuntimeError):
+        suite.run_suite(entries, ["naive"], "cpu", suite.SuiteConfig(max_series=3, max_windows=1), build_default_registry(), lambda e, n: data[e["id"]],
+                        progress, checkpoint)
+    assert snapshots == [1, 2]  # each finished dataset was written as it finished
+    saved = store.get(sid)
+    assert saved["status"] == "running" and saved["planned"] == 3 and saved["leaderboard"]["common_datasets"] == 2
+    store.finish(sid, "stopped")
+    assert store.get(sid)["status"] == "stopped" and store.list()[0]["status"] == "stopped" and store.list()[0]["planned"] == 3
+    store.save(saved, "cut", sid, "done")
+    store.finish(sid, "interrupted")  # a finished run is never downgraded
+    assert store.get(sid)["status"] == "done"
+
+
+def test_the_api_reports_a_run_nobody_is_running_as_interrupted(tmp_path) -> None:
+    rows = [_row("a", "fev", **{"seasonal-naive": 1.0, "x": 0.5})]
+    result = {"config": {}, "device": "cpu", "models": {}, "datasets": rows, "elapsed_s": 1.0, "planned": 5, "leaderboard": suite.aggregate(rows, ["x"])}
+    (tmp_path / "runs").mkdir()
+    sid = SuiteStore(tmp_path / "runs").save(result, "orphan", status="running")  # left behind by a server that died
+    app = create_app(root=tmp_path, allowed_hosts=("testserver",))
+    client = TestClient(app)
+    try:
+        listed = client.get("/api/suites").json()
+        assert listed[0]["status"] == "interrupted" and listed[0]["planned"] == 5
+        assert client.get(f"/api/suites/{sid}").json()["status"] == "interrupted"
+    finally:
+        app.state.worker.stop()

@@ -75,13 +75,24 @@ def aggregate(results: list[dict[str, Any]], ranked: list[str]) -> dict[str, Any
 
 
 def run_suite(entries: list[dict[str, Any]], model_ids: list[str], device: str, cfg: SuiteConfig, registry: Registry,
-              load: Callable[[dict[str, Any], int], Dataset], progress: Callable[[int, int, str], None] | None = None) -> dict[str, Any]:
-    """``entries`` are catalog entries; ``load(entry, max_series)`` returns the dataset (injected so tests need no downloads)."""
+              load: Callable[[dict[str, Any], int], Dataset], progress: Callable[[int, int, str], None] | None = None,
+              checkpoint: Callable[[dict[str, Any]], None] | None = None) -> dict[str, Any]:
+    """``entries`` are catalog entries; ``load(entry, max_series)`` returns the dataset (injected so tests need no downloads).
+
+    ``checkpoint`` receives the full result so far after every dataset, so a run that is stopped or killed keeps what it finished."""
     wanted = list(dict.fromkeys([*model_ids, REFERENCE]))
     adapters: dict[str, Any] = {}
     load_info: dict[str, Any] = {}
     results: list[dict[str, Any]] = []
     started = time.time()
+    ranked = [m for m in model_ids if m != REFERENCE]
+
+    def package() -> dict[str, Any]:
+        board = aggregate([r for r in results if r["models"] and REFERENCE in r["models"]], ranked)
+        board["total_datasets"] = len(results)  # including the ones that could not be scored
+        return {"config": cfg.to_dict(), "device": device, "models": {m: _model_meta(registry, m, load_info[m]) for m in wanted},
+                "datasets": results, "leaderboard": board, "planned": len(entries), "elapsed_s": round(time.time() - started, 1)}
+
     try:
         for mid in wanted:
             adapter = registry.create(mid)
@@ -106,6 +117,8 @@ def run_suite(entries: list[dict[str, Any]], model_ids: list[str], device: str, 
             except ValueError as error:  # a dataset too short for the task: recorded, the suite goes on
                 row["error"] = str(error)
                 results.append(row)
+                if checkpoint:
+                    checkpoint(package())
                 continue
             row["items"] = int(res.y.shape[0])
             for m in usable:
@@ -113,16 +126,14 @@ def run_suite(entries: list[dict[str, Any]], model_ids: list[str], device: str, 
                 row["models"][m] = {**{k: float(np.nanmean(out.items[k])) for k in METRICS}, "total_s": round(out.total_s, 3),
                                     "warnings": out.warnings[:3], "notes": out.notes[:2]}
             results.append(row)
+            if checkpoint:
+                checkpoint(package())
         if progress:
             progress(len(entries), len(entries), "done")
     finally:
         for adapter in adapters.values():
             adapter.unload()
-    ranked = [m for m in model_ids if m != REFERENCE]
-    board = aggregate([r for r in results if r["models"] and REFERENCE in r["models"]], ranked)
-    board["total_datasets"] = len(results)  # including the ones that could not be scored
-    return {"config": cfg.to_dict(), "device": device, "models": {m: _model_meta(registry, m, load_info[m]) for m in wanted},
-            "datasets": results, "leaderboard": board, "elapsed_s": round(time.time() - started, 1)}
+    return package()
 
 
 def _model_meta(registry: Registry, model_id: str, load: dict[str, Any]) -> dict[str, Any]:

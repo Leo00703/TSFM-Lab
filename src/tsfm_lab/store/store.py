@@ -155,11 +155,29 @@ class SuiteStore:
         self.root = (Path(root) if root else find_root() / "runs") / "suites"
         self.root.mkdir(parents=True, exist_ok=True)
 
-    def save(self, result: dict[str, Any], label: str | None = None) -> str:
-        suite_id = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(2)
-        result = {**result, "id": suite_id, "label": label, "created": datetime.now(timezone.utc).isoformat(timespec="seconds")}
-        (self.root / f"{suite_id}.json").write_text(json.dumps(to_jsonable(result), indent=1), encoding="utf-8")
+    def new_id(self) -> str:
+        return datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(2)
+
+    def save(self, result: dict[str, Any], label: str | None = None, suite_id: str | None = None, status: str = "done") -> str:
+        """Write (or rewrite) a run. A run in progress is saved after every dataset with status 'running'."""
+        suite_id = suite_id or self.new_id()
+        path = self.root / f"{Path(suite_id).name}.json"
+        created = json.loads(path.read_text(encoding="utf-8"))["created"] if path.is_file() else datetime.now(timezone.utc).isoformat(timespec="seconds")
+        result = {**result, "id": suite_id, "label": label, "created": created, "status": status}
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(to_jsonable(result), indent=1), encoding="utf-8")
+        tmp.replace(path)  # a reader never sees half a file
         return suite_id
+
+    def finish(self, suite_id: str, status: str) -> None:
+        """A run that was left 'running' (stopped, crashed, server restarted) gets its real status; finished runs are untouched."""
+        path = self.root / f"{Path(suite_id).name}.json"
+        if not path.is_file():
+            return
+        d = json.loads(path.read_text(encoding="utf-8"))
+        if d.get("status") == "running":
+            d["status"] = status
+            path.write_text(json.dumps(d, indent=1), encoding="utf-8")
 
     def list(self) -> list[dict[str, Any]]:
         out = []
@@ -169,6 +187,7 @@ class SuiteStore:
             best = max(board["ranked"], key=lambda m: (board["overall"][m]["sql_skill"] is not None, board["overall"][m]["sql_skill"] or 0),
                        default=None) if board["common_datasets"] else None
             out.append({"id": d["id"], "created": d["created"], "label": d.get("label"), "models": board["ranked"], "device": d["device"],
+                        "status": d.get("status", "done"), "planned": d.get("planned", board["total_datasets"]),
                         "datasets": board["total_datasets"], "common": board["common_datasets"], "best": best,
                         "best_skill": None if best is None else board["overall"][best]["sql_skill"], "elapsed_s": d["elapsed_s"]})
         return out

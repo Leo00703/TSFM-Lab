@@ -140,6 +140,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     compute_lock = threading.Lock()
     jobs = JobManager(compute_lock)
     worker = WorkerClient(root)
+    live_suites: set[str] = set()  # leaderboard runs this server is running right now
     app = FastAPI(title="tsfm-lab", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
     def ok(payload: Any, status: int = 200) -> JSONResponse:
@@ -361,10 +362,21 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         ranked = [m for m in dict.fromkeys(body.models) if registry.info(m).kind != "baseline"]
         if not ranked:
             raise HTTPException(422, "pick at least one model (baselines are always included as the reference)")
-        payload = {**body.model_dump(), "datasets": list(dict.fromkeys(body.datasets)), "models": ranked}
+        sid = suite_store.new_id()
+        payload = {**body.model_dump(), "datasets": list(dict.fromkeys(body.datasets)), "models": ranked, "suite_id": sid}
         names = ", ".join(registry.info(m).name for m in ranked)
-        return ok(jobs.submit("suite", f"Leaderboard: {names} on {len(payload['datasets'])} datasets · {body.device}", lambda j: worker.call(
-            "suite", payload, lambda d, t, m: j.update(d, t, m), j.cancel.is_set)).to_dict(), 202)
+
+        live_suites.add(sid)
+
+        def run(j):
+            try:
+                return worker.call("suite", payload, lambda d, t, m: j.update(d, t, m), j.cancel.is_set)
+            finally:  # whatever ended it, what was finished is kept and says how it ended
+                live_suites.discard(sid)
+                suite_store.finish(sid, "stopped" if j.cancel.is_set() else "interrupted")
+
+        return ok(jobs.submit("suite", f"Leaderboard: {names} on {len(payload['datasets'])} datasets · {body.device}", run,
+                              link=f"leaderboard/{sid}").to_dict(), 202)
 
     @app.post("/api/jobs/benchmark")
     def start_benchmark(body: BenchmarkBody):
@@ -407,13 +419,18 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         return ok({"deleted": bench_id})
 
     # ------------------------------------------------------------------ leaderboard runs
+    def judged(suite_id: str, status: str) -> str:
+        """A file that says 'running' but that no job of this server is running was cut short (a restart, a crash)."""
+        return "interrupted" if status == "running" and suite_id not in live_suites else status
+
     @app.get("/api/suites")
     def suites():
-        return ok(suite_store.list())
+        return ok([{**r, "status": judged(r["id"], r["status"])} for r in suite_store.list()])
 
     @app.get("/api/suites/{suite_id}")
     def suite(suite_id: str):
-        return ok(suite_store.get(suite_id))
+        d = suite_store.get(suite_id)
+        return ok({**d, "status": judged(suite_id, d.get("status", "done"))})
 
     @app.delete("/api/suites/{suite_id}")
     def delete_suite(suite_id: str):

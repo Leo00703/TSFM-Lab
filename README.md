@@ -159,7 +159,8 @@ size) and ranks them. Every model is loaded once and forecasts the same windows 
 benchmark's own task (windows capped, a seeded sample of series, the same context cap for all). The score is the fev-bench skill: the
 geometric mean over datasets of the model's error divided by seasonal naive's, on SQL and MASE; only datasets that every ranked model
 completed count, and models with different quantile levels are scored on the levels they share. Missing datasets are downloaded first
-(after confirmation), results are stored under `runs/suites/` and can be reopened.
+(after confirmation), results are stored under `runs/suites/` and can be reopened. The run is saved after every dataset: if you press Stop, or the
+computation fails, the datasets finished so far are kept and the ranking says how many it counts.
 
 Nothing is downloaded until you press **Download** on an entry, which shows its size and the licence note first. The file is
 checked against the SHA-256 published by Hugging Face and discarded if it differs. Once downloaded, an entry can be previewed,
