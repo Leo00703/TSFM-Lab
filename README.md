@@ -230,7 +230,7 @@ The app is built to be safe to leave running on your own machine, and to say pla
 
 ```bash
 .venv/bin/python -m pytest        # Windows: .venv\Scripts\python -m pytest   (no model weights needed; about a minute on a laptop CPU)
-.venv/bin/ruff check .            # Windows: .venv\Scriptsuff check .      (clean; the code is not auto-formatted, so do not run `ruff format`)
+.venv/bin/ruff check .            # Windows: .venv\Scripts\ruff check .      (clean; the code is not auto-formatted, so do not run `ruff format`)
 ```
 
 Set `CUDA_VISIBLE_DEVICES=""` to keep the tests off the GPU. The styles are built by the app itself when it starts (`web/src/app.css` into
