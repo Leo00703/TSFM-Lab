@@ -61,6 +61,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -119,6 +120,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -187,6 +189,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -245,6 +248,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [
     "past variable 1",
@@ -324,6 +328,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [
     "past variable 1",
@@ -403,6 +408,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -471,6 +477,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -539,6 +546,9 @@
    "targets": [
     "variable 1",
     "variable 2"
+   ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
    ],
    "known": [],
    "past": [
@@ -618,6 +628,9 @@
     "variable 1",
     "variable 2"
    ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
+   ],
    "known": [],
    "past": [
     "past variable 1",
@@ -695,6 +708,9 @@
    "targets": [
     "variable 1",
     "variable 2"
+   ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
    ],
    "known": [],
    "past": [
@@ -774,6 +790,9 @@
     "variable 1",
     "variable 2"
    ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
+   ],
    "known": [],
    "past": [
     "past variable 1",
@@ -851,6 +870,9 @@
    "targets": [
     "variable 1",
     "variable 2"
+   ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
    ],
    "known": [],
    "past": [
@@ -965,6 +987,9 @@
     "variable 6",
     "variable 7"
    ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
+   ],
    "known": [],
    "past": [
     "past variable 1",
@@ -1045,6 +1070,9 @@
     "variable 6",
     "variable 7"
    ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
+   ],
    "known": [],
    "past": [
     "past variable 1",
@@ -1119,6 +1147,9 @@
    "targets": [
     "variable 1",
     "variable 2"
+   ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
    ],
    "known": [],
    "past": [
@@ -1216,6 +1247,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -1274,6 +1306,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -1342,6 +1375,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -1400,6 +1434,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -1468,6 +1503,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -1526,6 +1562,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -1592,13 +1629,16 @@
     ]
    },
    "targets": [
-    "variable 1",
-    "variable 2",
-    "variable 3",
-    "variable 4",
-    "variable 5",
-    "variable 6",
-    "variable 7"
+    "HUFL",
+    "HULL",
+    "MUFL",
+    "MULL",
+    "LUFL",
+    "LULL",
+    "OT"
+   ],
+   "notes": [
+    "Variable names are those of the ETT csv files; the order was checked against fev-bench's ETT task value by value."
    ],
    "known": [],
    "past": [],
@@ -1656,13 +1696,16 @@
     ]
    },
    "targets": [
-    "variable 1",
-    "variable 2",
-    "variable 3",
-    "variable 4",
-    "variable 5",
-    "variable 6",
-    "variable 7"
+    "HUFL",
+    "HULL",
+    "MUFL",
+    "MULL",
+    "LUFL",
+    "LULL",
+    "OT"
+   ],
+   "notes": [
+    "Variable names are those of the ETT csv files; the order was checked against fev-bench's ETT task value by value."
    ],
    "known": [],
    "past": [],
@@ -1730,13 +1773,16 @@
     ]
    },
    "targets": [
-    "variable 1",
-    "variable 2",
-    "variable 3",
-    "variable 4",
-    "variable 5",
-    "variable 6",
-    "variable 7"
+    "HUFL",
+    "HULL",
+    "MUFL",
+    "MULL",
+    "LUFL",
+    "LULL",
+    "OT"
+   ],
+   "notes": [
+    "Variable names are those of the ETT csv files; the order was checked against fev-bench's ETT task value by value."
    ],
    "known": [],
    "past": [],
@@ -1794,13 +1840,16 @@
     ]
    },
    "targets": [
-    "variable 1",
-    "variable 2",
-    "variable 3",
-    "variable 4",
-    "variable 5",
-    "variable 6",
-    "variable 7"
+    "HUFL",
+    "HULL",
+    "MUFL",
+    "MULL",
+    "LUFL",
+    "LULL",
+    "OT"
+   ],
+   "notes": [
+    "Variable names are those of the ETT csv files; the order was checked against fev-bench's ETT task value by value."
    ],
    "known": [],
    "past": [],
@@ -1868,13 +1917,16 @@
     ]
    },
    "targets": [
-    "variable 1",
-    "variable 2",
-    "variable 3",
-    "variable 4",
-    "variable 5",
-    "variable 6",
-    "variable 7"
+    "HUFL",
+    "HULL",
+    "MUFL",
+    "MULL",
+    "LUFL",
+    "LULL",
+    "OT"
+   ],
+   "notes": [
+    "Variable names are those of the ETT csv files; the order was checked against fev-bench's ETT task value by value."
    ],
    "known": [],
    "past": [],
@@ -1932,13 +1984,16 @@
     ]
    },
    "targets": [
-    "variable 1",
-    "variable 2",
-    "variable 3",
-    "variable 4",
-    "variable 5",
-    "variable 6",
-    "variable 7"
+    "HUFL",
+    "HULL",
+    "MUFL",
+    "MULL",
+    "LUFL",
+    "LULL",
+    "OT"
+   ],
+   "notes": [
+    "Variable names are those of the ETT csv files; the order was checked against fev-bench's ETT task value by value."
    ],
    "known": [],
    "past": [],
@@ -2006,13 +2061,16 @@
     ]
    },
    "targets": [
-    "variable 1",
-    "variable 2",
-    "variable 3",
-    "variable 4",
-    "variable 5",
-    "variable 6",
-    "variable 7"
+    "HUFL",
+    "HULL",
+    "MUFL",
+    "MULL",
+    "LUFL",
+    "LULL",
+    "OT"
+   ],
+   "notes": [
+    "Variable names are those of the ETT csv files; the order was checked against fev-bench's ETT task value by value."
    ],
    "known": [],
    "past": [],
@@ -2070,13 +2128,16 @@
     ]
    },
    "targets": [
-    "variable 1",
-    "variable 2",
-    "variable 3",
-    "variable 4",
-    "variable 5",
-    "variable 6",
-    "variable 7"
+    "HUFL",
+    "HULL",
+    "MUFL",
+    "MULL",
+    "LUFL",
+    "LULL",
+    "OT"
+   ],
+   "notes": [
+    "Variable names are those of the ETT csv files; the order was checked against fev-bench's ETT task value by value."
    ],
    "known": [],
    "past": [],
@@ -2136,6 +2197,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -2194,6 +2256,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -2252,6 +2315,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -2340,6 +2404,9 @@
     "variable 20",
     "variable 21"
    ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
+   ],
    "known": [],
    "past": [],
    "static": [],
@@ -2417,6 +2484,9 @@
     "variable 19",
     "variable 20",
     "variable 21"
+   ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
    ],
    "known": [],
    "past": [],
@@ -2506,6 +2576,9 @@
     "variable 20",
     "variable 21"
    ],
+   "notes": [
+    "GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."
+   ],
    "known": [],
    "past": [],
    "static": [],
@@ -2564,6 +2637,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -2632,6 +2706,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -2690,6 +2765,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -2748,6 +2824,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -2806,6 +2883,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -2864,6 +2942,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -2922,6 +3001,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -2980,6 +3060,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3038,6 +3119,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3097,6 +3179,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3155,6 +3238,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3213,6 +3297,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3281,6 +3366,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3339,6 +3425,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3407,6 +3494,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3465,6 +3553,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3523,6 +3612,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3581,6 +3671,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3639,6 +3730,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],
@@ -3697,6 +3789,7 @@
    "targets": [
     "target"
    ],
+   "notes": [],
    "known": [],
    "past": [],
    "static": [],

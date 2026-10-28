@@ -13,7 +13,8 @@ function Facts({ items }) {
   return html`<dl class="grid gap-x-6 gap-y-3 text-body-small sm:grid-cols-2">${items.map(([k, v]) => html`<div class="min-w-0"><dt class="eyebrow">${k}</dt><dd class="mt-0.5 break-words">${v}</dd></div>`)}</dl>`;
 }
 
-const HORIZON_NOTE = { header: ' (declared in the file)', loader: ' (set by the Hugging Face loader)', default: ' (the file declares none: this is the default of the Hugging Face loader for the frequency)' };
+const HORIZON_NOTE = { header: ' (declared in the file)', loader: ' (set by the Hugging Face loader)', paper: ' (the file declares none: the rule of the Monash paper for this frequency)',
+  competition: ' (the horizon of the original competition, which the Monash paper keeps)', default: ' (the file declares none and the paper has no rule that fits: the default of the Hugging Face loader)' };
 const RULES = { fev: 'fev-bench tasks.yaml', gift: 'GIFT-Eval data.py (horizon and window rules)', monash: 'loader script monash_tsf.py' };
 const win = (n) => `${n} window${n === 1 ? '' : 's'}`;
 

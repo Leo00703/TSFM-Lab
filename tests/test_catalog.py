@@ -328,3 +328,26 @@ def test_calendar_and_fixed_steps_of_the_tsf_format_stay_exact() -> None:
     assert len(tsf.timestamps(start, "4_seconds", 7_400_000)) == 7_400_000  # a series of millions of observations is instant
     with pytest.raises(ValueError, match="unknown frequency"):
         tsf.timestamps(start, "fortnightly", 2)
+
+
+def test_the_ett_variables_have_their_real_names_and_other_multivariate_ones_say_they_are_numbered() -> None:
+    names = ["HUFL", "HULL", "MUFL", "MULL", "LUFL", "LULL", "OT"]
+    for freq in ("15T", "H", "D", "W"):
+        for ett in ("ett1", "ett2"):
+            e = H.entry(f"gift.{ett}.{freq}")
+            assert e["targets"] == names and any("checked against fev-bench" in n for n in e["notes"])
+    assert H.entry("gift.jena_weather")["targets"][0] == "variable 1" and any("numbered" in n for n in H.entry("gift.jena_weather")["notes"])
+    assert H.entry("gift.electricity.H")["notes"] == []  # a single variable needs no explanation
+
+
+def test_monash_horizons_follow_the_file_then_the_paper_and_say_which() -> None:
+    def h(name):
+        t = H.entry(f"monash.{name}")["task"]
+        return t["horizon"], t["horizon_source"]
+
+    assert h("kaggle_web_traffic") == (59, "header") and h("nn5_daily") == (56, "header") and h("solar_weekly") == (5, "header")
+    # the paper: 12 months, 8 weeks (5 for solar weekly), 30 days, and one week for half-hourly, hourly and 10-minute data
+    assert h("hospital") == (12, "paper") and h("weather") == (30, "paper") and h("traffic_hourly") == (168, "paper")
+    assert h("london_smart_meters") == (336, "paper") and h("solar_10_minutes") == (1008, "paper")
+    assert h("kdd_cup_2018") == (48, "competition")  # competition datasets keep the competition's horizon
+    assert h("wind_4_seconds") == (60, "default") and h("wind_farms_minutely") == (60, "default")  # a week of them would be absurd

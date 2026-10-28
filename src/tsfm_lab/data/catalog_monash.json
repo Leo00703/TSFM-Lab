@@ -37,10 +37,10 @@
     "total_points": 1155264
    },
    "task": {
-    "horizon": 48,
+    "horizon": 336,
     "num_windows": 1,
     "seasonality": 48,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -97,7 +97,7 @@
     "horizon": 30,
     "num_windows": 1,
     "seasonality": 7,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -152,7 +152,7 @@
     "horizon": 12,
     "num_windows": 1,
     "seasonality": 12,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -207,7 +207,7 @@
     "horizon": 12,
     "num_windows": 1,
     "seasonality": 12,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -264,7 +264,7 @@
     "horizon": 30,
     "num_windows": 1,
     "seasonality": 7,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -319,7 +319,7 @@
     "horizon": 12,
     "num_windows": 1,
     "seasonality": 12,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -374,7 +374,7 @@
     "horizon": 12,
     "num_windows": 1,
     "seasonality": 12,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -539,7 +539,7 @@
     "horizon": 48,
     "num_windows": 1,
     "seasonality": 24,
-    "horizon_source": "default"
+    "horizon_source": "competition"
    },
    "targets": [
     "target"
@@ -595,10 +595,10 @@
     "total_points": 166528896
    },
    "task": {
-    "horizon": 48,
+    "horizon": 336,
     "num_windows": 1,
     "seasonality": 48,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -760,10 +760,10 @@
     "total_points": 800456
    },
    "task": {
-    "horizon": 48,
+    "horizon": 168,
     "num_windows": 1,
     "seasonality": 24,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -817,10 +817,10 @@
     "total_points": 3132346
    },
    "task": {
-    "horizon": 48,
+    "horizon": 168,
     "num_windows": 1,
     "seasonality": 24,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -872,10 +872,10 @@
     "total_points": 1246464
    },
    "task": {
-    "horizon": 48,
+    "horizon": 168,
     "num_windows": 1,
     "seasonality": 24,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -937,7 +937,7 @@
     "horizon": 30,
     "num_windows": 1,
     "seasonality": 7,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -989,10 +989,10 @@
     "total_points": 7200720
    },
    "task": {
-    "horizon": 48,
+    "horizon": 1008,
     "num_windows": 1,
     "seasonality": 144,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -1157,7 +1157,7 @@
     "horizon": 30,
     "num_windows": 1,
     "seasonality": 7,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -1212,7 +1212,7 @@
     "horizon": 30,
     "num_windows": 1,
     "seasonality": 7,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -1434,10 +1434,10 @@
     "total_points": 15122928
    },
    "task": {
-    "horizon": 48,
+    "horizon": 168,
     "num_windows": 1,
     "seasonality": 24,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -1547,7 +1547,7 @@
     "horizon": 30,
     "num_windows": 1,
     "seasonality": 7,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -1602,7 +1602,7 @@
     "horizon": 30,
     "num_windows": 1,
     "seasonality": 7,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"
@@ -1661,7 +1661,7 @@
     "horizon": 30,
     "num_windows": 1,
     "seasonality": 7,
-    "horizon_source": "default"
+    "horizon_source": "paper"
    },
    "targets": [
     "target"

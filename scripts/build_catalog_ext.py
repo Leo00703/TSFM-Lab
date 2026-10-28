@@ -72,6 +72,12 @@ PRETTY = {"ett1": "ETT1", "ett2": "ETT2", "loop_seattle": "LOOP Seattle", "sz_ta
           "hierarchical_sales": "Hierarchical sales"}
 
 
+# Variable names of the two ETT datasets (the columns of the ETT csv files). GIFT-Eval stores the seven variables unnamed; the order
+# was checked against fev-bench's ETT task, which names them: ett1/ett2 at 15 minutes match its two series value for value, and the
+# hourly, daily and weekly files are the sums of the finer ones, variable by variable (checked on 2026-10-28).
+ETT_VARIABLES = ["HUFL", "HULL", "MUFL", "MULL", "LUFL", "LULL", "OT"]
+
+
 def month_name(number: int) -> str:
     return ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][(number - 1) % 12]
 
@@ -254,7 +260,11 @@ def build_gift(only: set[str] | None) -> dict:
             "family": DOMAINS.get(base, "Econ/Fin"), "freq": r["freq"], "pandas_freq": r["pandas_freq"],
             "files": [{"path": s_.path, "size_bytes": int(s_.size), "sha256": s_.lfs.sha256} for s_ in shards],
             "size_bytes": int(size), "n_series": r["n_series"], "length": length_summary(lengths), "task": task,
-            "targets": ["target"] if r["dims"] == 1 else [f"variable {i + 1}" for i in range(r["dims"])],
+            "targets": (["target"] if r["dims"] == 1 else ETT_VARIABLES if name.lower() in ("ett1", "ett2") and r["dims"] == 7
+                        else [f"variable {i + 1}" for i in range(r["dims"])]),
+            "notes": ([("Variable names are those of the ETT csv files; the order was checked against fev-bench's ETT task value by value.")]
+                      if name.lower() in ("ett1", "ett2") else
+                      ["GIFT-Eval stores the variables unnamed, so they are numbered in the order of the file."] if r["dims"] > 1 else []),
             "known": [], "past": [f"past variable {i + 1}" for i in range(r["past_dims"])], "static": [],
             "columns": {"target": {"kind": "list-numeric"}, **({"past_feat_dynamic_real": {"kind": "list-numeric"}} if r["past_dims"] else {})},
             "checks": {"sampled_series": r["n_series"], "target_missing_pct": pct(s["target_missing"], s["target_total"]),
@@ -299,6 +309,12 @@ def monash_configs(script: Path) -> dict[str, dict]:
     return out
 
 
+# The Monash paper (Godahewa et al., 2021, section on experiments): competition datasets keep the competition's horizon, "12 months
+# ahead for monthly datasets, 8 weeks for weekly datasets (5 for solar weekly), 30 days for daily datasets" and "for half-hourly,
+# hourly and other low frequency datasets the forecasting horizon is one week, e.g. 168 for hourly datasets". One week of the minute
+# and seconds data is not practical (and the paper did not evaluate those four datasets), so they keep the loader's default.
+PAPER_HORIZON = {"monthly": 12, "weekly": 8, "daily": 30, "hourly": 168, "half_hourly": 336, "10_minutes": 1008}
+COMPETITION_HORIZON = {"kdd_cup_2018": 48}  # KDD Cup 2018 asked for the next 48 hours; the paper keeps competition horizons
 DEFAULT_HORIZON = {"yearly": 4, "quarterly": 4, "monthly": 12, "weekly": 8, "daily": 30, "hourly": 48, "half_hourly": 48,
                    "10_minutes": 48, "minutely": 60, "4_seconds": 60}  # the loader's own map; used only when a file declares none
 SEASON = {"yearly": 1, "quarterly": 4, "monthly": 12, "weekly": 1, "daily": 7, "hourly": 24, "half_hourly": 48,
@@ -368,8 +384,16 @@ def build_monash(only: set[str] | None) -> dict:
             pandas_freq = tsf.ALIASES[frequency]
         month_based = frequency in ("yearly", "quarterly", "monthly")
         late_days = sum(int(pd.Timestamp(s).day > 28) for s in starts) if month_based else 0
-        horizon = h["horizon"] or cfg.get("prediction_length") or DEFAULT_HORIZON[frequency]
-        source = "header" if h["horizon"] else "loader" if cfg.get("prediction_length") else "default"
+        if h["horizon"]:
+            horizon, source = h["horizon"], "header"
+        elif cfg.get("prediction_length"):
+            horizon, source = cfg["prediction_length"], "loader"
+        elif name in COMPETITION_HORIZON:
+            horizon, source = COMPETITION_HORIZON[name], "competition"
+        elif frequency in PAPER_HORIZON:
+            horizon, source = PAPER_HORIZON[frequency], "paper"
+        else:
+            horizon, source = DEFAULT_HORIZON[frequency], "default"
         lengths = r["lengths"]
         static = [n for n in r["attribute_names"] if n not in ("series_name", "start_timestamp")]
         notes = []
