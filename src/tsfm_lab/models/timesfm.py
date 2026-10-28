@@ -164,6 +164,11 @@ class TimesFM25Adapter(TorchAdapter):
             warnings.append(f"{variables} variables per series are forecast one at a time.")
         self._compile(length, horizon, request.options)
         series = [np.asarray(request.context[b, v], dtype=np.float32) for b in range(batch) for v in range(variables)]
+        empty = [i for i, x in enumerate(series) if not np.isfinite(x).any()]
+        for i in empty:  # the package's own fallback for a context with nothing observed crashes: it meant to read it as zeros
+            series[i] = np.zeros_like(series[i])
+        if empty:
+            warnings.append(f"{len(empty)} context(s) had no observed value at all; TimesFM 2.5 read them as zeros.")
         (_, quantiles), timings = self._timed(lambda: self._model.forecast(horizon=horizon, inputs=series))
         q = np.asarray(quantiles, dtype=np.float32)[:, :horizon, 1:10]  # column 0 is the mean; 1..9 are the deciles
         q = q.reshape(batch, variables, horizon, 9)

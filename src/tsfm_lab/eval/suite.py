@@ -114,8 +114,9 @@ def run_suite(entries: list[dict[str, Any]], model_ids: list[str], device: str, 
                     row["skipped"][m] = "does not take multivariate targets"
             try:
                 res = run_backtest(ds, [adapters[m] for m in usable], bt)
-            except ValueError as error:  # a dataset too short for the task: recorded, the suite goes on
-                row["error"] = str(error)
+            except ValueError as error:  # recorded, the suite goes on (a stop is not a ValueError, so it still stops the run)
+                too_short = str(error).startswith("no valid backtest windows")
+                row["error"] = str(error) if too_short else f"a model failed on this dataset ({type(error).__name__}): {error}"
                 results.append(row)
                 if checkpoint:
                     checkpoint(package())

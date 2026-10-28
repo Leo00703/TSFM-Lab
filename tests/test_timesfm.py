@@ -115,6 +115,23 @@ def test_version_2_5_drops_the_mean_column_and_says_what_it_ignores() -> None:
     assert len(fake.compiled) == 2 and fake.compiled[1].max_horizon == 384
 
 
+def test_version_2_5_survives_a_context_with_nothing_observed() -> None:
+    seen = []
+
+    class Recording(FakeV25):
+        def forecast(self, horizon, inputs):
+            seen.extend(np.array(x) for x in inputs)
+            return super().forecast(horizon, inputs)
+
+    adapter = build_default_registry().create("timesfm-2-5")
+    adapter._model, adapter._device = Recording(), "cpu"
+    ctx = np.random.default_rng(1).normal(size=(3, 1, 64))
+    ctx[1] = np.nan  # a series that is all missing in this window (the package would crash on it)
+    res = adapter.forecast(ForecastRequest(ctx, 8))
+    assert res.quantiles.shape == (3, 1, 8, 9) and (seen[1] == 0).all() and np.isfinite(seen[0]).all()
+    assert any("1 context(s) had no observed value" in w for w in res.warnings)
+
+
 def test_loading_without_weights_says_where_to_get_them(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(cache, "hub_dir", lambda: tmp_path)
     for model in ("timesfm-3", "timesfm-2-5"):
