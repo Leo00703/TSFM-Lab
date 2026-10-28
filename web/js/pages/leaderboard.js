@@ -122,7 +122,8 @@ function Detail({ id }) {
   return html`<div><${PageHeader} eyebrow="Leaderboard" title=${r.label || 'Leaderboard run'}>${when(r.created)} · ${deviceLabel(r.device)} · ${r.leaderboard.total_datasets} datasets (${board.common_datasets} counted${cautions.length > 0 && !withCautions ? `, ${cautions.length} left out` : ''}) · ${duration(r.elapsed_s)}<//>
     ${partial && html`<div class="mt-6"><${Notice} kind=${r.status === 'running' ? 'info' : 'warning'} title=${`${board.total_datasets} of ${r.planned || board.total_datasets} datasets run`}>${partial}<//></div>`}
     ${cautions.length > 0 && html`<div class="mt-6"><${Notice} kind="warning" title=${withCautions ? `${cautions.length === 1 ? 'A dataset the catalog warns about is' : `${cautions.length} datasets the catalog warns about are`} counted in the ranking` : `${cautions.length === 1 ? 'A dataset is' : `${cautions.length} datasets are`} left out of the ranking`}>
-      <ul class="mt-1 grid gap-1">${cautions.map((d) => html`<li><b>${dataset(d)}</b>: ${d.caution}</li>`)}</ul>
+      <p class="mt-1">${[...new Set(cautions.map((d) => d.caution))].join(' ')}</p>
+      <p class="mt-1 text-text-muted">${cautions.map(dataset).join(' · ')}</p>
       <div class="mt-2"><${Button} small kind="outline" onClick=${() => setWithCautions(!withCautions)}>${withCautions ? 'Leave it out again' : 'Count it anyway'}<//></div><//></div>`}
     <${Section} title="Ranking" aside=${html`<${Button} small kind="ghost" onClick=${() => go('leaderboard')}>Back<//>`}>
       <div class="mb-3"><${Tabs} value=${view} onChange=${setView} label="Group" items=${[{ value: 'overall', label: 'All datasets' }, ...groups.map((g) => ({ value: g, label: source(g) }))]} /></div>

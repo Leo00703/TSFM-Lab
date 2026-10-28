@@ -193,24 +193,32 @@ class SuiteStore:
     @staticmethod
     def _rescored(d: dict[str, Any]) -> dict[str, Any]:
         """The ranking of a saved run, counted by today's rules (a run saved before a rule changed would otherwise keep the old count)."""
+        from tsfm_lab.data.hub_catalog import caution
         from tsfm_lab.eval.suite import REFERENCE, aggregate
 
         rows, board = d.get("datasets"), d.get("leaderboard")
         if not rows or not board:
             return d
-        fresh = aggregate([r for r in rows if r["models"] and REFERENCE in r["models"]], board["ranked"])
-        return {**d, "leaderboard": {**fresh, "total_datasets": board["total_datasets"]}}
+        scored = [r for r in rows if r["models"] and REFERENCE in r["models"]]
+        out = {**d, "leaderboard": {**aggregate(scored, board["ranked"]), "total_datasets": board["total_datasets"]}}
+        for r in rows:  # a dataset that a ranked model lists as its training data does not compare that model with the others
+            r["caution"] = caution(r["id"], board["ranked"])
+        flagged = {r["id"] for r in rows if r["caution"]}
+        if flagged:  # the same ranking without them
+            out["leaderboard_trusted"] = {**aggregate([r for r in scored if r["id"] not in flagged], board["ranked"]),
+                                          "total_datasets": board["total_datasets"] - len(flagged)}
+        return out
 
     def list(self) -> list[dict[str, Any]]:
         out = []
         for path in sorted(self.root.glob("*.json"), reverse=True):
             d = self._rescored(json.loads(path.read_text(encoding="utf-8")))
-            board = d["leaderboard"]
+            board = d.get("leaderboard_trusted") or d["leaderboard"]
             best = max(board["ranked"], key=lambda m: (board["overall"][m]["sql_skill"] is not None, board["overall"][m]["sql_skill"] or 0),
                        default=None) if board["common_datasets"] else None
             out.append({"id": d["id"], "created": d["created"], "label": d.get("label"), "models": board["ranked"], "device": d["device"],
                         "status": d.get("status", "done"), "planned": d.get("planned", board["total_datasets"]),
-                        "datasets": board["total_datasets"], "common": board["common_datasets"], "best": best,
+                        "datasets": d["leaderboard"]["total_datasets"], "common": board["common_datasets"], "best": best,
                         "best_skill": None if best is None else board["overall"][best]["sql_skill"], "elapsed_s": d["elapsed_s"]})
         return out
 

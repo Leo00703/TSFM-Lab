@@ -173,16 +173,17 @@ geometric mean over datasets of the model's error divided by seasonal naive's, o
 completed, and on which seasonal naive has an error to score against, count, and models with different quantile levels are scored on the levels they share. Missing datasets are downloaded first
 (after confirmation), results are stored under `runs/suites/` and can be reopened. The run is saved after every dataset: if you press Stop, or the
 computation fails, the datasets finished so far are kept and the ranking says how many it counts.
-A dataset where one model's result is far beyond what the others reach and nothing explains it (today only `kdd_cup_2022_10T`, where TimesFM 2.5 makes a quarter of every other
-model's error) carries a warning in the Catalog and is left out of the ranking by default; the Leaderboard says so and a button counts it anyway.
+A dataset that a ranked model's own authors list as training data (the `trained_on_this_dataset` column of the fev-bench results they submitted: ten
+datasets for TimesFM 2.5, none for the other models) carries a warning in the Catalog and is left out of the ranking by default; the Leaderboard says so
+and a button counts it anyway. On one of them, `kdd_cup_2022_10T`, TimesFM 2.5 makes a quarter of every other model's error.
 
 Nothing is downloaded until you press **Download** on an entry, which shows its size and the licence note first. The file is
 checked against the SHA-256 published by Hugging Face and discarded if it differs. Once downloaded, an entry can be previewed,
 forecast in the Playground and backtested in Experiments like any other dataset; a very large file (30,000 series) is sampled
 with a fixed seed (200 series by default, adjustable) and says so. Text columns such as holiday names become on/off flags;
 static per-series attributes are not used. The cards declare the licence as "other" and the data come from public sources:
-check their terms before reusing the data. Because the models' training data is not disclosed, these datasets are marked as
-possibly seen; synthetic scenarios are the only guaranteed-unseen ones.
+check their terms before reusing the data. Because the real training data of most models is not listed, these datasets are marked as
+possibly seen: Mistral says Timestral's was mostly synthetic and that nothing it backtests was seen in pre-training, but names no real source and publishes no overlap analysis. Synthetic scenarios are the only guaranteed-unseen ones.
 
 ### Showcase data
 

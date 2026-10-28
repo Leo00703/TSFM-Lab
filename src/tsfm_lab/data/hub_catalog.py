@@ -26,28 +26,39 @@ DEFAULT_MAX_SERIES = 200  # a larger file is sampled (seeded, sorted) so memory 
 MAX_SERIES_LIMIT = 5000
 LARGE_BYTES = 50_000_000
 
-# Datasets where one model's result is far beyond what the others reach and nothing explains it: the Leaderboard leaves them out
-# of the ranking by default (they stay in the table), and the Catalog says why.
-CAUTIONS = {
-    "kdd_cup_2022_10T": "On this dataset TimesFM 2.5 makes about a quarter of the error of every other model, from the first hours of the forecast on "
-                        "(wind-turbine power two days ahead), and none of the nine others comes near. The cause is not known; one possibility is "
-                        "that it saw these data in training, which is not public. Scores on it do not compare models; the Leaderboard "
-                        "leaves it out of the ranking unless asked.",
+# Datasets that a model's own authors list as part of its training data: the 'trained_on_this_dataset' column of the fev-bench result
+# files they submitted (autogluon/fev, benchmarks/fev_bench/results, commit ceb25ae; read on 2026-10-28). Timestral, Chronos-2,
+# TimesFM 3.0, t0-gamma and TiRex-2 declare none; this says nothing for the datasets that fev-bench does not contain.
+# Where such a model is ranked, the Leaderboard leaves the dataset out of the ranking by default (it stays in the table).
+DECLARED_TRAINING_DATA = {
+    "timesfm-2-5": ("TimesFM 2.5", ("favorita_transactions_1D", "favorita_transactions_1W", "fred_md_2025--cee", "fred_md_2025--macro",
+                                    "kdd_cup_2022_10T", "m5_1D", "m5_1W", "proenfo_gfc12", "proenfo_gfc14", "proenfo_gfc17")),
 }
+
+
+def caution(dataset_id: str, ranked: list[str] | None = None) -> str | None:
+    """Why a dataset does not compare models, if a model among ``ranked`` (any model if None) lists it as training data."""
+    names = [name for model, (name, ids) in DECLARED_TRAINING_DATA.items() if dataset_id in ids and (ranked is None or model in ranked)]
+    if not names:
+        return None
+    who = " and ".join(names)
+    return (f"The authors of {who} list this dataset as part of the training data (the trained_on_this_dataset column of the fev-bench "
+            f"results they submitted), so a score on it does not compare {who} with the other models; the Leaderboard leaves it out of the "
+            "ranking unless asked.")
 
 # What each source says about licence and about the chance that a model has already seen its data.
 TEXT = {
     "fev": {
         "name": "fev-bench", "benchmark": "fev-bench", "format": "fev-parquet",
         "license": "The dataset card declares the licence as “other”: the data come from public sources whose own terms apply.",
-        "contamination": "Public benchmark: Timestral's training data is not disclosed, so it may have seen this data. Scores here are "
-                         "indications, not proof of out-of-sample skill.",
+        "contamination": "Public benchmark. Mistral says most of Timestral's training data was synthetic and that nothing it backtests was seen in pre-training, but names no real source and has published no overlap analysis; TimesFM 2.5's authors list ten of these datasets as training data "
+                         "(marked here). Scores are indications, not proof of out-of-sample skill.",
     },
     "gift": {
         "name": "GIFT-Eval", "benchmark": "GIFT-Eval", "format": "gift-arrow",
         "license": "The dataset card declares Apache-2.0 for the compilation; each dataset keeps the terms of its original source.",
         "contamination": "Built as a held-out benchmark, but it reuses well-known public series (M4, ETT, electricity, solar…) that also "
-                         "sit in public pretraining corpora, and Timestral's training data is not disclosed. Scores here are "
+                         "sit in public pretraining corpora. Mistral says most of Timestral's training data was synthetic and that nothing it backtests was seen in pre-training, but names no real source and has published no overlap analysis. Scores here are "
                          "indications, not proof of out-of-sample skill.",
     },
     "monash": {
@@ -55,7 +66,7 @@ TEXT = {
         "license": "The dataset card declares CC BY 4.0 for the archive; the series come from competitions and public agencies whose "
                    "own terms apply.",
         "contamination": "A classic public archive: its datasets appear in public pretraining corpora (the Chronos corpus "
-                         "autogluon/chronos_datasets carries Monash datasets) and Timestral's training data is not disclosed. Scores "
+                         "autogluon/chronos_datasets carries Monash datasets). Mistral says most of Timestral's training data was synthetic and that nothing it backtests was seen in pre-training, but names no real source and has published no overlap analysis. Scores "
                          "here are indications, not proof of out-of-sample skill.",
     },
 }
@@ -78,7 +89,7 @@ def _catalog() -> dict[str, Any]:
             entries.append({
                 **e, "source": key, "repo": src["repo"], "revision": src["revision"], "format": src["format"],
                 "files": e.get("files") or [{"path": e["path"], "size_bytes": e["size_bytes"], "sha256": e["sha256"]}],
-                "notes": e.get("notes", []), "description": e.get("description", ""), "caution": CAUTIONS.get(e["id"])})
+                "notes": e.get("notes", []), "description": e.get("description", "")})
     # The same data under two names: identical series count and number of observations, in a different source.
     shape: dict[tuple[int, int], list[dict[str, Any]]] = {}
     for e in entries:
@@ -225,7 +236,7 @@ def listing() -> list[dict[str, Any]]:
             "text_flags": known_text, "task": e["task"], "size_bytes": e["size_bytes"], "checks": e["checks"],
             "downloaded": file_paths(e) is not None, "files": e["files"], "path": e["files"][0]["path"],
             "sha256": e["files"][0]["sha256"], "large": e["size_bytes"] > LARGE_BYTES, "sampled_above": DEFAULT_MAX_SERIES,
-            "notes": e["notes"], "description": e["description"], "caution": e["caution"],
+            "notes": e["notes"], "description": e["description"], "caution": caution(e["id"]),
             "also_in": [{"id": o, "source": by_id[o]["source"], "label": f"{title(by_id[o])} · {freq_label(by_id[o]['pandas_freq'])}"}
                         for o in e["overlaps"]],
         })

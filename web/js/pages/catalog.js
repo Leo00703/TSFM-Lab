@@ -50,7 +50,7 @@ function Details({ e, src }) {
       ['Task definition', html`<a class="underline underline-offset-2" href=${src.rules_url} target="_blank" rel="noreferrer">${RULES[e.source]}</a> at ${src.key === 'monash' ? 'revision' : 'commit'} <span class="font-mono">${src.rules_ref.slice(0, 10)}</span>`],
     ]} />
     ${e.notes.map((n) => html`<p class="text-body-small text-text-muted">${n}</p>`)}
-    ${e.caution && html`<${Notice} kind="warning" title="Results on this dataset do not compare models">${e.caution}<//>`}
+    ${e.caution && html`<${Notice} kind="warning" title="A model has trained on this dataset">${e.caution}<//>`}
     <p class="text-body-small text-text-warning">${src.contamination}</p>
   </div>`;
 }

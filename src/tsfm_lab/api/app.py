@@ -513,19 +513,12 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     @app.get("/api/suites/{suite_id}")
     def suite(suite_id: str):
         from tsfm_lab.data import hub_catalog
-        from tsfm_lab.eval.suite import REFERENCE, aggregate
 
         d = suite_store.get(suite_id)
         known = hub_catalog.entries()
         for row in d.get("datasets", []):  # runs saved before a name was polished show the current name, with its frequency
             if row["id"] in known:
                 row["title"], row["freq_label"] = hub_catalog.title(known[row["id"]]), hub_catalog.freq_label(known[row["id"]]["pandas_freq"])
-            row["caution"] = (known.get(row["id"]) or {}).get("caution")
-        flagged = {row["id"] for row in d.get("datasets", []) if row["caution"]}
-        if flagged and "leaderboard" in d:  # the same ranking without the datasets the catalog warns about
-            board = d["leaderboard"]
-            kept = [r for r in d["datasets"] if r["id"] not in flagged and r["models"] and REFERENCE in r["models"]]
-            d["leaderboard_trusted"] = {**aggregate(kept, board["ranked"]), "total_datasets": board["total_datasets"] - len(flagged)}
         return ok({**d, "status": judged(suite_id, d.get("status", "done"))})
 
     @app.delete("/api/suites/{suite_id}")
