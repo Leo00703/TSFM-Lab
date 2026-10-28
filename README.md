@@ -13,8 +13,8 @@ measurements and configuration needed to judge it honestly.
 
 **Status:** working local web app and command line. The home page is a **Showcase** of real-data forecasts explained in plain
 language (six scenarios, with the measured effect of the factors known in advance); the Playground, Experiments, Leaderboard, Runs and
-System pages hold the technical detail. The full plan, research notes, run results and decisions are in [`RESOCONTO.md`](RESOCONTO.md)
-(Italian).
+System pages hold the technical detail. The measured results (ranking of the ten models on 187 public datasets, with the caveats) are in [`RESULTS.md`](RESULTS.md);
+the full plan, research notes, every run and decision are in [`RESOCONTO.md`](RESOCONTO.md) (Italian).
 
 ## Quick start
 
