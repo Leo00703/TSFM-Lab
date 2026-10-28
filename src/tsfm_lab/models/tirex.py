@@ -96,13 +96,14 @@ class TiRexAdapter(TorchAdapter):
         caps = self.info.capabilities
         batch, variables, length = request.context.shape
         horizon = request.horizon
-        keep = min(length, caps.max_context)
-        start = length - keep
         warnings: list[str] = []
         if length > caps.max_context:
             warnings.append(f"context longer than {caps.max_context}: the model keeps only the most recent steps.")
         if horizon > caps.max_horizon_per_pass:
-            warnings.append(f"horizon {horizon} exceeds {caps.max_horizon_per_pass}: the model continues in several passes.")
+            # The package itself silently cuts a longer request to its maximum, so the passes are made here: each one feeds the median of the
+            # previous back as history (past-only covariates are unknown there and are passed as missing).
+            warnings.append(f"horizon {horizon} exceeds {caps.max_horizon_per_pass}: forecast in several passes, each continuing from the median of the "
+                            "previous one, so the later steps are conditional on it and their intervals tend to be too narrow.")
         known, past = request.known_covariates, request.past_covariates
         if known is not None and np.isnan(known[..., length:length + horizon]).any():
             warnings.append("known covariates are missing over the forecast region: the model treats them as unobserved.")
@@ -112,19 +113,33 @@ class TiRexAdapter(TorchAdapter):
         def tensor(a: np.ndarray):
             return torch.from_numpy(np.ascontiguousarray(a, dtype=np.float32))
 
-        series = [TimeseriesType(
-            target=tensor(request.context[b, :, start:]),
-            past_covariates=None if past is None else tensor(past[b, :, start:length]),
-            future_covariates=None if known is None else tensor(known[b, :, start:length + horizon])) for b in range(batch)]
         per_call = SERIES_PER_CALL.get((self._device or "cpu").split(":")[0], 16)
+        median = list(caps.quantile_levels).index(0.5)
 
-        def run() -> list[np.ndarray]:
-            with torch.inference_mode():
-                return self._model.forecast(series, prediction_length=horizon, output_type="numpy", batch_size=per_call)
+        def run() -> np.ndarray:
+            full = np.ascontiguousarray(request.context, dtype=np.float32)  # (B, V, length + steps already forecast)
+            full_past = None if past is None else np.ascontiguousarray(past[..., :length], dtype=np.float32)
+            pieces, done = [], 0
+            while done < horizon:
+                step = min(caps.max_horizon_per_pass, horizon - done)
+                end = full.shape[2]
+                first = max(0, end - caps.max_context)
+                series = [TimeseriesType(
+                    target=tensor(full[b, :, first:end]),
+                    past_covariates=None if full_past is None else tensor(full_past[b, :, first:end]),
+                    future_covariates=None if known is None else tensor(known[b, :, first:length + done + step])) for b in range(batch)]
+                with torch.inference_mode():
+                    out = self._model.forecast(series, prediction_length=step, output_type="numpy", batch_size=per_call)
+                piece = np.transpose(np.stack([np.asarray(o, dtype=np.float32) for o in out]), (0, 1, 3, 2))  # (B, V, Q, step) -> (B, V, step, Q)
+                pieces.append(piece)
+                done += step
+                if done < horizon:
+                    full = np.concatenate([full, piece[..., median]], axis=2)
+                    if full_past is not None:
+                        full_past = np.concatenate([full_past, np.full((*full_past.shape[:2], step), np.nan, dtype=np.float32)], axis=2)
+            return np.concatenate(pieces, axis=2)
 
-        out, timings = self._timed(run)
-        q = np.stack([np.asarray(o, dtype=np.float32) for o in out])  # (B, V, Q, H)
-        q = np.transpose(q, (0, 1, 3, 2))  # -> (B, V, H, Q)
+        q, timings = self._timed(run)
         if (np.diff(q, axis=-1) < 0).any():
             q = np.sort(q, axis=-1)
             warnings.append("the model returned crossing quantiles for some steps: they were put back in order.")

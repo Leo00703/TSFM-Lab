@@ -77,6 +77,39 @@ def test_long_context_is_capped_gaps_are_kept_and_crossing_quantiles_are_put_in_
     assert any("missing over the forecast region" in w for w in res.warnings)
 
 
+class CuttingForecast(FakeForecast):
+    """Like the package: a request beyond 320 steps is silently cut to 320. The median of each answer is the step number it started at."""
+
+    def forecast(self, series, prediction_length, output_type, batch_size):
+        self.calls.append({"series": series, "h": prediction_length})
+        h = min(prediction_length, 320)
+        base = float(len(self.calls))
+        return [np.full((s.target.shape[0], 9, h), base, dtype=np.float32) + np.linspace(0, 0.8, 9, dtype=np.float32)[None, :, None] for s in series]
+
+
+def test_a_horizon_beyond_one_pass_is_forecast_in_passes_and_not_silently_cut() -> None:
+    fake = CuttingForecast()
+    ctx = np.random.default_rng(2).normal(size=(2, 1, 100))
+    past = np.ones((2, 1, 100))
+    known = np.zeros((2, 1, 100 + 700))
+    res = adapter_with(fake).forecast(ForecastRequest(ctx, 700, past_covariates=past, known_covariates=known))
+    assert res.quantiles.shape == (2, 1, 700, 9), "the whole horizon comes back, not the package's 320"
+    assert [c["h"] for c in fake.calls] == [320, 320, 60]
+    lengths = [(c["series"][0].target.shape[-1], c["series"][0].future_covariates.shape[-1]) for c in fake.calls]
+    assert lengths == [(100, 420), (420, 740), (740, 800)], "each pass sees the earlier forecast as history and the known covariates that cover it"
+    second, third = fake.calls[1]["series"][0], fake.calls[2]["series"][0]
+    assert np.allclose(second.target.numpy()[0, 100:], 1.4)  # the median (index 4) of the first pass, fed back
+    assert np.isnan(second.past_covariates.numpy()[0, 100:]).all() and np.isfinite(second.past_covariates.numpy()[0, :100]).all()
+    assert third.target.shape[-1] == 740 and any("several passes" in w for w in res.warnings)
+
+
+def test_the_history_handed_to_a_later_pass_stays_within_the_context_limit() -> None:
+    fake = CuttingForecast()
+    ctx = np.random.default_rng(3).normal(size=(1, 1, 2000))
+    adapter_with(fake).forecast(ForecastRequest(ctx, 700))
+    assert [c["series"][0].target.shape[-1] for c in fake.calls] == [2000, 2048, 2048]
+
+
 def test_loading_without_weights_says_where_to_get_them(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(cache, "hub_dir", lambda: tmp_path)
     adapter = build_default_registry().create("tirex-2")
