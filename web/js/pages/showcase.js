@@ -273,7 +273,7 @@ export function Showcase({ route }) {
         <p class="mt-5 border-t border-border-primary pt-4 text-body-small text-text-muted">“Error score” is a quantile loss: it measures how close the forecast is <i>and</i> how honest its shaded range is. Lower is better. It is computed here on this machine for the model and device selected above, on the default ${sc.horizon_label}, and stored so the second time is instant.</p><//>
       <${Card}><${Eyebrow}>Read this before trusting a number<//>
         <ul class="mt-4 list-disc space-y-3 pl-5 text-body-small text-text-muted">${sc.caveats.map((c) => html`<li>${c}</li>`)}
-          <li>These are public datasets: the models' training data is not fully disclosed (Timestral's not at all), so they may have seen them. Results on your own data are the real test.</li></ul>
+          <li>These are public datasets, and most makers do not list the real data their models were trained on (Mistral says Timestral's was mostly synthetic), so a model may have seen them. Results on your own data are the real test.</li></ul>
         <div class="mt-4"><${Collapse} title="Data source and licence"><p class="text-body-small text-text-muted"><span class="font-mono">${sc.source.repo}</span> · ${sc.source.name}/${sc.source.freq} · revision <span class="font-mono">${sc.source.revision.slice(0, 10)}</span><br />License: ${sc.source.license}.</p><//></div><//>
     </div>`}
   </div>`;

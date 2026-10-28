@@ -9,7 +9,7 @@ export function ModelChoice({ models, value, onChange }) {
 }
 
 const BASELINES = [['seasonal-naive', 'Seasonal naive'], ['naive', 'Naive'], ['drift', 'Drift']];
-export const ToggleList = ({ items, value, onChange }) => html`<div class="flex flex-wrap gap-x-5">${items.map(([v, l]) => html`<${Check} checked=${value.includes(v)} onChange=${(c) => onChange(c ? [...value, v] : value.filter((x) => x !== v))}>${l}<//>`)}</div>`;
+export const ToggleList = ({ items, value, onChange }) => html`<div class="grid grid-cols-2 gap-x-4">${items.map(([v, l]) => html`<${Check} checked=${value.includes(v)} onChange=${(c) => onChange(c ? [...value, v] : value.filter((x) => x !== v))}>${l}<//>`)}</div>`;
 
 export function Playground({ route }) {
   const { device } = useStore();

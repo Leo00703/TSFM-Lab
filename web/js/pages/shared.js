@@ -31,6 +31,6 @@ export function DatasetPicker({ datasets, value, onChange }) {
     ${cur && cur.source === 'synthetic' && html`<div class="grid grid-cols-3 gap-3">
       ${['n_series', 'length', 'seed'].filter((k) => k in cur.params).map((k) => html`<${Field} label=${k.replace('_', ' ')}>
         <${NumberInput} value=${value.params[k] ?? cur.params[k]} min=${k === 'seed' ? 0 : 1} onChange=${(v) => set({ params: { ...value.params, [k]: v ?? cur.params[k] } })} /><//>`)}</div>`}
-    ${cur && cur.contamination_risk !== 'none' && html`<p class="text-body-small text-text-warning">Possible contamination: ${cur.contamination_risk === 'unknown' ? 'the model’s real training data is not disclosed, so results on data that may be public are not guaranteed to be out-of-sample.' : cur.contamination_risk}</p>`}
+    ${cur && cur.contamination_risk !== 'none' && html`<p class="text-body-small text-text-warning">Possible contamination: ${cur.contamination_risk === 'unknown' ? 'the real training data of most models is not fully disclosed, so results on data that may be public are not guaranteed to be out-of-sample.' : cur.contamination_risk}</p>`}
   </div>`;
 }

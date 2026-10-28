@@ -161,6 +161,8 @@
   .tag { @apply inline-flex items-center rounded-sm bg-surface-brand-tertiary px-2 py-0.5 font-mono text-[0.6875rem] uppercase text-text-secondary; letter-spacing: .02em; }
   .tabs { @apply inline-flex flex-wrap gap-2; }
   .tab { @apply rounded-md px-4 h-10 text-button-large bg-surface-brand-secondary border border-border-primary text-text-primary cursor-pointer transition-colors hover:bg-action-ghost-1; }
+  .tabs-fill { @apply grid; grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)); }
+  .tabs-fill .tab { @apply px-2 text-center; }
   .tab[aria-selected="true"] { @apply bg-action-primary text-text-invert border-transparent; }
   .data-table { @apply w-full text-left text-body-small; }
   .data-table th { @apply font-mono uppercase text-[0.6875rem] text-text-muted font-normal px-3 py-2 border-b border-border-primary whitespace-nowrap; letter-spacing: .02em; }

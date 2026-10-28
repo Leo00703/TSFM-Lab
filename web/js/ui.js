@@ -49,8 +49,9 @@ export function Check({ checked, onChange, children, hint, disabled }) {
     <span class="text-body-large leading-6">${children}${hint && html`<span class="block text-body-small text-text-muted">${hint}</span>`}</span></label>`;
 }
 
-export function Tabs({ value, onChange, items, label }) {
-  return html`<div class="tabs" role="tablist" aria-label=${label}>${items.map((it) => html`<button type="button" role="tab" class="tab" aria-selected=${it.value === value} onClick=${() => onChange(it.value)}>${it.label}</button>`)}</div>`;
+// `cols` or `fill` make the tabs share the width of a narrow form column in equal cells instead of wrapping raggedly.
+export function Tabs({ value, onChange, items, label, cols, fill }) {
+  return html`<div class=${cols || fill ? 'tabs tabs-fill' : 'tabs'} style=${cols ? `grid-template-columns:repeat(${cols},minmax(0,1fr))` : undefined} role="tablist" aria-label=${label}>${items.map((it) => html`<button type="button" role="tab" class="tab" aria-selected=${it.value === value} onClick=${() => onChange(it.value)}>${it.label}</button>`)}</div>`;
 }
 
 export const Tag = ({ children }) => html`<span class="tag">${children}</span>`;
@@ -119,5 +120,5 @@ export function DeviceSelect({ class: c = '', compact }) {
   const list = devices.length ? devices : [{ id: 'cpu', name: 'CPU', supported: true }];
   const options = list.map((d) => ({ value: d.id, disabled: !d.supported, text: d.id === 'cpu' ? 'CPU' : 'GPU', label: friendlyDevice(d, list) }));
   return html`<div class=${'flex items-center gap-2 ' + c}><span class=${compact ? 'sr-only' : 'label !mb-0 shrink-0'}>Compute device</span>
-    <${Select} compact=${compact} value=${device} onChange=${setDevice} options=${options} aria-label="Compute device" class=${compact ? 'w-40' : 'min-w-0 flex-1'} /></div>`;
+    <${Select} compact=${compact} value=${device} onChange=${setDevice} options=${options} aria-label="Compute device" class=${compact ? 'w-52' : 'min-w-0 flex-1'} /></div>`;
 }

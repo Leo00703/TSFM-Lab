@@ -113,7 +113,7 @@ export function Datasets({ route }) {
     <div class="mt-4 flex flex-wrap gap-2"><${Button} small kind="outline" onClick=${() => setPrev(d)}>Preview<//>
       <${Button} small kind="outline" onClick=${() => go(`playground?ds=${keyOf(d)}`)}>Forecast<//><${Button} small kind="outline" onClick=${() => go(`experiments?ds=${keyOf(d)}`)}>Backtest<//>
       ${d.source === 'local' && html`<${Button} small kind="danger" icon="trash" aria-label="Remove dataset" onClick=${() => del(d)} />`}</div><//>`;
-  return html`<div><${PageHeader} eyebrow="Data" title="Datasets">Bundled synthetic scenarios, your own files, and a curated list of online benchmarks. Public data may overlap a model's undisclosed training data: scenarios built here are guaranteed unseen, your files are marked “unknown”, online benchmarks “possible”.<//>
+  return html`<div><${PageHeader} eyebrow="Data" title="Datasets">Bundled synthetic scenarios, your own files, and a curated list of online benchmarks. Public data may overlap what a model was trained on: scenarios built here are guaranteed unseen, your files are marked “unknown”, online benchmarks “possible”.<//>
     ${prev && html`<${Preview} ds=${prev} onClose=${() => setPrev(null)} />`}
     <${Section} title="Your data">
       ${local.length > 0 && html`<div class="mb-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">${local.map(card)}</div>`}<${Wizard} onDone=${reload} /><//>
