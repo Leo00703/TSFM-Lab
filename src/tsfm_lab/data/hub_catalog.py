@@ -174,6 +174,11 @@ def remove(e: dict[str, Any]) -> bool:
     return removed
 
 
+def run_entries(ids: list[str]) -> list[dict[str, Any]]:
+    """Entries ready for a leaderboard run: each with its display title (fev-bench entries derive theirs from the config name)."""
+    return [{**entry(i), "title": title(entry(i))} for i in ids]
+
+
 def listing() -> list[dict[str, Any]]:
     """Everything the catalog page needs, with the download status of each entry."""
     by_id = entries()

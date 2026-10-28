@@ -143,3 +143,10 @@ def test_the_api_reports_a_run_nobody_is_running_as_interrupted(tmp_path) -> Non
         assert client.get(f"/api/suites/{sid}").json()["status"] == "interrupted"
     finally:
         app.state.worker.stop()
+
+
+def test_every_catalog_entry_of_every_benchmark_can_be_run() -> None:
+    from tsfm_lab.data import hub_catalog as H
+
+    entries = H.run_entries(list(H.entries()))
+    assert len(entries) == 187 and all(isinstance(e["title"], str) and e["title"] and e["task"]["horizon"] and e["source"] for e in entries)

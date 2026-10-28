@@ -138,7 +138,7 @@ def do_suite(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
 
     for model in a["models"]:
         svc.drop(model)  # the suite loads its own copies and times them cleanly
-    entries = [hub_catalog.entry(i) for i in a["datasets"]]
+    entries = hub_catalog.run_entries(a["datasets"])
     cfg = SuiteConfig(max_series=a["max_series"], max_windows=a["max_windows"], max_context=a["max_context"],
                       use_covariates=a["use_covariates"])
     load = lambda e, n: svc.catalog.resolve({"source": "hub", "id": e["id"], "params": {"max_series": n}})  # noqa: E731
