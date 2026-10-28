@@ -114,6 +114,46 @@ class ForecastResult:
         raise ValueError(f"quantile level {level} not produced by this model: {self.quantile_levels}")
 
 
+# Values outside this range make the float32 arithmetic inside several models overflow or underflow (a square of 1e20 is already past the
+# largest float32): they came back as NaN or garbage, and in one model a single such series spoiled every other series of its batch.
+SAFE_ABS_RANGE = (1e-12, 1e15)
+
+
+def rescale_extreme(request: "ForecastRequest") -> tuple["ForecastRequest", np.ndarray | None, str | None]:
+    """Divide every target (and covariate) series whose values are outside what float32 handles safely by its largest absolute value.
+
+    The models are scale-equivariant by design, so this changes nothing for them except removing the overflow; the forecast of a
+    rescaled target is multiplied back by the returned factors, shape (B, V). Series inside the range are not touched at all (no
+    arithmetic, so a normal run is bit-for-bit what it was). Returns ``(request, None, None)`` when nothing was outside.
+    """
+    lo, hi = SAFE_ABS_RANGE
+
+    def factors(a: np.ndarray) -> np.ndarray:
+        top = np.where(np.isfinite(a), np.abs(a), 0.0).max(axis=-1, initial=0.0)  # missing and infinite values do not count
+        return np.where((top > hi) | ((top > 0) & (top < lo)), top, 1.0)
+
+    f_target = factors(request.context)
+    if not (f_target != 1.0).any() and all(a is None or not (factors(a) != 1.0).any() for a in (request.past_covariates, request.known_covariates)):
+        return request, None, None
+
+    def divide(a: np.ndarray | None) -> np.ndarray | None:
+        if a is None:
+            return None
+        f = factors(a)
+        return a if not (f != 1.0).any() else a / f[..., None]
+
+    scaled = ForecastRequest(
+        context=request.context / f_target[..., None], horizon=request.horizon, past_covariates=divide(request.past_covariates),
+        known_covariates=divide(request.known_covariates), categorical_past_covariates=request.categorical_past_covariates,
+        categorical_known_covariates=request.categorical_known_covariates, seasonal_period=request.seasonal_period, options=request.options)
+    n = int((f_target != 1.0).sum())
+    peak = float(np.nanmax(np.abs(request.context[np.isfinite(request.context)]))) if np.isfinite(request.context).any() else 0.0
+    note = (f"{n} target series had values outside the range float32 handles safely ({lo:g} to {hi:g}; the largest is {peak:.3g}): each was divided "
+            "by its largest absolute value before the model and its forecast multiplied back." if n else
+            f"some covariates had values outside the range float32 handles safely ({lo:g} to {hi:g}): they were divided by their largest absolute value.")
+    return scaled, f_target if n else None, note
+
+
 class ModelAdapter(ABC):
     """One loaded-or-loadable model. Instances hold weights only while loaded."""
 

@@ -12,7 +12,9 @@ import time
 from abc import abstractmethod
 from typing import Any
 
-from tsfm_lab.models.base import DeviceInfo, ForecastRequest, ForecastResult, ModelAdapter
+import numpy as np
+
+from tsfm_lab.models.base import DeviceInfo, ForecastRequest, ForecastResult, ModelAdapter, rescale_extreme
 from tsfm_lab.system.devices import list_devices, pick_device
 
 
@@ -97,6 +99,7 @@ class TorchAdapter(ModelAdapter):
     def forecast(self, request: ForecastRequest) -> ForecastResult:
         if self._model is None or self._device is None:
             raise RuntimeError("model not loaded: call load(device) first")
+        request, factors, rescaled = rescale_extreme(request)
         try:
             result = self._forecast_once(request)
         except (RuntimeError, NotImplementedError) as exc:  # includes out-of-memory and unsupported GPU operations
@@ -106,6 +109,10 @@ class TorchAdapter(ModelAdapter):
             self.load("cpu")
             self._fallback_note = f"{failed} failed while forecasting ({type(exc).__name__}: {str(exc)[:160]}); continued on the CPU."
             result = self._forecast_once(request)
+        if factors is not None:
+            result.quantiles = result.quantiles.astype(np.float64) * factors[:, :, None, None]
+        if rescaled:
+            result.warnings.append(rescaled)
         if self._fallback_note:
             result.warnings.insert(0, self._fallback_note)
         return result
