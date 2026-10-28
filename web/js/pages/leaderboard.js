@@ -105,30 +105,33 @@ function History() {
 
 function Detail({ id }) {
   const [s, reload] = useAsync(() => api(`/api/suites/${id}`), [id]);
-  const [view, setView] = useState('overall');
+  const [view, setView] = useState('overall'), [withCautions, setWithCautions] = useState(false);
   const running = !!s.data && s.data.status === 'running';
   useEffect(() => { if (!running) return undefined; const t = setInterval(reload, 4000); return () => clearInterval(t); }, [running]);
   if (s.loading && !s.data) return html`<${Spinner} />`;
   if (s.error) return html`<${ErrorBox} error=${s.error} />`;
-  const r = s.data, board = r.leaderboard, name = (m) => (r.models[m] || {}).name || m;
+  const r = s.data, cautions = r.datasets.filter((d) => d.caution), board = r.leaderboard_trusted && !withCautions ? r.leaderboard_trusted : r.leaderboard, name = (m) => (r.models[m] || {}).name || m;
   const rowsOf = (table) => board.ranked.slice().sort((a, b) => (table[b].sql_skill ?? -1e9) - (table[a].sql_skill ?? -1e9));
-  const table = view === 'overall' ? board.overall : board.by_group[view];
+  const table = (view !== 'overall' && board.by_group[view]) || board.overall;
   const groups = Object.keys(board.by_group), all = [...board.ranked, 'seasonal-naive'];
   const problems = r.datasets.filter((d) => d.error || Object.keys(d.skipped).length);
   const partial = { running: 'This run is still going: the ranking below counts the datasets finished so far and updates by itself.',
     stopped: 'This run was stopped before the end: the ranking below counts only the datasets finished before that.',
     interrupted: 'This run was cut short (the server stopped or the computation failed): the ranking below counts only the datasets finished before that.' }[r.status];
-  return html`<div><${PageHeader} eyebrow="Leaderboard" title=${r.label || 'Leaderboard run'}>${when(r.created)} · ${deviceLabel(r.device)} · ${board.total_datasets} datasets (${board.common_datasets} counted) · ${duration(r.elapsed_s)}<//>
+  return html`<div><${PageHeader} eyebrow="Leaderboard" title=${r.label || 'Leaderboard run'}>${when(r.created)} · ${deviceLabel(r.device)} · ${r.leaderboard.total_datasets} datasets (${board.common_datasets} counted${cautions.length > 0 && !withCautions ? `, ${cautions.length} left out` : ''}) · ${duration(r.elapsed_s)}<//>
     ${partial && html`<div class="mt-6"><${Notice} kind=${r.status === 'running' ? 'info' : 'warning'} title=${`${board.total_datasets} of ${r.planned || board.total_datasets} datasets run`}>${partial}<//></div>`}
+    ${cautions.length > 0 && html`<div class="mt-6"><${Notice} kind="warning" title=${withCautions ? `${cautions.length === 1 ? 'A dataset the catalog warns about is' : `${cautions.length} datasets the catalog warns about are`} counted in the ranking` : `${cautions.length === 1 ? 'A dataset is' : `${cautions.length} datasets are`} left out of the ranking`}>
+      <ul class="mt-1 grid gap-1">${cautions.map((d) => html`<li><b>${dataset(d)}</b>: ${d.caution}</li>`)}</ul>
+      <div class="mt-2"><${Button} small kind="outline" onClick=${() => setWithCautions(!withCautions)}>${withCautions ? 'Leave it out again' : 'Count it anyway'}<//></div><//></div>`}
     <${Section} title="Ranking" aside=${html`<${Button} small kind="ghost" onClick=${() => go('leaderboard')}>Back<//>`}>
       <div class="mb-3"><${Tabs} value=${view} onChange=${setView} label="Group" items=${[{ value: 'overall', label: 'All datasets' }, ...groups.map((g) => ({ value: g, label: source(g) }))]} /></div>
       <${Card} tight><${Table} head=${['#', 'Model', 'SQL skill', 'MASE skill', 'Wins', 'Datasets', 'Time']} empty="Nothing completed." rows=${rowsOf(table).map((m, i) => [i + 1, html`<b>${name(m)}</b>`, html`<${SkillBar} value=${table[m].sql_skill} />`, skillText(table[m].mase_skill), table[m].wins, table[m].datasets, `${table[m].total_s} s`])} /><//>
-      <p class="mt-3 max-w-3xl text-body-small text-text-muted">Skill is measured against seasonal naive on the same windows (geometric mean of error ratios over datasets; higher is better). Only the ${board.common_datasets} datasets every ranked model completed are counted. Settings: ${r.config.max_series} series, up to ${r.config.max_windows} windows, context ${r.config.max_context || 'unlimited'}, covariates ${r.config.use_covariates ? 'on' : 'off'}.</p><//>
+      <p class="mt-3 max-w-3xl text-body-small text-text-muted">Skill is measured against seasonal naive on the same windows (geometric mean of error ratios over datasets; higher is better). Only the ${board.common_datasets} datasets every ranked model completed${cautions.length > 0 && !withCautions ? ' (and the catalog does not warn about)' : ''} are counted. Settings: ${r.config.max_series} series, up to ${r.config.max_windows} windows, context ${r.config.max_context || 'unlimited'}, covariates ${r.config.use_covariates ? 'on' : 'off'}.</p><//>
     ${problems.length > 0 && html`<${Section} title="Not counted"><${Card} tight><ul class="grid gap-1 text-body-small text-text-muted">${problems.map((d) => html`<li><b class="text-text-primary">${dataset(d)}</b> · ${d.error ? d.error : `${Object.keys(d.skipped).map(name).join(', ')} skipped: ${Object.values(d.skipped)[0]}`}</li>`)}</ul><//><//>`}
     <${Section} title="Every dataset" aside=${html`<span class="text-body-small text-text-muted">mean SQL (lower is better); the best model is marked</span>`}>
       <${Card} class="!p-3 md:!p-5"><${Table} head=${['Dataset', 'Horizon × windows', 'Series', ...all.map(name)]} rows=${r.datasets.map((d) => {
         const best = board.ranked.filter((m) => d.models[m]).sort((a, b) => d.models[a].sql - d.models[b].sql)[0];
-        return [html`<span>${dataset(d)} <${Tag}>${source(d.group)}<//></span>`, `${d.horizon} × ${d.windows}`, d.series, ...all.map((m) => (d.models[m] ? html`<span class=${m === best ? 'font-semibold text-text-success' : ''}>${num(d.models[m].sql)}</span>` : '–'))];
+        return [html`<span>${dataset(d)} <${Tag}>${source(d.group)}<//>${d.caution && html` <${Tag}>${withCautions ? 'counted, warned' : 'not counted'}<//>`}</span>`, `${d.horizon} × ${d.windows}`, d.series, ...all.map((m) => (d.models[m] ? html`<span class=${m === best ? 'font-semibold text-text-success' : ''}>${num(d.models[m].sql)}</span>` : '–'))];
       })} /><//><//>
     <${Section} title="Models"><${Card} tight><${Table} head=${['Model', 'Parameters', 'Licence', 'Device']} rows=${all.map((m) => [name(m), params(r.models[m].params), r.models[m].license || '–', (r.models[m].load || {}).device || '–'])} /><//><//>
   </div>`;

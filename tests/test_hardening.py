@@ -127,3 +127,26 @@ def test_the_system_report_survives_a_cuda_build_that_sees_no_device(monkeypatch
     monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
     monkeypatch.setattr(torch.cuda, "device_count", lambda: 0)  # what CUDA_VISIBLE_DEVICES="" does to some builds
     assert environment_info()["cuda_available"] is False
+
+
+def test_a_dataset_the_catalog_warns_about_is_left_out_of_the_trusted_ranking_but_stays_in_the_table(client, tmp_path) -> None:
+    from tsfm_lab.eval.suite import aggregate
+
+    def row(dataset_id: str, a: float, b: float) -> dict:
+        errors = lambda sql: {"sql": sql, "mase": sql, "wql": sql, "total_s": 1.0}  # noqa: E731
+        return {"id": dataset_id, "title": dataset_id, "group": "fev", "freq": "h", "freq_label": "hourly", "horizon": 8, "windows": 1, "series": 2,
+                "targets": 1, "covariates": False, "skipped": {}, "error": None,
+                "models": {"a": errors(a), "b": errors(b), "seasonal-naive": errors(1.0)}}
+
+    rows = [row("kdd_cup_2022_10T", 0.15, 0.6), row("m5_1D", 0.9, 0.8), row("LOOP_SEATTLE_5T", 0.9, 0.8)]
+    board = {**aggregate(rows, ["a", "b"]), "total_datasets": 3}
+    sid = SuiteStore(tmp_path / "runs").save({"leaderboard": board, "datasets": rows, "device": "cpu", "elapsed_s": 1.0, "models": {}}, "x", None, "done")
+    d = client.get(f"/api/suites/{sid}").json()
+    assert [r["id"] for r in d["datasets"] if r["caution"]] == ["kdd_cup_2022_10T"]
+    assert d["leaderboard"]["common_datasets"] == 3 and d["leaderboard"]["overall"]["a"]["sql_skill"] > d["leaderboard"]["overall"]["b"]["sql_skill"]
+    trusted = d["leaderboard_trusted"]
+    assert trusted["common_datasets"] == 2 and trusted["total_datasets"] == 2 and trusted["overall"]["b"]["sql_skill"] > trusted["overall"]["a"]["sql_skill"]
+    plain = SuiteStore(tmp_path / "runs").save({"leaderboard": aggregate(rows[1:], ["a", "b"]), "datasets": rows[1:], "device": "cpu", "elapsed_s": 1.0, "models": {}}, "y", None, "done")
+    assert "leaderboard_trusted" not in client.get(f"/api/suites/{plain}").json()
+    listed = {e["id"]: e for e in hub_catalog.listing()}
+    assert listed["kdd_cup_2022_10T"]["caution"] and listed["m5_1D"]["caution"] is None

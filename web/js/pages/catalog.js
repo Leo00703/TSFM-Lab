@@ -1,6 +1,6 @@
 import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
 import { api, useAsync, useStore, useFocus, go, bytes } from '../core.js';
-import { Card, Button, Tag, Select, Tabs, Spinner, ErrorBox, Progress } from '../ui.js';
+import { Card, Button, Tag, Select, Tabs, Spinner, ErrorBox, Progress, Notice } from '../ui.js';
 import { isActive, stopJob } from '../activity.js';
 import { confirmDialog } from '../dialog.js';
 
@@ -50,6 +50,7 @@ function Details({ e, src }) {
       ['Task definition', html`<a class="underline underline-offset-2" href=${src.rules_url} target="_blank" rel="noreferrer">${RULES[e.source]}</a> at ${src.key === 'monash' ? 'revision' : 'commit'} <span class="font-mono">${src.rules_ref.slice(0, 10)}</span>`],
     ]} />
     ${e.notes.map((n) => html`<p class="text-body-small text-text-muted">${n}</p>`)}
+    ${e.caution && html`<${Notice} kind="warning" title="Results on this dataset do not compare models">${e.caution}<//>`}
     <p class="text-body-small text-text-warning">${src.contamination}</p>
   </div>`;
 }
@@ -75,7 +76,7 @@ function Row({ e, src, active, onPreview, reload }) {
           ${e.downloaded && html`<span class="tag !text-text-success">downloaded</span>`}<${Tag}>${src.name}<//>
           ${e.also_in.length > 0 && html`<${Tag}>also in ${[...new Set(e.also_in.map((o) => o.source_name))].join(', ')}<//>`}
           ${e.known.length > 0 && html`<${Tag}>known covariates<//>`}${e.targets.length > 1 && html`<${Tag}>multivariate<//>`}
-          ${e.large && html`<${Tag}>large file<//>`}${e.n_series > e.sampled_above && html`<${Tag}>sampled to ${e.sampled_above} series<//>`}</div></div>
+          ${e.caution && html`<span class="tag !text-text-warning">results not comparable</span>`}${e.large && html`<${Tag}>large file<//>`}${e.n_series > e.sampled_above && html`<${Tag}>sampled to ${e.sampled_above} series<//>`}</div></div>
       <div class="flex flex-wrap items-center gap-2">
         <${Button} small kind="ghost" onClick=${() => setOpen(!open)} aria-expanded=${open}>${open ? 'Hide details' : 'Details'}<//>
         ${e.downloaded ? html`<${Button} small kind="outline" onClick=${() => onPreview({ source: 'hub', id: e.id, name: label(e) })}>Preview<//>

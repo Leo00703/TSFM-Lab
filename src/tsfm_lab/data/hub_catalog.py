@@ -26,6 +26,14 @@ DEFAULT_MAX_SERIES = 200  # a larger file is sampled (seeded, sorted) so memory 
 MAX_SERIES_LIMIT = 5000
 LARGE_BYTES = 50_000_000
 
+# Datasets where one model's result looks like memory, not forecasting: the Leaderboard leaves them out of the ranking by
+# default (they stay in the table), and the Catalog says why.
+CAUTIONS = {
+    "kdd_cup_2022_10T": "On this dataset TimesFM 2.5 makes about a quarter of the error of every other model, which cannot be forecast "
+                        "(wind-turbine power two days ahead), so it has probably seen these data in training. Scores on it say "
+                        "nothing about forecasting skill; the Leaderboard leaves it out of the ranking unless asked.",
+}
+
 # What each source says about licence and about the chance that a model has already seen its data.
 TEXT = {
     "fev": {
@@ -69,7 +77,7 @@ def _catalog() -> dict[str, Any]:
             entries.append({
                 **e, "source": key, "repo": src["repo"], "revision": src["revision"], "format": src["format"],
                 "files": e.get("files") or [{"path": e["path"], "size_bytes": e["size_bytes"], "sha256": e["sha256"]}],
-                "notes": e.get("notes", []), "description": e.get("description", "")})
+                "notes": e.get("notes", []), "description": e.get("description", ""), "caution": CAUTIONS.get(e["id"])})
     # The same data under two names: identical series count and number of observations, in a different source.
     shape: dict[tuple[int, int], list[dict[str, Any]]] = {}
     for e in entries:
@@ -216,7 +224,7 @@ def listing() -> list[dict[str, Any]]:
             "text_flags": known_text, "task": e["task"], "size_bytes": e["size_bytes"], "checks": e["checks"],
             "downloaded": file_paths(e) is not None, "files": e["files"], "path": e["files"][0]["path"],
             "sha256": e["files"][0]["sha256"], "large": e["size_bytes"] > LARGE_BYTES, "sampled_above": DEFAULT_MAX_SERIES,
-            "notes": e["notes"], "description": e["description"],
+            "notes": e["notes"], "description": e["description"], "caution": e["caution"],
             "also_in": [{"id": o, "source": by_id[o]["source"], "label": f"{title(by_id[o])} · {freq_label(by_id[o]['pandas_freq'])}"}
                         for o in e["overlaps"]],
         })
