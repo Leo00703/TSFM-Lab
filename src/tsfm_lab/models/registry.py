@@ -40,7 +40,7 @@ class Registry:
 
 
 def build_default_registry() -> Registry:
-    from tsfm_lab.models import baselines, chronos, t0, timesfm, timestral
+    from tsfm_lab.models import baselines, chronos, t0, timesfm, timestral, tirex
 
     registry = Registry()
     baselines.register(registry)
@@ -48,6 +48,7 @@ def build_default_registry() -> Registry:
     chronos.register(registry)
     timesfm.register(registry)
     t0.register(registry)
+    tirex.register(registry)
     for entry in entry_points(group="tsfm_lab.models"):
         entry.load()(registry)
     return registry

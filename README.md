@@ -86,9 +86,10 @@ before and after an install.
 | TimesFM 3.0 (Google) | 331M | code Apache-2.0; **weights non-commercial** (testing, evaluation, research only) | past, known-future (numeric) |
 | TimesFM 2.5 (Google) | 231M | Apache-2.0 | none (univariate; covariates are ignored and the result says so) |
 | t0-gamma (The Forecasting Company) | 256M | Apache-2.0 (a very young model: read its notes) | past, known-future (numeric) |
+| TiRex-2 (NXAI) | 82M | Apache-2.0; one of its runtime libraries (`mlstm_kernels`) is under the NXAI Community Licence (free below EUR 100 million revenue, see its notes) | past, known-future (numeric), several variables together |
 
 Weights are downloaded only when you ask, from the Models page (Chronos-2 is 478 MB, its small variant 112 MB, TimesFM 2.5 925 MB,
-TimesFM 3.0 1.3 GB, t0-gamma 1 GB). **TimesFM 3.0's weights are under Google's non-commercial licence**: the card says so and asks you to
+TimesFM 3.0 1.3 GB, t0-gamma 1 GB, TiRex-2 330 MB). **TimesFM 3.0's weights are under Google's non-commercial licence**: the card says so and asks you to
 acknowledge it before downloading; do not use them for commercial or production purposes, and do not redistribute them. In the Playground
 and in Experiments, choose a model and tick the others under "Compare with": they run on the same windows, with the same metrics.
 Chronos-2 and t0-gamma use the same 21 quantile levels as Timestral; both TimesFM models produce nine deciles (0.1 to 0.9). When models with

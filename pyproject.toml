@@ -17,6 +17,7 @@ dependencies = [
     "timestral",
     "chronos-forecasting>=2.3,<3",  # Amazon's Chronos-2 (Apache-2.0); official PyPI package
     "timesfm>=3.0.2,<4",  # Google's TimesFM 2.5 and 3.0 (code Apache-2.0); torch comes from the project extras
+    "tirex-2==0.4.0",  # NXAI's TiRex-2 (Apache-2.0, pure Python); runs on pure-PyTorch kernels. Its dependency mlstm_kernels is under the NXAI Community Licence
     "tfc-t0==0.6.0",  # The Forecasting Company's t0 (Apache-2.0, pure Python); its torch extra is replaced by the three lines below
     "rotary-embedding-torch>=0.8",
     "einops>=0.7",

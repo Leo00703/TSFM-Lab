@@ -1,0 +1,25 @@
+# Numbers under [reported] were computed on 2026-10-28 from the result file published in the autogluon/fev repository
+# (benchmarks/fev_bench/results/tirex-2.csv); vendor-submitted, NOT measured here.
+id = "tirex-2"
+family = "tirex"
+name = "TiRex-2"
+repo = "NX-AI/TiRex-2"
+params = 82500000
+description = "NXAI's recurrent (xLSTM) forecaster: zero-shot probabilistic forecasts of one or several target variables, with past-only and known-future covariates, from a small checkpoint."
+license = "Apache-2.0"
+license_url = "https://huggingface.co/NX-AI/TiRex-2"
+source_url = "https://github.com/NX-AI/tirex-2"
+max_context = 2048
+max_horizon_per_pass = 320
+quantile_levels = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+[details]
+blocks = 12
+d_model = 512
+patch_size = 32
+active_params_univariate = 38400000
+weights_mb_fp32 = 330
+
+[reported]
+source = "fev-bench result file (submitted by the authors), computed here"
+fev_bench_sql_skill = 45.5
