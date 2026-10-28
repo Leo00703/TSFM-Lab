@@ -78,7 +78,7 @@ class CustomModelBody(BaseModel):
 
 class SuiteBody(BaseModel):
     datasets: list[str] = Field(min_length=1, max_length=200)  # catalog ids
-    models: list[str] = Field(min_length=1, max_length=8)
+    models: list[str] = Field(min_length=1, max_length=24)
     device: str = "cpu"
     max_series: int = Field(20, ge=1, le=200)
     max_windows: int = Field(3, ge=1, le=20)

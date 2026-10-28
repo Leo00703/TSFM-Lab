@@ -93,6 +93,8 @@ def test_the_api_refuses_a_run_over_datasets_that_are_unknown_or_not_downloaded(
     try:
         post = lambda body: client.post("/api/jobs/suite", json={"device": "cpu", **body})  # noqa: E731
         assert post({"datasets": ["nope"], "models": ["timestral-5m"]}).status_code == 404
+        every_model = [m["id"] for m in client.get("/api/models").json() if m["kind"] == "foundation"]
+        assert len(every_model) > 8 and post({"datasets": ["nope"], "models": every_model}).status_code == 404  # a run may take every model
         r = post({"datasets": ["hospital"], "models": ["timestral-5m"]})
         assert r.status_code == 422 and "not downloaded" in r.text
         r = post({"datasets": ["hospital"], "models": ["naive"]})
