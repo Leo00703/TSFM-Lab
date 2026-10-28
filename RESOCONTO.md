@@ -532,3 +532,18 @@ Cautele: Moirai-2.0 ha **28 dei 100 task nei propri dati di addestramento** (col
 **Prova reale.** 4 modelli (Timestral-209M, Chronos-2, TimesFM 3.0, t0-gamma) su 7 piccoli dataset di GIFT-Eval e Monash, GPU, 36 secondi. Risultato (solo un campione piccolo, da leggere come indicazione): t0-gamma +27,2% di abilità SQL, Timestral-209M +25,4%, TimesFM 3.0 +24,7%, Chronos-2 +19,7% sul seasonal naive: tutti e quattro vicini, coerente con la verifica precedente. **Test:** 5 nuovi (punteggio e limiti, regola dei dataset comuni, corsa completa con soli baseline e dataset troppo corto, archivio, rifiuti dell'API); 125 in totale.
 
 **Salvataggio parziale (2026-10-28).** La classifica viene salvata dopo ogni dataset (scrittura atomica). Se si preme Stop, il calcolo si interrompe o il server si ferma, i dataset già completati restano: la corsa compare come «stopped» (Stop dell'utente) o «interrupted» (qualunque altra interruzione, anche un riavvio: lo stato si giudica alla lettura, senza riscrivere i file, così un secondo server non rovina le corse di un altro). La pagina mostra un avviso con quanti dataset su quanti pianificati sono stati eseguiti e la classifica conta solo quelli; una corsa ancora in corso si aggiorna da sola ogni 4 secondi. Le corse complete non vengono mai declassate. Prova reale: corsa da 10 dataset fermata a metà, 4 dataset conservati e classificati. **Test:** 2 nuovi (checkpoint e interruzione, stato «interrupted» via API); 127 in totale.
+
+### Prima corsa vera della classifica: GIFT-Eval, 5 modelli (2026-10-28)
+**Cosa:** 49 dataset di GIFT-Eval sotto i 50 MB (249 MB scaricati, SHA-256 verificato), 5 modelli su GPU, 20 serie per dataset, al massimo 3 finestre, contesto 2048 per tutti, covariate attive; 8 minuti. Tutti i 49 dataset contati.
+
+| Modello | Abilità SQL | Abilità MASE | Vittorie |
+|---|---|---|---|
+| t0-gamma | +35,0% | +31,3% | 16 |
+| Timestral-209M | +34,5% | +30,2% | 16 |
+| TimesFM 3.0 | +33,4% | +29,2% | 5 |
+| Chronos-2 | +32,5% | +28,2% | 8 |
+| TimesFM 2.5 | +29,5% | +25,4% | 4 |
+
+**Lettura onesta.** I primi quattro sono entro 2,5 punti: sul campione usato (20 serie per dataset) la differenza fra t0-gamma e Timestral (0,5 punti) è dentro il rumore, e i dati di GIFT-Eval possono essere stati visti da alcuni modelli (Timestral non dichiara i suoi). Con covariate (8 dataset) Timestral-209M è primo (44,1 contro 43,0 di Chronos-2, 42,6 TimesFM 3.0, 42,3 t0-gamma); senza (41 dataset) è primo t0-gamma (33,5), poi Timestral (32,5) e TimesFM 3.0 (31,4). TimesFM 2.5, che ignora le covariate, è ultimo come atteso.
+
+**Bug trovato dalla corsa.** Nella prima corsa `kdd_cup_2018` (orario) risultava «non contato» con un errore oscuro: TimesFM 2.5 andava in crash quando il contesto di una serie era interamente mancante (il pacchetto vuole usare zero, ma controlla male un array vuoto). Ora l'adattatore sostituisce quel contesto con zeri e lo segnala; inoltre la classifica distingue «troppo corto» da «un modello è fallito». Corsa rifatta da capo: 49 su 49. 128 test.
