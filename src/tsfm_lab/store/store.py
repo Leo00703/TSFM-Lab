@@ -190,10 +190,21 @@ class SuiteStore:
             tmp.write_text(json.dumps(d, indent=1), encoding="utf-8")
             tmp.replace(path)
 
+    @staticmethod
+    def _rescored(d: dict[str, Any]) -> dict[str, Any]:
+        """The ranking of a saved run, counted by today's rules (a run saved before a rule changed would otherwise keep the old count)."""
+        from tsfm_lab.eval.suite import REFERENCE, aggregate
+
+        rows, board = d.get("datasets"), d.get("leaderboard")
+        if not rows or not board:
+            return d
+        fresh = aggregate([r for r in rows if r["models"] and REFERENCE in r["models"]], board["ranked"])
+        return {**d, "leaderboard": {**fresh, "total_datasets": board["total_datasets"]}}
+
     def list(self) -> list[dict[str, Any]]:
         out = []
         for path in sorted(self.root.glob("*.json"), reverse=True):
-            d = json.loads(path.read_text(encoding="utf-8"))
+            d = self._rescored(json.loads(path.read_text(encoding="utf-8")))
             board = d["leaderboard"]
             best = max(board["ranked"], key=lambda m: (board["overall"][m]["sql_skill"] is not None, board["overall"][m]["sql_skill"] or 0),
                        default=None) if board["common_datasets"] else None
@@ -207,7 +218,7 @@ class SuiteStore:
         path = self.root / f"{Path(suite_id).name}.json"
         if not path.is_file():
             raise KeyError(f"unknown leaderboard run '{suite_id}'")
-        return json.loads(path.read_text(encoding="utf-8"))
+        return self._rescored(json.loads(path.read_text(encoding="utf-8")))
 
     def delete(self, suite_id: str) -> None:
         (self.root / f"{Path(suite_id).name}.json").unlink(missing_ok=True)

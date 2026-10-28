@@ -36,6 +36,22 @@ def test_only_datasets_every_ranked_model_completed_are_counted() -> None:
     assert board["by_group"]["gift"]["x"]["datasets"] == 1
 
 
+
+def test_a_dataset_the_reference_cannot_score_is_not_counted_and_old_runs_are_recounted(tmp_path) -> None:
+    flat = _row("night", "monash", **{"seasonal-naive": float("nan"), "x": float("nan")})  # constant series: no error scale, nothing to score
+    empty = _row("none", "monash", **{"seasonal-naive": None, "x": None})
+    rows = [_row("a", "fev", **{"seasonal-naive": 1.0, "x": 0.5}), flat, empty]
+    board = suite.aggregate(rows, ["x"])
+    assert board["common_datasets"] == 1 and board["overall"]["x"]["sql_skill"] == pytest.approx(50.0) and "monash" not in board["by_group"]
+    assert suite.scorable(rows[0]) and not suite.scorable(flat) and not suite.scorable(empty)
+    # a run saved when every dataset with all the models counted still shows today's count when it is opened or listed
+    old = {**suite.aggregate(rows[:1], ["x"]), "common_datasets": 3, "total_datasets": 3}
+    store = SuiteStore(tmp_path)
+    sid = store.save({"config": {}, "device": "cpu", "models": {}, "datasets": rows, "elapsed_s": 1.0, "leaderboard": old}, "old", status="done")
+    assert store.get(sid)["leaderboard"]["common_datasets"] == 1 and store.get(sid)["leaderboard"]["total_datasets"] == 3
+    assert store.list()[0]["common"] == 1 and store.list()[0]["datasets"] == 3
+
+
 def _dataset(n_series: int, length: int, seed: int) -> Dataset:
     rng = np.random.default_rng(seed)
     t = np.arange(length)

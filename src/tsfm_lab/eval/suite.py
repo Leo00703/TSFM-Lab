@@ -49,9 +49,17 @@ def skill(ratios: list[float]) -> float | None:
     return None if not ratios else float(100 * (1 - math.exp(sum(math.log(r) for r in ratios) / len(ratios))))
 
 
+def scorable(row: dict[str, Any]) -> bool:
+    """A dataset scores nothing when the reference has no usable error: a series that is constant over its context (all zeros at night)
+    has an error scale of zero, so every ratio is undefined."""
+    reference = row["models"].get(REFERENCE) or {}
+    sql = reference.get("sql")
+    return sql is not None and math.isfinite(sql) and sql > 0
+
+
 def aggregate(results: list[dict[str, Any]], ranked: list[str]) -> dict[str, Any]:
     """Leaderboard rows from per-dataset results. ``results[i]['models'][model]`` holds the errors or is missing when skipped."""
-    common = [r for r in results if all(m in r["models"] for m in ranked)]
+    common = [r for r in results if all(m in r["models"] for m in ranked) and scorable(r)]
 
     def rows(subset: list[dict[str, Any]]) -> dict[str, Any]:
         out = {}
