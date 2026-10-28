@@ -723,4 +723,4 @@ Fatta mentre girava la corsa senza covariate: nessun riavvio del server di lavor
 
 **Decisione.** Segnalo e lascio fuori dalla classifica solo `kdd_cup_2022_10T`, dove il rapporto è 0,27 e il dataset da solo capovolge la graduatoria dei 12. Gli altri non vengono esclusi: non c'è alcuna prova, escluderli penalizzerebbe un modello su una sola ipotesi e le conclusioni non cambiano. Restano documentati qui.
 
-**Un'osservazione a margine.** `monash.solar_4_seconds` risulta contato nella classifica a 127 ma non contribuisce: la serie è costante nel contesto, l'errore di scala è nullo e SQL, MASE e WQL sono vuoti per tutti i modelli. Dei 127 dataset contano quindi 126.
+**Un'osservazione a margine.** `monash.solar_4_seconds` risulta contato nella classifica a 127 ma non contribuisce: la serie è costante nel contesto, l'errore di scala è nullo e SQL, MASE e WQL sono vuoti per tutti i modelli. Dei 127 dataset contano quindi 126. **Corretto**: la classifica conta solo i dataset su cui il baseline ha un errore utilizzabile, le corse già salvate vengono riconteggiate all'apertura (126 di 127, punteggi invariati) e il dataset compare in "Not counted" con il motivo.

@@ -19,6 +19,7 @@ def test_skill_is_the_geometric_mean_of_clipped_error_ratios() -> None:
     assert suite.skill([0.5, 0.5]) == pytest.approx(50.0) and suite.skill([2.0, 0.5]) == pytest.approx(0.0)
     assert suite.skill([]) is None
     assert suite.clipped_ratio(1.0, 0.0) is None and suite.clipped_ratio(float("nan"), 1.0) is None
+    assert suite.clipped_ratio(None, 1.0) is None and suite.clipped_ratio(1.0, None) is None  # what a saved run holds for an undefined error
     assert suite.clipped_ratio(1e-9, 1.0) == 0.01 and suite.clipped_ratio(1e9, 1.0) == 100.0  # one dataset cannot dominate
 
 
@@ -50,6 +51,19 @@ def test_a_dataset_the_reference_cannot_score_is_not_counted_and_old_runs_are_re
     sid = store.save({"config": {}, "device": "cpu", "models": {}, "datasets": rows, "elapsed_s": 1.0, "leaderboard": old}, "old", status="done")
     assert store.get(sid)["leaderboard"]["common_datasets"] == 1 and store.get(sid)["leaderboard"]["total_datasets"] == 3
     assert store.list()[0]["common"] == 1 and store.list()[0]["datasets"] == 3
+
+
+def test_a_saved_run_with_an_undefined_metric_on_a_scorable_dataset_still_opens(tmp_path) -> None:
+    row = _row("a", "fev", **{"seasonal-naive": 1.0, "x": 0.5})
+    row["models"]["x"]["mase"] = None  # saved as null: the sql error is defined, the mase one is not
+    row["models"]["seasonal-naive"]["wql"] = None
+    row["models"]["y"] = {"sql": None, "mase": None, "wql": None, "total_s": 1.0}  # a model that failed on this dataset
+    store = SuiteStore(tmp_path)
+    sid = store.save({"config": {}, "device": "cpu", "models": {}, "datasets": [row], "elapsed_s": 1.0, "leaderboard": suite.aggregate([_row("a", "fev", **{"seasonal-naive": 1.0, "x": 0.5, "y": 0.9})], ["x", "y"])}, "nulls")
+    board = store.get(sid)["leaderboard"]
+    assert board["common_datasets"] == 1 and board["overall"]["x"]["sql_skill"] == pytest.approx(50.0) and board["overall"]["x"]["mase_skill"] is None
+    assert board["overall"]["x"]["wins"] == 1 and board["overall"]["y"]["wins"] == 0 and board["overall"]["y"]["sql_skill"] is None
+    assert store.list()[0]["common"] == 1
 
 
 def _dataset(n_series: int, length: int, seed: int) -> Dataset:

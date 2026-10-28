@@ -38,7 +38,9 @@ class SuiteConfig:
         return asdict(self)
 
 
-def clipped_ratio(model: float, reference: float) -> float | None:
+def clipped_ratio(model: float | None, reference: float | None) -> float | None:
+    if model is None or reference is None:  # a saved run keeps an undefined error as null
+        return None
     if not (math.isfinite(model) and math.isfinite(reference)) or reference <= 0:
         return None
     return float(np.clip(model / reference, 0.01, 100.0))
@@ -71,8 +73,9 @@ def aggregate(results: list[dict[str, Any]], ranked: list[str]) -> dict[str, Any
             row["total_s"] = round(sum(r["models"][m]["total_s"] for r in subset), 2)
             out[m] = row
         for r in subset:  # a win is the lowest SQL on a dataset
-            winner = min(ranked, key=lambda m: r["models"][m]["sql"] if math.isfinite(r["models"][m]["sql"]) else math.inf)
-            if math.isfinite(r["models"][winner]["sql"]):
+            sql = {m: v if (v := r["models"][m]["sql"]) is not None and math.isfinite(v) else math.inf for m in ranked}  # null: undefined, saved
+            winner = min(ranked, key=sql.__getitem__)
+            if math.isfinite(sql[winner]):
                 out[winner]["wins"] = out[winner].get("wins", 0) + 1
         for row in out.values():
             row.setdefault("wins", 0)
