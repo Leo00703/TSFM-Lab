@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shutil
 import threading
 from collections import OrderedDict
 from dataclasses import asdict
@@ -17,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from tsfm_lab.data import hub_catalog, synthetic
-from tsfm_lab.data.local import ColumnMapping, guess_mapping, load_dataframe, read_table
+from tsfm_lab.data.local import READERS, ColumnMapping, guess_mapping, load_dataframe, read_table
 from tsfm_lab.data.schema import Dataset
 from tsfm_lab.isolation import find_root
 
@@ -112,14 +113,22 @@ class DatasetCatalog:
         if len(data) > MAX_UPLOAD_BYTES:
             raise ValueError(f"file too large (limit {MAX_UPLOAD_BYTES // 2**20} MB)")
         name = SAFE_NAME.sub("_", Path(filename).name)[:120] or "upload"
+        if Path(name).suffix.lower() not in READERS:  # refused before anything is written
+            raise ValueError(f"unsupported file type '{Path(name).suffix}'. Supported: {', '.join(READERS)}")
         file_id = hashlib.sha256(data).hexdigest()[:16]
         folder = self.root / "uploads" / file_id
+        existed = folder.is_dir()
         folder.mkdir(parents=True, exist_ok=True)
+        for old in folder.glob("*"):  # the same bytes under another name: one file per id, so the reader always gets this one
+            if old.is_file() and old.name != name:
+                old.unlink()
         path = folder / name
         path.write_bytes(data)
         try:
             frame = read_table(path)
         except Exception as error:
+            if not existed:  # a file that cannot be read is not kept
+                shutil.rmtree(folder, ignore_errors=True)
             raise ValueError(f"could not read '{name}': {error}") from error
         mapping = guess_mapping(frame)
         return {"file_id": file_id, "filename": name, "rows": int(len(frame)), "columns": list(map(str, frame.columns)),

@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import secrets
+import shutil
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,6 +38,9 @@ def to_jsonable(obj: Any) -> Any:
     if isinstance(obj, (np.bool_,)):
         return bool(obj)
     return obj
+
+
+RUN_ID = re.compile(r"\d{8}-\d{6}-[0-9a-f]{4}")
 
 
 class RunStore:
@@ -99,20 +104,24 @@ class RunStore:
             out.append(d)
         return out
 
+    def _folder(self, run_id: str) -> Path:
+        """The folder of a run. The id comes from a URL, so it must be exactly the shape ``save`` makes: nothing like '..' or a path gets through."""
+        if not RUN_ID.fullmatch(run_id):
+            raise KeyError(f"unknown run '{run_id[:40]}'")
+        return self.root / run_id
+
     def meta(self, run_id: str) -> dict[str, Any]:
-        path = self.root / run_id / "meta.json"
+        path = self._folder(run_id) / "meta.json"
         if not path.is_file():
             raise KeyError(f"unknown run '{run_id}'")
         return json.loads(path.read_text(encoding="utf-8"))
 
     def arrays(self, run_id: str) -> dict[str, np.ndarray]:
-        with np.load(self.root / run_id / "arrays.npz") as data:
+        with np.load(self._folder(run_id) / "arrays.npz") as data:
             return {k: data[k] for k in data.files}
 
     def delete(self, run_id: str) -> None:
-        import shutil
-
-        shutil.rmtree(self.root / run_id, ignore_errors=True)
+        shutil.rmtree(self._folder(run_id), ignore_errors=True)
         with sqlite3.connect(self.db) as con:
             con.execute("DELETE FROM runs WHERE id = ?", (run_id,))
 
@@ -177,7 +186,9 @@ class SuiteStore:
         d = json.loads(path.read_text(encoding="utf-8"))
         if d.get("status") == "running":
             d["status"] = status
-            path.write_text(json.dumps(d, indent=1), encoding="utf-8")
+            tmp = path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(d, indent=1), encoding="utf-8")
+            tmp.replace(path)
 
     def list(self) -> list[dict[str, Any]]:
         out = []

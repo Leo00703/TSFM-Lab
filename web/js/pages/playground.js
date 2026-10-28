@@ -69,15 +69,15 @@ export function Playground({ route }) {
           <div><span class="label">Compare with</span><${ToggleList} items=${[...BASELINES, ...comparable(models.data, c.model)]} value=${c.baselines} onChange=${(v) => set({ baselines: v })} /></div></div>
         <div class="border-t border-border-primary pt-4">
           ${info && (info.n_known > 0 || info.n_past_covariates > 0) && html`<${Check} checked=${c.covariates} onChange=${(v) => set({ covariates: v })} hint="Known-future and past-only columns of this dataset">Use covariates<//>`}
-          <${Check} checked=${c.symmetric} onChange=${(v) => set({ symmetric: v })} hint="Timestral averages with the forecast of the mirrored series">Symmetric averaging<//>
-          <${Check} checked=${c.maskFlat} onChange=${(v) => set({ maskFlat: v })} hint="Workaround for upstream issue #7">Mask flat covariates<//>
+          <${Check} checked=${c.symmetric} onChange=${(v) => set({ symmetric: v })} hint="Averages the forecast with that of the mirrored series (Timestral; the closest equivalent for TimesFM)">Symmetric averaging<//>
+          <${Check} checked=${c.maskFlat} onChange=${(v) => set({ maskFlat: v })} hint="Workaround for a Timestral bug with constant covariates (upstream issue #7)">Mask flat covariates<//>
           <${Check} checked=${c.clip} onChange=${(v) => set({ clip: v })} hint="Clamp at 0 when the history is non-negative">Clip non-negative<//></div>
         <${Button} kind="brand" onClick=${run} disabled=${busy || !info}>${busy ? 'Forecasting…' : 'Run forecast'}<//>
       </div><//>
 
       <div ref=${out} class="min-w-0 scroll-mt-16 grid grid-cols-[minmax(0,1fr)] content-start gap-4">
         ${error && html`<${ErrorBox} error=${error} />`}
-        ${!res && !busy && html`<${Card}><p class="text-text-muted">Set things up on the left and press <b class="text-text-primary">Run forecast</b>. Timestral will run on <b class="text-text-primary">${deviceLabel(device)}</b>.</p><//>`}
+        ${!res && !busy && html`<${Card}><p class="text-text-muted">Set things up on the left and press <b class="text-text-primary">Run forecast</b>. The model will run on <b class="text-text-primary">${deviceLabel(device)}</b>.</p><//>`}
         ${busy && html`<${Card}><${Spinner} label=${`Running on ${deviceLabel(device)}… the first call after loading a model is slower`} /><//>`}
         ${res && html`
           <${Figure} title=${`${res.series_id} · ${res.horizon}-step forecast`} subtitle=${`Context ${res.context_used} steps · ${hasActual ? 'black line = what actually happened' : 'no real values after this point'}`}

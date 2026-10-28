@@ -5,6 +5,10 @@ import { Card, PageHeader, Section, Button, Field, NumberInput, Check, Notice, E
 import { confirmDialog } from '../dialog.js';
 
 const SIZE_LIMITS = [['5', 'Under 5 MB'], ['50', 'Under 50 MB'], ['any', 'Any size']];
+const SOURCE = { fev: 'fev-bench', gift: 'GIFT-Eval', monash: 'Monash' };
+const source = (g) => SOURCE[g] || g;
+const duration = (s) => (s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min` : s >= 120 ? `${Math.round(s / 60)} min` : `${Math.round(s)} s`);
+const dataset = (d) => `${d.title} · ${d.freq_label || d.freq}`;
 const params = (n) => (!n ? '–' : n >= 1e6 ? `${Math.round(n / 1e6)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n));
 const STATUS = { done: 'complete', running: 'running', stopped: 'stopped', interrupted: 'interrupted' };
 const skillText = (x) => (x === null || x === undefined ? '–' : `${x >= 0 ? '+' : ''}${x.toFixed(1)}%`);
@@ -95,7 +99,7 @@ function History() {
     if (ok) reload();
   };
   return html`<${Section} title="Previous runs">${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : html`<${Card} tight>
-    <${Table} head=${['When', 'Label', 'Models', 'Datasets', 'Best (SQL skill)', 'Status', '']} empty="No leaderboard runs yet." rows=${s.data.map((r) => [when(r.created), r.label || '–', r.models.join(', '), r.status === 'done' ? `${r.common} of ${r.datasets}` : `${r.datasets} of ${r.planned} run`, r.best ? `${r.best} ${skillText(r.best_skill)}` : '–', html`<${Tag}>${STATUS[r.status] || r.status}<//>`,
+    <${Table} head=${['When', 'Label', 'Models', 'Datasets', 'Best (SQL skill)', 'Status', '']} empty="No leaderboard runs yet." rows=${s.data.map((r) => [when(r.created), r.label || '–', r.models.length > 3 ? `${r.models.length} models` : r.model_names.join(', '), r.status === 'done' ? `${r.common} of ${r.datasets}` : `${r.datasets} of ${r.planned} run`, r.best ? `${r.best_name} ${skillText(r.best_skill)}` : '–', html`<${Tag}>${STATUS[r.status] || r.status}<//>`,
       html`<span class="flex gap-2"><${Button} small kind="outline" onClick=${() => go('leaderboard/' + r.id)}>Open<//><${Button} small kind="danger" icon="trash" aria-label="Delete run" onClick=${() => del(r)} /></span>`])} /><//>`}<//>`;
 }
 
@@ -114,17 +118,17 @@ function Detail({ id }) {
   const partial = { running: 'This run is still going: the ranking below counts the datasets finished so far and updates by itself.',
     stopped: 'This run was stopped before the end: the ranking below counts only the datasets finished before that.',
     interrupted: 'This run was cut short (the server stopped or the computation failed): the ranking below counts only the datasets finished before that.' }[r.status];
-  return html`<div><${PageHeader} eyebrow="Leaderboard" title=${r.label || 'Leaderboard run'}>${when(r.created)} · ${deviceLabel(r.device)} · ${board.total_datasets} datasets (${board.common_datasets} counted) · ${Math.round(r.elapsed_s)} s<//>
+  return html`<div><${PageHeader} eyebrow="Leaderboard" title=${r.label || 'Leaderboard run'}>${when(r.created)} · ${deviceLabel(r.device)} · ${board.total_datasets} datasets (${board.common_datasets} counted) · ${duration(r.elapsed_s)}<//>
     ${partial && html`<div class="mt-6"><${Notice} kind=${r.status === 'running' ? 'info' : 'warning'} title=${`${board.total_datasets} of ${r.planned || board.total_datasets} datasets run`}>${partial}<//></div>`}
     <${Section} title="Ranking" aside=${html`<${Button} small kind="ghost" onClick=${() => go('leaderboard')}>Back<//>`}>
-      <div class="mb-3"><${Tabs} value=${view} onChange=${setView} label="Group" items=${[{ value: 'overall', label: 'All datasets' }, ...groups.map((g) => ({ value: g, label: g }))]} /></div>
+      <div class="mb-3"><${Tabs} value=${view} onChange=${setView} label="Group" items=${[{ value: 'overall', label: 'All datasets' }, ...groups.map((g) => ({ value: g, label: source(g) }))]} /></div>
       <${Card} tight><${Table} head=${['#', 'Model', 'SQL skill', 'MASE skill', 'Wins', 'Datasets', 'Time']} empty="Nothing completed." rows=${rowsOf(table).map((m, i) => [i + 1, html`<b>${name(m)}</b>`, html`<${SkillBar} value=${table[m].sql_skill} />`, skillText(table[m].mase_skill), table[m].wins, table[m].datasets, `${table[m].total_s} s`])} /><//>
       <p class="mt-3 max-w-3xl text-body-small text-text-muted">Skill is measured against seasonal naive on the same windows (geometric mean of error ratios over datasets; higher is better). Only the ${board.common_datasets} datasets every ranked model completed are counted. Settings: ${r.config.max_series} series, up to ${r.config.max_windows} windows, context ${r.config.max_context || 'unlimited'}, covariates ${r.config.use_covariates ? 'on' : 'off'}.</p><//>
-    ${problems.length > 0 && html`<${Section} title="Not counted"><${Card} tight><ul class="grid gap-1 text-body-small text-text-muted">${problems.map((d) => html`<li><b class="text-text-primary">${d.title}</b> · ${d.error ? d.error : `${Object.keys(d.skipped).map(name).join(', ')} skipped: ${Object.values(d.skipped)[0]}`}</li>`)}</ul><//><//>`}
+    ${problems.length > 0 && html`<${Section} title="Not counted"><${Card} tight><ul class="grid gap-1 text-body-small text-text-muted">${problems.map((d) => html`<li><b class="text-text-primary">${dataset(d)}</b> · ${d.error ? d.error : `${Object.keys(d.skipped).map(name).join(', ')} skipped: ${Object.values(d.skipped)[0]}`}</li>`)}</ul><//><//>`}
     <${Section} title="Every dataset" aside=${html`<span class="text-body-small text-text-muted">mean SQL (lower is better); the best model is marked</span>`}>
       <${Card} class="!p-3 md:!p-5"><${Table} head=${['Dataset', 'Horizon × windows', 'Series', ...all.map(name)]} rows=${r.datasets.map((d) => {
         const best = board.ranked.filter((m) => d.models[m]).sort((a, b) => d.models[a].sql - d.models[b].sql)[0];
-        return [html`<span>${d.title} <${Tag}>${d.group}<//></span>`, `${d.horizon} × ${d.windows}`, d.series, ...all.map((m) => (d.models[m] ? html`<span class=${m === best ? 'font-semibold text-text-success' : ''}>${num(d.models[m].sql)}</span>` : '–'))];
+        return [html`<span>${dataset(d)} <${Tag}>${source(d.group)}<//></span>`, `${d.horizon} × ${d.windows}`, d.series, ...all.map((m) => (d.models[m] ? html`<span class=${m === best ? 'font-semibold text-text-success' : ''}>${num(d.models[m].sql)}</span>` : '–'))];
       })} /><//><//>
     <${Section} title="Models"><${Card} tight><${Table} head=${['Model', 'Parameters', 'Licence', 'Device']} rows=${all.map((m) => [name(m), params(r.models[m].params), r.models[m].license || '–', (r.models[m].load || {}).device || '–'])} /><//><//>
   </div>`;

@@ -1,5 +1,5 @@
 import { html, useState } from '/vendor/htm-preact.js';
-import { api, useAsync, go, num, pct, pct0, ms, when } from '../core.js';
+import { api, useAsync, go, num, pct, pct0, ms, when, int } from '../core.js';
 import { Card, PageHeader, Section, Button, Tabs, Select, Field, Spinner, ErrorBox, Notice, Table, KV, Collapse, Tag, Eyebrow, download } from '../ui.js';
 import { confirmDialog } from '../dialog.js';
 import { Figure, barOption, linesOption, fanOption, baseOption, axisStyle, modelColors, quantileStats, isNarrow } from '../charts.js';
@@ -18,7 +18,7 @@ function RunList() {
   return html`<div><${PageHeader} eyebrow="History" title="Runs">Every experiment is stored with its configuration, environment and raw forecasts, so any chart can be redrawn and any number traced back.<//>
     <${Section}>${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : !s.data.length ? html`<${Card}><p class="text-text-muted">No runs yet. <a class="underline" href="#/experiments">Start an experiment</a>.</p><//>` : html`
       <div class="mb-3 flex flex-wrap items-center gap-3"><${Button} kind="brand" disabled=${sel.length < 2} onClick=${() => go('compare?runs=' + sel.join(','))}>Compare selected (${sel.length})<//><span class="text-body-small text-text-muted">Tick two or more runs of the same dataset and horizon (up to 6).</span></div>
-      <${Card} class="!p-3 md:!p-5"><${Table} head=${['', 'When', 'Dataset', 'Models', 'Device', 'Horizon', 'Items', 'MASE (main model)', '']} rows=${s.data.map((r) => [html`<input type="checkbox" class="size-4 accent-[var(--color-surface-brand)]" aria-label="Select run to compare" checked=${sel.includes(r.id)} onChange=${() => toggle(r.id)} />`, when(r.created), r.dataset_name, r.models.join(', '), r.devices.join(', '), r.horizon, r.n_items,
+      <${Card} class="!p-3 md:!p-5"><${Table} head=${['', 'When', 'Dataset', 'Models', 'Device', 'Horizon', 'Items', 'MASE (main model)', '']} rows=${s.data.map((r) => [html`<input type="checkbox" class="size-4 accent-[var(--color-surface-brand)]" aria-label="Select run to compare" checked=${sel.includes(r.id)} onChange=${() => toggle(r.id)} />`, when(r.created), r.dataset_name, r.model_names.join(', '), r.devices.join(', '), r.horizon, r.n_items,
         num((r.headline[r.models[0]] || {}).mase), html`<span class="flex gap-2"><${Button} small kind="outline" onClick=${() => go('runs/' + r.id)}>Open<//><${Button} small kind="danger" icon="trash" aria-label="Delete run" onClick=${() => del(r)} /></span>`])} /><//>`}<//></div>`;
 }
 
@@ -113,7 +113,7 @@ function RunDetail({ id }) {
       ${an.data ? html`<${Distribution} an=${an.data} ids=${ids} names=${names} focus=${focus} metric=${dm} />` : html`<${Spinner} />`}<//>
 
     <${Section} title="Forecast vs actual" aside=${html`<div class="w-56 max-w-full"><${Select} value=${model} onChange=${setAModel} options=${ids.map((i) => ({ value: i, label: names[i] }))} aria-label="Model for the plots" /></div>`}>
-      ${an.data ? html`<div class="grid gap-4 lg:grid-cols-2"><${Figure} title="Median forecast vs actual" subtitle=${`${an.data.scatter.n.toLocaleString()} points${an.data.scatter.n > 3000 ? ' (evenly sampled to 3,000)' : ''} · dashed = perfect`} build=${scatterBuild} deps=${[an.data]} filename="scatter" />
+      ${an.data ? html`<div class="grid gap-4 lg:grid-cols-2"><${Figure} title="Median forecast vs actual" subtitle=${`${int(an.data.scatter.n)} points${an.data.scatter.n > 3000 ? ' (evenly sampled to 3,000)' : ''} · dashed = perfect`} build=${scatterBuild} deps=${[an.data]} filename="scatter" />
         <${Figure} title="Error distribution" subtitle="Median forecast − actual, in units of each series’ history scale" build=${histBuild} deps=${[an.data]} filename="residuals" note="Tails clipped at the 99th percentile of |error| for readability." /></div>` : html`<${Spinner} />`}<//>
 
     <${ItemExplorer} id=${id} meta=${meta} focus=${focus} />

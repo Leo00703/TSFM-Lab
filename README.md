@@ -1,10 +1,10 @@
 # TSFM-Lab
 
-A local sandbox to **run, compare and inspect time-series foundation models**: Mistral's
-[Timestral](https://github.com/mistralai/timestral) family (5M / 28M / 123M / 209M) and Amazon's
-[Chronos-2](https://github.com/amazon-science/chronos-forecasting) (120M and 28M) and Google's
-[TimesFM](https://github.com/google-research/timesfm) 3.0 and 2.5, and The Forecasting Company's
-[t0-gamma](https://huggingface.co/theforecastingcompany/t0-gamma), which can be run on the same data and compared side by side.
+A local sandbox to **run, compare and inspect time-series foundation models**. Ten models from five families run on the same data
+and are compared side by side: Mistral's [Timestral](https://github.com/mistralai/timestral) (5M / 28M / 123M / 209M), Amazon's
+[Chronos-2](https://github.com/amazon-science/chronos-forecasting) (120M and 28M), Google's
+[TimesFM](https://github.com/google-research/timesfm) 3.0 and 2.5, The Forecasting Company's
+[t0-gamma](https://huggingface.co/theforecastingcompany/t0-gamma) and NXAI's [TiRex-2](https://github.com/NX-AI/tirex-2).
 Any other model plugs in as one adapter file.
 Models run entirely on your machine, on the CPU or a GPU (NVIDIA CUDA, Apple Metal), and every result is shown with the
 measurements and configuration needed to judge it honestly.
@@ -12,8 +12,8 @@ measurements and configuration needed to judge it honestly.
 > **Unofficial.** This is an independent tool, not affiliated with or endorsed by Mistral AI.
 
 **Status:** working local web app and command line. The home page is a **Showcase** of real-data forecasts explained in plain
-language (six scenarios, with the measured effect of the factors known in advance); the Playground, Experiments, Runs and
-System pages hold the technical detail. The full plan, research notes and decisions are in [`RESOCONTO.md`](RESOCONTO.md)
+language (six scenarios, with the measured effect of the factors known in advance); the Playground, Experiments, Leaderboard, Runs and
+System pages hold the technical detail. The full plan, research notes, run results and decisions are in [`RESOCONTO.md`](RESOCONTO.md)
 (Italian).
 
 ## Quick start
@@ -101,7 +101,7 @@ Weights are downloaded only when you ask, from the Models page (Chronos-2 is 478
 TimesFM 3.0 1.3 GB, t0-gamma 1 GB, TiRex-2 330 MB). **TimesFM 3.0's weights are under Google's non-commercial licence**: the card says so and asks you to
 acknowledge it before downloading; do not use them for commercial or production purposes, and do not redistribute them. In the Playground
 and in Experiments, choose a model and tick the others under "Compare with": they run on the same windows, with the same metrics.
-Chronos-2 and t0-gamma use the same 21 quantile levels as Timestral; both TimesFM models produce nine deciles (0.1 to 0.9). When models with
+Chronos-2 and t0-gamma use the same 21 quantile levels as Timestral; both TimesFM models and TiRex-2 produce nine deciles (0.1 to 0.9). When models with
 different levels run in one backtest, **SQL and WQL are computed for every model on the levels they all share**, so those scores
 (and the skill scores built on them) stay comparable; each model's own-level values are kept alongside, and the 90% and 98%
 interval coverage is only reported for models that predict those tails. Timestral's options map to the closest equivalent
@@ -135,9 +135,10 @@ so it is an option, not the default. Check your own machine with
 
 ## Web app
 
-Pages: **Showcase** (home), Models (download weights, specs), Datasets (your own files, online benchmarks, bundled scenarios), Playground (one
-forecast, all quantiles), Experiments (rolling-window backtests against baselines), Runs (every metric, calibration, per-step
-error, reproducibility, comparison of runs), System (CPU vs GPU benchmark). Long jobs (experiments, benchmarks, downloads,
+Pages: **Showcase** (home), Models (download weights, specs, your own checkpoints), Datasets (your own files, online benchmarks, bundled
+scenarios), Playground (one forecast, all quantiles), Experiments (rolling-window backtests against baselines), Leaderboard (several models on
+a whole benchmark), Runs (every metric, calibration, per-step error, reproducibility, comparison of runs), System (CPU vs GPU benchmark,
+disk use), About (licences, definitions). Long jobs (experiments, benchmarks, downloads,
 measurements) run in the background, survive navigation and reloads, and can be stopped from the Activity panel.
 
 Dark by default with a light theme switch, responsive down to phone width, English only. Inference runs in a separate worker
@@ -149,14 +150,15 @@ only. There is no login, so anyone on your tailnet can use it.
 
 ### Online benchmarks
 
-The Datasets page lists **100 curated tasks** from the [fev-bench](https://github.com/autogluon/fev) benchmark, over 96 files of
+The Datasets page lists **187 curated datasets** from three public benchmarks, none of them downloaded until you ask. The first is
+[fev-bench](https://github.com/autogluon/fev): 100 tasks over 96 files of
 [`autogluon/fev_datasets`](https://huggingface.co/datasets/autogluon/fev_datasets) at a fixed revision (about 650 MB in all).
 It is a finite, verified list, not a search box: `scripts/build_catalog.py` read every file's schema and the exact length of every
 series straight from Hugging Face, checked a sample of each (missing values, time axis, constant series, text columns) and took
 from fev-bench which columns are the target, known in advance, past-only or static, plus the recommended horizon and seasonality.
 The result is committed as `src/tsfm_lab/data/catalog_fev.json`.
 
-Two more public benchmarks are listed the same way, **187 datasets in all**: [GIFT-Eval](https://huggingface.co/datasets/Salesforce/GiftEval)
+The other two are listed the same way: [GIFT-Eval](https://huggingface.co/datasets/Salesforce/GiftEval)
 (55 datasets, about 1.2 GB, Arrow files; horizons and windows follow the benchmark's own rules, including the medium and long terms of
 sub-daily data) and the [Monash archive](https://huggingface.co/datasets/Monash-University/monash_tsf) (32 datasets, about 0.6 GB, `.tsf`
 files read by a parser that never executes anything). `scripts/build_catalog_ext.py gift|monash` read every file completely once and
@@ -201,10 +203,42 @@ before reusing the data. Nothing from your own files or runs is ever uploaded.
 `run` backtests the model and the baselines on identical rolling windows and stores the run under `runs/`.
 To add a model, write one `ModelAdapter` and register it (see `src/tsfm_lab/models/`).
 
+## Security
+
+The app is built to be safe to leave running on your own machine, and to say plainly where it is not.
+
+- **Local only by default.** The server listens on `127.0.0.1` and refuses any request whose `Host` is not a local name (which also blocks
+  DNS-rebinding), and any state-changing request from another origin. With `--tailscale` it also listens on your tailnet address; **there
+  is no login**, so anyone on your tailnet can use the app and see your runs and datasets.
+- **Nothing from outside is ever executed.** Weights are loaded from `safetensors` files only (never pickle, never `trust_remote_code`);
+  the Monash `.tsf` files are read by a parser, and your uploads by `pandas` readers for CSV, TSV, Parquet and Excel. Catalog dataset downloads
+  are pinned to a commit and checked against a SHA-256 before use, and a custom checkpoint is fetched at the exact commit that was inspected.
+- **Uploads** are limited to 100 MB (refused as soon as the limit is passed, before the body is held in memory), must be one of the
+  supported types, and are stored under `data/user/` with a name stripped of anything but letters, digits and `._-`.
+- **The page** is served with a Content-Security-Policy (only its own scripts, no inline script, no framing), `X-Frame-Options: DENY` and
+  `nosniff`; it loads nothing from another site. Run ids that come from a URL are checked against the exact shape the app generates, so
+  no URL can reach a file outside `runs/`. CSV exports quote cells that a spreadsheet would run as a formula.
+- **Inference runs in a separate process**, so a crash of PyTorch or the GPU driver cannot take the server down, and a dataset or a leaderboard
+  run cannot be deleted while a job is using it.
+- **Not covered:** a malicious file that exploits a bug in `pandas`, `pyarrow` or `openpyxl` while it is being read (keep them updated with
+  `uv sync`; the lock file pins what was tested), and anything a person with access to your tailnet or to this folder can do.
+
+## Development
+
+```bash
+.venv/bin/python -m pytest        # Windows: .venv\Scripts\python -m pytest   (no model weights needed; about a minute on a laptop CPU)
+```
+
+Set `CUDA_VISIBLE_DEVICES=""` to keep the tests off the GPU. The styles are built by the app itself when it starts (`web/src/app.css` into
+`web/dist/app.css`, with the pinned Tailwind CLI); the JavaScript is plain modules, so there is no build step.
+`src/tsfm_lab/` holds `models/` (adapters and manifests), `data/` (loaders, catalogs), `eval/` (backtests, metrics, the leaderboard),
+`api/` (FastAPI app, jobs, the worker process), `store/` (runs on disk), `showcase/` and `system/`; `web/` is the interface and `tests/` the tests.
+
 ## Continuous integration
 
-`.github/workflows/ci.yml` checks Linux, Windows and macOS. It **never runs by itself**: start it from the Actions tab
-(Run workflow) or with `gh workflow run ci.yml -f systems=all` (or `linux`, `windows`, `macos`). Each system runs the real
+`.github/workflows/ci.yml` ("Cross-platform check") runs Linux, Windows and macOS through the reusable `check.yml` (one system). It
+**never runs by itself**: start it from the Actions tab (Run workflow) or with `gh workflow run ci.yml -f systems=all` (or `linux`,
+`windows`, `macos`). Each system runs the real
 installation (`scripts/bootstrap.py`), the environment report, the tests without model weights, and the tests with the real
 Timestral-5M checkpoint on the CPU. Hosted runners have no GPU, so the GPU paths are checked by hand. On private repositories
 the minutes are multiplied (Linux x1, Windows x2, macOS x10): a full run costs roughly 15 billable minutes.

@@ -17,6 +17,7 @@ from typing import Any
 
 import numpy as np
 
+from tsfm_lab.data.hub_catalog import freq_label
 from tsfm_lab.data.schema import Dataset
 from tsfm_lab.eval.backtest import BacktestConfig, run_backtest
 from tsfm_lab.models.registry import Registry
@@ -106,7 +107,7 @@ def run_suite(entries: list[dict[str, Any]], model_ids: list[str], device: str, 
             bt = BacktestConfig(horizon=task["horizon"], n_windows=min(task["num_windows"], cfg.max_windows), max_series=cfg.max_series,
                                 max_context=cfg.max_context, use_covariates=cfg.use_covariates, options=dict(cfg.options))
             usable = [m for m in wanted if ds.n_targets == 1 or adapters[m].info.capabilities.multivariate]
-            row: dict[str, Any] = {"id": e["id"], "title": e["title"], "group": e["source"], "freq": e["pandas_freq"], "horizon": bt.horizon,
+            row: dict[str, Any] = {"id": e["id"], "title": e["title"], "group": e["source"], "freq": e["pandas_freq"], "freq_label": freq_label(e["pandas_freq"]), "horizon": bt.horizon,
                                    "windows": bt.n_windows, "series": len(ds.series), "targets": ds.n_targets,
                                    "covariates": bool(ds.n_known or ds.n_past), "models": {}, "skipped": {}, "error": None}
             for m in wanted:

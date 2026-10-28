@@ -39,7 +39,7 @@ export function Experiments({ route }) {
     } catch (e) { setError(e); }
   };
 
-  return html`<div><${PageHeader} eyebrow="Backtest" title="Experiments">Run a model and the baselines on identical rolling windows of a dataset, then inspect every metric. Timestral runs on <b class="text-text-primary">${deviceLabel(device)}</b>; change the device in the top bar or below.<//>
+  return html`<div><${PageHeader} eyebrow="Backtest" title="Experiments">Run a model and the baselines on identical rolling windows of a dataset, then inspect every metric. The model runs on <b class="text-text-primary">${deviceLabel(device)}</b>; change the device in the top bar or below.<//>
     <div class="mt-8 grid gap-4 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
       <${Card} class="!p-5 h-fit"><div class="grid gap-5">
         <${DatasetPicker} datasets=${ds.data || []} value=${pick} onChange=${setPick} />
@@ -56,8 +56,8 @@ export function Experiments({ route }) {
           <${Field} label="Label (optional)"><input class="input" value=${c.label} maxlength="80" onInput=${(e) => set({ label: e.currentTarget.value })} /><//></div>
         <div class="border-t border-border-primary pt-4">
           <${Check} checked=${c.covariates} onChange=${(v) => set({ covariates: v })} hint="Ignored automatically by models that cannot use them">Use covariates<//>
-          <${Check} checked=${c.symmetric} onChange=${(v) => set({ symmetric: v })}>Symmetric averaging (Timestral)<//>
-          <${Check} checked=${c.maskFlat} onChange=${(v) => set({ maskFlat: v })} hint="Workaround for upstream issue #7">Mask flat covariates<//></div>
+          <${Check} checked=${c.symmetric} onChange=${(v) => set({ symmetric: v })}>Symmetric averaging (Timestral and TimesFM)<//>
+          <${Check} checked=${c.maskFlat} onChange=${(v) => set({ maskFlat: v })} hint="Workaround for a Timestral bug with constant covariates (upstream issue #7)">Mask flat covariates<//></div>
         <div class="flex gap-3"><${Button} kind="brand" disabled=${running} onClick=${start}>${running ? 'Running…' : 'Start experiment'}<//>${running && html`<${Button} kind="danger" onClick=${() => stopJob(active.id)}>Stop<//>`}</div>
       </div><//>
 

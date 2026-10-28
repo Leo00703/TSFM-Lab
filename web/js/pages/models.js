@@ -1,5 +1,5 @@
 import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
-import { api, useAsync, useStore, useFocus, params, bytes, ms, num } from '../core.js';
+import { api, useAsync, useStore, useFocus, params, bytes, ms, num, int } from '../core.js';
 import { isActive, stopJob } from '../activity.js';
 import { Logo, Icon } from '../icons.js';
 import { familyName } from './shared.js';
@@ -110,17 +110,17 @@ function ModelCard({ m, reload }) {
     ${d.restriction && html`<div class="mt-3"><${Notice} kind="warning" title="Non-commercial licence">${d.restriction_note}<//></div>`}
     <div class="mt-5"><${KV} items=${[
       ...(d.custom ? [['Runs on', `the ${d.base} adapter; ${d.repo} @ ${String(d.custom_revision).slice(0, 10)}`]]
-        : [['Layers × width', `${d.layers} × ${d.d_model}`], ['Attention heads', d.num_heads ?? 'download to read'], ['Patch size', `${d.patch_size} steps`]]),
-      ['Context', `${c.max_context.toLocaleString()} steps`], ['Horizon per pass', `${c.max_horizon_per_pass.toLocaleString()} steps`],
+        : [['Layers × width', `${d.layers} × ${d.d_model}`], ...(d.num_heads != null || !m.cache.downloaded ? [['Attention heads', d.num_heads ?? 'download to read']] : []), ['Patch size', `${d.patch_size} steps`]]),
+      ['Context', `${int(c.max_context)} steps`], ['Horizon per pass', `${int(c.max_horizon_per_pass)} steps`],
       ['Quantiles', `${c.quantile_levels.length} (${c.quantile_levels[0]} … ${c.quantile_levels.at(-1)})`],
-      ['Inputs', [c.multivariate && 'multivariate', c.past_covariates && 'past covariates', c.known_covariates && 'known covariates', c.categorical_covariates && 'categorical'].filter(Boolean).join(' · ')],
+      ['Inputs', [c.multivariate && (c.past_covariates || c.known_covariates ? 'multivariate' : 'several variables, one at a time'), c.past_covariates && 'past covariates', c.known_covariates && 'known covariates', c.categorical_covariates && 'categorical'].filter(Boolean).join(' · ')],
       ['Devices', c.device_kinds.join(', ').toUpperCase()],
     ]} /></div>
     ${d.custom && html`<div class="mt-3"><${Notice} kind="warning" title="Unverified third-party checkpoint">Context, quantile levels and covariate support shown here are those of the base model. Only config.json and model.safetensors are downloaded; no code from the repository is ever run.<//></div>`}
     <${CacheControls} model=${m} onChange=${reload} />
     ${d.custom && html`<${RemoveCustom} model=${m} onChange=${reload} />`}
     <${LocalBench} b=${m.local_benchmark} />
-    <div class="mt-4"><${Reported} r=${d.vendor_reported} /><${Collapse} title="Known issues & license"><ul class="list-disc space-y-2 pl-5 text-body-small text-text-muted">${m.notes.map((n) => html`<li>${n}</li>`)}</ul><//></div>
+    <div class="mt-4"><${Reported} r=${d.vendor_reported} /><${Collapse} title="Known issues & licence"><ul class="list-disc space-y-2 pl-5 text-body-small text-text-muted">${m.notes.map((n) => html`<li>${n}</li>`)}</ul><//></div>
   <//>`;
 }
 

@@ -2,7 +2,6 @@ import { html, render, useState, useEffect } from '/vendor/htm-preact.js';
 import { api, applyTheme, setState, setDevice, useStore, useRoute } from './core.js';
 import { DeviceSelect } from './ui.js';
 import { Icon, Logo } from './icons.js';
-import { Overview } from './pages/overview.js';
 import { Showcase } from './pages/showcase.js';
 import { Models } from './pages/models.js';
 import { Datasets } from './pages/datasets.js';
@@ -18,7 +17,6 @@ import { DialogHost } from './dialog.js';
 
 const PAGES = [
   { id: 'showcase', label: 'Showcase', icon: 'play', C: Showcase },
-  { id: 'overview', label: 'Overview', icon: 'home', C: Overview, hidden: true },
   { id: 'models', label: 'Models', icon: 'models', C: Models },
   { id: 'datasets', label: 'Datasets', icon: 'data', C: Datasets },
   { id: 'playground', label: 'Playground', icon: 'play', C: Playground },
@@ -63,7 +61,7 @@ function Nav({ page }) {
 function Footer() {
   return html`<footer class="border-t border-border-primary"><div class="mx-auto flex max-w-6xl flex-col gap-4 border-x border-border-primary px-4 py-8 text-body-small text-text-muted md:flex-row md:items-center md:justify-between md:px-8">
     <p class="max-w-xl">Independent tool, not affiliated with or endorsed by Mistral AI. Runs entirely on this machine; nothing is uploaded.</p>
-    <a class="underline-offset-4 hover:underline" href="#/about">Licenses & definitions</a></div></footer>`;
+    <a class="underline-offset-4 hover:underline" href="#/about">Licences & definitions</a></div></footer>`;
 }
 
 function App() {

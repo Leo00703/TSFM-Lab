@@ -112,12 +112,36 @@ def freq_label(pandas_freq: str) -> str:
     return adjective if n == 1 and word not in ("minute", "second") else (f"every {n} {word}s" if n > 1 else adjective)
 
 
+# How the lower-case names that fev-bench and the Monash archive use are written out (acronyms and proper names); other words are capitalised.
+PHRASES = {"fred md": "FRED-MD", "fred qd": "FRED-QD"}
+WORDS = {"entsoe": "ENTSO-E", "ecdc": "ECDC", "ili": "ILI", "epf": "EPF", "be": "BE", "de": "DE", "fr": "FR", "np": "NP", "pjm": "PJM", "cif": "CIF",
+         "kdd": "KDD", "uci": "UCI", "uk": "UK", "us": "US", "nn5": "NN5", "m4": "M4", "m5": "M5", "ercot": "ERCOT", "gvar": "GVAR", "bizitobs": "BizITObs",
+         "l2c": "L2C", "proenfo": "ProEnFo", "gfc12": "GFC12", "gfc14": "GFC14", "gfc17": "GFC17", "covid": "COVID", "co2": "CO2", "utla": "UTLA",
+         "cee": "CEE"}
+
+
+def pretty(name: str) -> str:
+    """A name as it should read ('entsoe' -> 'ENTSO-E'). A name that already has capitals was spelled out by its benchmark and is kept."""
+    if any(c.isupper() for c in name):
+        return name
+    out, words, i = [], name.split(), 0
+    while i < len(words):
+        pair = " ".join(words[i:i + 2])
+        if pair in PHRASES:
+            out.append(PHRASES[pair])
+            i += 2
+        else:
+            out.append(WORDS.get(words[i], words[i].capitalize()))
+            i += 1
+    return " ".join(out)
+
+
 def title(e: dict[str, Any]) -> str:
     """The dataset name without its frequency suffix ('ETT_15T' -> 'ETT'); 'boomlet_1062' keeps its number."""
     if e.get("title"):
-        return e["title"]
+        return pretty(e["title"])
     base = re.sub(r"_\d*[THDWMQYA]$", "", e["config"]).replace("_", " ")
-    return f"{base} · {e['variant'].replace('_', ' ')}" if e.get("variant") else base
+    return pretty(f"{base} · {e['variant'].replace('_', ' ')}" if e.get("variant") else base)
 
 
 # ---------------------------------------------------------------------------- files

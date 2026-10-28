@@ -154,7 +154,7 @@ def test_the_web_ui_is_served_with_its_vendored_libraries() -> None:
 
     client = TestClient(create_app(root=find_root(), allowed_hosts=("testserver",)))
     page = client.get("/")
-    assert page.status_code == 200 and 'name="viewport"' in page.text and "tsfm-theme" in page.text
+    assert page.status_code == 200 and 'name="viewport"' in page.text and "/js/theme-init.js" in page.text
     for path in ("/js/main.js", "/js/pages/runs.js", "/vendor/htm-preact.js", "/vendor/echarts.min.js", "/fonts/Inter-VariableFont.woff2",
                  "/api/health"):
         assert client.get(path).status_code == 200, path

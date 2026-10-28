@@ -1,5 +1,5 @@
 import { html, useState, useRef, useEffect } from '/vendor/htm-preact.js';
-import { api, useAsync, go, num } from '../core.js';
+import { api, useAsync, go, num, int } from '../core.js';
 import { Card, PageHeader, Section, Tag, Button, Spinner, ErrorBox, Notice, Table, Field, Select, Check, Tabs } from '../ui.js';
 import { Figure, axisStyle, baseOption, palette, isNarrow } from '../charts.js';
 import { specOf, keyOf } from './shared.js';
@@ -76,7 +76,7 @@ function Wizard({ onDone }) {
         <${Button} kind="primary" icon="upload" disabled=${busy} onClick=${() => input.current.click()}>${busy ? 'Reading…' : 'Choose a file'}<//></div>
       ${error && html`<${ErrorBox} error=${error} />`}
       ${up && m && html`<div class="grid gap-5">
-        <p class="text-body-small text-text-muted num"><b class="text-text-primary">${up.filename}</b> · ${up.rows.toLocaleString()} rows · ${up.columns.length} columns</p>
+        <p class="text-body-small text-text-muted num"><b class="text-text-primary">${up.filename}</b> · ${int(up.rows)} rows · ${up.columns.length} columns</p>
         <${Table} head=${up.columns} rows=${up.head.map((r) => up.columns.map((c) => String(r[c] ?? '')))} />
         <div class="grid gap-4 md:grid-cols-3">
           <${Field} label="Timestamp column"><${Select} value=${m.timestamp} onChange=${(v) => setM({ ...m, timestamp: v, targets: m.targets.filter((c) => c !== v) })} options=${up.columns.map((c) => ({ value: c, label: c }))} /><//>

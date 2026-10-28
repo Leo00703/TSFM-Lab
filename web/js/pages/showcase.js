@@ -200,14 +200,14 @@ export function Showcase({ route }) {
     <section class="pt-10 pb-8 md:pt-20 md:pb-14 border-b border-border-primary">
       <div class="flex items-center gap-4"><${Logo} size=${56} /><${Eyebrow}>Timestral · by Mistral AI<//></div>
       <h1 class="mt-5 max-w-4xl font-mistral text-h1 font-medium md:text-[3.5rem] md:leading-[3.75rem]">A forecasting model that runs on your own machine.</h1>
-      <p class="mt-5 max-w-3xl text-body-large text-text-muted">Timestral is a family of small AI models, from 5 million to 209 million parameters, that predict how a number will evolve over time: sales, electricity demand, solar output. It was never trained on the series you give it, and it answers with a range of likely outcomes, not a single guess. This app runs it locally, so you can see how good it really is on real data.</p>
+      <p class="mt-5 max-w-3xl text-body-large text-text-muted">Timestral is a family of small AI models, from 5 million to 209 million parameters, that predict how a number will evolve over time: sales, electricity demand, solar output. It was never trained on the series you give it, and it answers with a range of likely outcomes, not a single guess. This app runs it locally, next to similar models from Amazon, Google, The Forecasting Company and NXAI (pick one in the Model menu below), so you can see how good they really are on real data.</p>
       <p class="mt-4 max-w-3xl text-body-large text-text-muted">Start with the examples below. When you want to look under the hood, the <a class="underline underline-offset-4" href="#/playground">Playground</a> forecasts your own files and the <a class="underline underline-offset-4" href="#/experiments">Experiments</a> page measures accuracy against simple baselines.</p>
     </section>
 
     <header class="pt-8 pb-6 md:pt-14 md:pb-10 border-b border-border-primary">
       <${Eyebrow}>Showcase · real data, forecast on your machine<//>
       <h2 class="page-title mt-2">See what the model can do</h2>
-      <p class="mt-3 max-w-3xl text-body-large text-text-muted">Pick a real situation. Drag the handle: everything on its left is what happened, everything on its right is what Timestral predicts <i>without ever seeing</i> it. Give it the factors that are known in advance, and see how much closer it gets.</p>
+      <p class="mt-3 max-w-3xl text-body-large text-text-muted">Pick a real situation. Drag the handle: everything on its left is what happened, everything on its right is what the model predicts <i>without ever seeing</i> it. Give it the factors that are known in advance, and see how much closer it gets.</p>
     </header>
 
     <div class="mt-8 rounded-xl border border-border-primary bg-surface-brand-secondary">
@@ -219,7 +219,7 @@ export function Showcase({ route }) {
 
       ${!sc ? null : !sc.ready ? html`<div class="px-4 md:px-8"><${Prepare} sc=${sc} onReady=${() => setReloadKey((k) => k + 1)} /></div>` : html`
       <div class="p-4 md:p-8">
-        ${ready.length === 0 && html`<${Notice} kind="warning" title="No model downloaded">Download a Timestral model on the <a class="underline" href="#/models">Models</a> page to run forecasts.<//>`}
+        ${ready.length === 0 && html`<${Notice} kind="warning" title="No model downloaded">Download a model on the <a class="underline" href="#/models">Models</a> page to run forecasts.<//>`}
         <div class="flex flex-wrap items-end justify-between gap-4">
           <div><h2 class="font-mistral text-h3">${sc.title}</h2><p class="text-body-small text-text-muted">${sc.subtitle}${sc.unit ? ' · ' + sc.unit : ''}</p></div>
           ${sc.series.length > 1 && html`<div class="flex items-center gap-2"><span class="label !mb-0">${sc.series_label}</span><${Select} compact class="w-44" value=${sid} onChange=${(v) => setSeries({ ...series, [sc.id]: v })} options=${sc.series.map((s) => ({ value: s.id, label: s.label }))} aria-label=${sc.series_label} /></div>`}</div>
@@ -268,8 +268,8 @@ export function Showcase({ route }) {
         <p class="mt-5 border-t border-border-primary pt-4 text-body-small text-text-muted">“Error score” is a quantile loss: it measures how close the forecast is <i>and</i> how honest its shaded range is. Lower is better. It is computed here on this machine for the model and device selected above, on the default ${sc.horizon_label}, and stored so the second time is instant.</p><//>
       <${Card}><${Eyebrow}>Read this before trusting a number<//>
         <ul class="mt-4 list-disc space-y-3 pl-5 text-body-small text-text-muted">${sc.caveats.map((c) => html`<li>${c}</li>`)}
-          <li>These are public datasets: Timestral's training data is not disclosed, so it may have seen them. Results on your own data are the real test.</li></ul>
-        <div class="mt-4"><${Collapse} title="Data source and license"><p class="text-body-small text-text-muted"><span class="font-mono">${sc.source.repo}</span> · ${sc.source.name}/${sc.source.freq} · revision <span class="font-mono">${sc.source.revision.slice(0, 10)}</span><br />License: ${sc.source.license}.</p><//></div><//>
+          <li>These are public datasets: the models' training data is not fully disclosed (Timestral's not at all), so they may have seen them. Results on your own data are the real test.</li></ul>
+        <div class="mt-4"><${Collapse} title="Data source and licence"><p class="text-body-small text-text-muted"><span class="font-mono">${sc.source.repo}</span> · ${sc.source.name}/${sc.source.freq} · revision <span class="font-mono">${sc.source.revision.slice(0, 10)}</span><br />License: ${sc.source.license}.</p><//></div><//>
     </div>`}
   </div>`;
 }

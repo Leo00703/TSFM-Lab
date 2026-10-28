@@ -1,5 +1,5 @@
 import { html, useState, useEffect, useRef } from '/vendor/htm-preact.js';
-import { api, useAsync, useStore, useFocus, ms, num, bytes, when, deviceLabel } from '../core.js';
+import { api, useAsync, useStore, useFocus, ms, num, bytes, when, deviceLabel, int } from '../core.js';
 import { isActive, stopJob } from '../activity.js';
 import { modelOptions } from './shared.js';
 import { Card, PageHeader, Section, Button, Field, Select, NumberInput, Check, Notice, Spinner, ErrorBox, Table, KV, Progress, Tabs, Tag, Eyebrow } from '../ui.js';
@@ -85,7 +85,7 @@ export function System({ route }) {
       <${Card}><${Eyebrow}>Compute devices<//><ul class="mt-3 divide-y divide-border-primary">${sys.data.devices.map((d) => html`<li class="py-3"><div class="flex flex-wrap items-center justify-between gap-2"><b>${d.id === 'cpu' ? 'CPU' : deviceLabel(d.id)}</b><${Tag}>${d.supported ? 'available' : 'unavailable'}<//></div>
         <div class="text-body-small text-text-muted">${d.name}${d.memory_gb ? ` · ${d.memory_gb} GB` : ''}${e.cuda_capability && d.kind === 'cuda' ? ` · compute capability ${e.cuda_capability.join('.')}` : ''}</div>${d.reason && html`<div class="mt-1 text-body-small text-text-warning">${d.reason}</div>`}</li>`)}</ul><//></div><//>
     <${Section} title="Disk" aside=${html`<span class="text-body-small text-text-muted">everything lives inside the project folder</span>`}>
-      <${Card} tight>${disk.loading ? html`<${Spinner} label="Measuring disk usage…" />` : disk.error ? html`<${ErrorBox} error=${disk.error} />` : html`<${Table} head=${['Location', 'Files', 'Size']} rows=${disk.data.map((d) => [d.label, d.files.toLocaleString(), bytes(d.bytes)])} />
+      <${Card} tight>${disk.loading ? html`<${Spinner} label="Measuring disk usage…" />` : disk.error ? html`<${ErrorBox} error=${disk.error} />` : html`<${Table} head=${['Location', 'Files', 'Size']} rows=${disk.data.map((d) => [d.label, int(d.files), bytes(d.bytes)])} />
         <p class="mt-2 text-body-small text-text-muted">The package cache is hard-linked with <span class="font-mono">.venv</span> where the volume allows, so the real total is lower than the sum. Deleting the project folder removes everything.</p>`}<//><//>
     <${Section} title="Benchmark: CPU vs GPU">
       ${models.data && html`<${Benchmark} sys=${sys.data} models=${models.data} />`}

@@ -102,7 +102,8 @@ export const num = (x, d = 3) => (x === null || x === undefined || Number.isNaN(
 export const pct = (x, d = 1) => (x === null || x === undefined || Number.isNaN(x) ? '–' : `${x >= 0 ? '+' : ''}${(x * 100).toFixed(d)}%`);
 export const pct0 = (x, d = 0) => (x === null || x === undefined ? '–' : `${(x * 100).toFixed(d)}%`);
 export const ms = (x) => (x === null || x === undefined ? '–' : x >= 1000 ? `${(x / 1000).toFixed(2)} s` : `${x >= 100 ? x.toFixed(0) : x.toFixed(1)} ms`);
-export const bytes = (b) => { if (!b) return '0 B'; const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0; let v = b; while (v >= 1024 && i < 4) { v /= 1024; i++; } return `${v.toFixed(v >= 100 || i === 0 ? 0 : 1)} ${u[i]}`; };
+export const bytes = (b) => { if (!b) return '0 B'; const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0; let v = b; while (v >= 1000 && i < 4) { v /= 1000; i++; } return `${v.toFixed(v >= 100 || i === 0 ? 0 : 1)} ${u[i]}`; };
+export const int = (n) => (n === null || n === undefined ? '–' : Number(n).toLocaleString('en-US'));
 export const params = (n) => (n === null || n === undefined ? '–' : n >= 1e9 ? `${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e8 ? 0 : 1)}M` : `${n}`);
-export const when = (iso) => { try { return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return iso || ''; } };
+export const when = (iso) => { try { return new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return iso || ''; } };
 export const deviceLabel = (d) => (d === 'cpu' ? 'CPU' : d.toUpperCase().replace('CUDA:', 'CUDA:'));

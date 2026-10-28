@@ -47,11 +47,13 @@ def environment_info() -> dict[str, Any]:
 
         info["torch_threads"] = torch.get_num_threads()
         info["cuda_build"] = torch.version.cuda
-        info["cuda_available"] = torch.cuda.is_available()
-        if torch.cuda.is_available():
+        info["cuda_available"] = torch.cuda.is_available() and torch.cuda.device_count() > 0  # CUDA_VISIBLE_DEVICES="" can leave the first True with no device
+        if info["cuda_available"]:
             info["cuda_capability"] = list(torch.cuda.get_device_capability(0))
     except ImportError:
         pass
+    except Exception:  # noqa: BLE001 - a broken CUDA driver must not take the System page down: it is only a report
+        info["cuda_available"] = False
     try:
         sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=5)
         info["tsfm_lab_commit"] = sha.stdout.strip() or None

@@ -15,11 +15,12 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
 from tsfm_lab.api.jobs import JobManager
 from tsfm_lab.eval import metrics as M
 from tsfm_lab.api.worker import WorkerClient, WorkerCrashed, axis
-from tsfm_lab.data.catalog import DatasetCatalog
+from tsfm_lab.data.catalog import MAX_UPLOAD_BYTES, DatasetCatalog
 from tsfm_lab.eval.benchmark import SCENARIOS
 from tsfm_lab.eval.runner import DEFAULT_BASELINES
 from tsfm_lab.isolation import find_root
@@ -29,6 +30,10 @@ from tsfm_lab.models.registry import Registry, default_registry
 from tsfm_lab.store.store import BenchmarkStore, RunStore, SuiteStore, to_jsonable
 from tsfm_lab.system.devices import list_devices
 from tsfm_lab.system.probe import environment_info
+
+# The page loads only its own files: no inline script, no other site, no framing. Styles may be inline (the charts set them).
+CONTENT_SECURITY_POLICY = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; "
+                           "connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
 
 ALLOWED_OPTIONS = {"symmetric_averaging": bool, "clip_nonnegative": bool, "mask_flat_covariates": bool,
                    "quantile_real_cap_k": float, "max_packed_rows": int}
@@ -125,6 +130,11 @@ def _rules_url(src: dict[str, Any]) -> str:
     return f"https://github.com/{src['rules_repo']}/blob/{src['rules_ref']}/{src['rules_path']}"
 
 
+def csv_cell(value: Any) -> Any:
+    """Text that a spreadsheet would run as a formula ('=...', '+...', '-...', '@...') is written with a leading quote."""
+    return "'" + value if isinstance(value, str) and value[:1] in ("=", "+", "-", "@", "\t", "\r") else value
+
+
 def clean_options(options: dict[str, Any]) -> dict[str, Any]:
     out = {}
     for key, value in options.items():
@@ -155,6 +165,15 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     def ok(payload: Any, status: int = 200) -> JSONResponse:
         return JSONResponse(to_jsonable(payload), status_code=status)
 
+    def names() -> dict[str, str]:
+        custom.sync(registry, root)
+        return {i.id: i.name for i in registry.infos()}
+
+    def refuse_while_busy(what: str) -> None:
+        """A job reads datasets and weights as it goes: taking one away under it would make it fail halfway."""
+        if compute_lock.locked():
+            raise HTTPException(409, f"a job is running; {what} when it finishes")
+
     # ------------------------------------------------------------------ security
     @app.middleware("http")
     async def local_only(request: Request, call_next):
@@ -168,6 +187,11 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
                 return JSONResponse({"detail": "cross-origin request rejected"}, status_code=403)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        if not request.url.path.startswith("/api/docs"):  # the interactive API docs load their viewer from a CDN, which the policy would block
+            response.headers["Content-Security-Policy"] = CONTENT_SECURITY_POLICY
         return response
 
     @app.exception_handler(KeyError)
@@ -325,6 +349,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
             e = hub_catalog.entry(entry_id)
         except KeyError as error:
             raise HTTPException(404, str(error)) from error
+        refuse_while_busy("remove this dataset")
         removed = hub_catalog.remove(e)
         catalog.forget_hub(entry_id)
         return ok({"removed": removed})
@@ -332,8 +357,17 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     @app.post("/api/datasets/upload")
     async def upload(request: Request):
         name = request.headers.get("x-filename", "upload")
-        data = await request.body()
-        return ok(catalog.upload(name, data))
+        declared = request.headers.get("content-length", "")
+        too_large = HTTPException(413, f"file too large (limit {MAX_UPLOAD_BYTES // 2**20} MB)")
+        if declared.isdigit() and int(declared) > MAX_UPLOAD_BYTES:
+            raise too_large
+        chunks, size = [], 0
+        async for chunk in request.stream():  # stopped as soon as the limit is passed, not after the whole body is in memory
+            size += len(chunk)
+            if size > MAX_UPLOAD_BYTES:
+                raise too_large
+            chunks.append(chunk)
+        return ok(await run_in_threadpool(catalog.upload, name, b"".join(chunks)))  # parsing a big file must not freeze the server
 
     @app.post("/api/datasets/register")
     def register(body: RegisterBody):
@@ -341,6 +375,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
 
     @app.delete("/api/datasets/local/{dataset_id}")
     def delete_local(dataset_id: str):
+        refuse_while_busy("delete this dataset")
         catalog.delete_local(dataset_id)
         return ok({"deleted": dataset_id})
 
@@ -471,23 +506,34 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
 
     @app.get("/api/suites")
     def suites():
-        return ok([{**r, "status": judged(r["id"], r["status"])} for r in suite_store.list()])
+        by_name = names()
+        return ok([{**r, "status": judged(r["id"], r["status"]), "model_names": [by_name.get(m, m) for m in r["models"]],
+                    "best_name": by_name.get(r["best"], r["best"])} for r in suite_store.list()])
 
     @app.get("/api/suites/{suite_id}")
     def suite(suite_id: str):
+        from tsfm_lab.data import hub_catalog
+
         d = suite_store.get(suite_id)
+        known = hub_catalog.entries()
+        for row in d.get("datasets", []):  # runs saved before a name was polished show the current name, with its frequency
+            if row["id"] in known:
+                row["title"], row["freq_label"] = hub_catalog.title(known[row["id"]]), hub_catalog.freq_label(known[row["id"]]["pandas_freq"])
         return ok({**d, "status": judged(suite_id, d.get("status", "done"))})
 
     @app.delete("/api/suites/{suite_id}")
     def delete_suite(suite_id: str):
         suite_store.get(suite_id)
+        if suite_id in live_suites:
+            raise HTTPException(409, "this run is still going: stop it from the Activity panel first")
         suite_store.delete(suite_id)
         return ok({"deleted": suite_id})
 
     # ------------------------------------------------------------------ runs
     @app.get("/api/runs")
     def runs():
-        return ok(store.list_runs())
+        by_name = names()
+        return ok([{**r, "model_names": [by_name.get(m, m) for m in r["models"]]} for r in store.list_runs()])
 
     @app.get("/api/runs/{run_id}")
     def run_meta(run_id: str):
@@ -649,11 +695,11 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         out = io.StringIO()
         w = csv.writer(out)
         metric_names = sorted({k.split("/item/")[1] for k in arrays if "/item/" in k})
-        w.writerow(["model", "series", "window", "origin", "origin_time", "variate", *metric_names])
+        w.writerow(["model", "series", "window", "origin", "origin_time", "variate", *metric_names])  # ids come from the user's files: see csv_cell
         for mid in meta["models"]:
             for i, sid in enumerate(meta["items"]["series"]):
                 for v in range(arrays["y"].shape[1]):
-                    w.writerow([mid, sid, meta["items"]["window"][i], meta["items"]["origin"][i],
+                    w.writerow([csv_cell(mid), csv_cell(sid), meta["items"]["window"][i], meta["items"]["origin"][i],
                                 meta["items"]["origin_time"][i], v,
                                 *[f"{arrays[f'{mid}/item/{k}'][i, v]:.6g}" for k in metric_names]])
         return Response(out.getvalue(), media_type="text/csv",
@@ -662,6 +708,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     # ------------------------------------------------------------------ static UI (last: API routes win)
     atexit.register(worker.stop)  # the worker is a daemon process, this just makes the exit clean
     app.state.worker = worker
+    app.state.compute_lock = compute_lock
     web = root / "web"
     if web.is_dir():
         app.mount("/", StaticFiles(directory=web, html=True), name="web")
