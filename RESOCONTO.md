@@ -547,3 +547,20 @@ Cautele: Moirai-2.0 ha **28 dei 100 task nei propri dati di addestramento** (col
 **Lettura onesta.** I primi quattro sono entro 2,5 punti: sul campione usato (20 serie per dataset) la differenza fra t0-gamma e Timestral (0,5 punti) è dentro il rumore, e i dati di GIFT-Eval possono essere stati visti da alcuni modelli (Timestral non dichiara i suoi). Con covariate (8 dataset) Timestral-209M è primo (44,1 contro 43,0 di Chronos-2, 42,6 TimesFM 3.0, 42,3 t0-gamma); senza (41 dataset) è primo t0-gamma (33,5), poi Timestral (32,5) e TimesFM 3.0 (31,4). TimesFM 2.5, che ignora le covariate, è ultimo come atteso.
 
 **Bug trovato dalla corsa.** Nella prima corsa `kdd_cup_2018` (orario) risultava «non contato» con un errore oscuro: TimesFM 2.5 andava in crash quando il contesto di una serie era interamente mancante (il pacchetto vuole usare zero, ma controlla male un array vuoto). Ora l'adattatore sostituisce quel contesto con zeri e lo segnala; inoltre la classifica distingue «troppo corto» da «un modello è fallito». Corsa rifatta da capo: 49 su 49. 128 test.
+
+### Seconda corsa vera: fev-bench, 5 modelli (2026-10-28)
+**Cosa:** 97 compiti di fev-bench sotto i 50 MB (su 100; 206 MB scaricati, SHA-256 verificato), 5 modelli su GPU, 20 serie per compito, al massimo 3 finestre, contesto 2048 per tutti, covariate attive; 15 minuti e 35 secondi, tutti i 97 contati.
+
+| Modello | Abilità SQL | Abilità MASE | Vittorie |
+|---|---|---|---|
+| Timestral-209M | +40,8% | +35,1% | 37 |
+| t0-gamma | +40,2% | +34,8% | 21 |
+| TimesFM 3.0 | +39,9% | +34,4% | 18 |
+| Chronos-2 | +37,7% | +31,7% | 10 |
+| TimesFM 2.5 | +36,2% | +30,6% | 11 |
+
+**Con covariate (40 compiti):** Timestral-209M 43,1 · t0-gamma 42,7 · TimesFM 3.0 41,6 · Chronos-2 40,2 · TimesFM 2.5 38,4. **Senza (57):** Timestral 39,2 · TimesFM 3.0 38,6 · t0-gamma 38,5 · Chronos-2 35,8 · TimesFM 2.5 34,6.
+
+**Lettura onesta.** Su fev-bench Timestral-209M è primo per abilità e, soprattutto, per vittorie (37 compiti su 97 contro 21 di t0-gamma), ma il margine sul secondo e sul terzo è di 0,6-0,9 punti: con 20 serie per compito resta dentro il rumore, mentre il distacco da Chronos-2 e TimesFM 2.5 (3-4,6 punti) è più netto. Attenzione ai limiti: (1) il campione è piccolo e il contesto è limitato a 2048 passi per tutti; (2) fev-bench è un benchmark pubblico e Timestral non dichiara i suoi dati di addestramento; (3) la classifica ufficiale di fev-bench usa tutti i dati e metodi leggermente diversi (t0-gamma in testa), quindi questo non la smentisce né la conferma. Con GIFT-Eval (corsa precedente) l'ordine dei primi due era invertito di mezzo punto: i due modelli sono alla pari sui dati usati.
+
+**Errore trovato.** La prima partenza è fallita subito perché le voci di fev-bench non avevano un titolo pronto (solo quelle di GIFT-Eval e Monash lo avevano): ora lo costruisce `hub_catalog.run_entries`, con un test che prova tutte le 187 voci. 129 test.
