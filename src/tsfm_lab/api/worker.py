@@ -161,7 +161,7 @@ def do_download(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
     from tsfm_lab.models import cache
 
     progress(0, 0, "downloading from Hugging Face…")
-    return {"cache": cache.download(a["repo"])}
+    return {"cache": cache.download(a["repo"], a.get("revision"))}
 
 
 def do_remove(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
@@ -225,6 +225,7 @@ if os.environ.get("TSFM_LAB_TEST_OPS") == "1":
 
 def worker_main(root: str, requests, responses, cancel) -> None:
     import tsfm_lab  # noqa: F401  (cache isolation before torch / huggingface_hub)
+    from tsfm_lab.models import custom
 
     svc = Services(Path(root))
     responses.put(("ready", None, None, None))
@@ -232,6 +233,7 @@ def worker_main(root: str, requests, responses, cancel) -> None:
         call_id, op, payload = requests.get()
         if op == "stop":
             return
+        custom.sync(svc.registry, svc.root)  # custom checkpoints added or removed since the last job
         cancel.clear()
 
         def progress(done: int, total: int, message: str) -> None:

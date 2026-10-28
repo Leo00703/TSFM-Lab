@@ -11,6 +11,7 @@ from typing import Any
 
 import numpy as np
 
+from tsfm_lab.models import cache
 from tsfm_lab.models.base import Capabilities, ForecastRequest, ForecastResult, ModelInfo
 from tsfm_lab.models.covariates import inspect_known_covariates, mask_flat_rows
 from tsfm_lab.models.torch_adapter import TorchAdapter
@@ -63,8 +64,14 @@ class TimestralAdapter(TorchAdapter):
         from timestral import TimestralForecaster
         from timestral.loading import resolve_checkpoint
 
-        checkpoint = resolve_checkpoint(self.manifest["repo"])
-        self._model = TimestralForecaster.from_pretrained(self.manifest["repo"], device=device)
+        source = self.manifest["repo"]
+        if self.info.details.get("custom"):  # a custom checkpoint runs from the commit that was inspected, never from the hub's latest
+            status = cache.status(source)
+            if not status["downloaded"]:
+                raise FileNotFoundError(f"{self.info.name} is not downloaded: download its weights on the Models page first")
+            source = str(cache.repo_dir(source) / "snapshots" / status["revision"])
+        checkpoint = resolve_checkpoint(source)
+        self._model = TimestralForecaster.from_pretrained(source, device=device)
         config = json.loads((Path(checkpoint) / "config.json").read_text(encoding="utf-8"))
         self.info.details.update({k: config[k] for k in ("num_heads", "mlp_hidden_dim", "d_model", "patch_size")
                                   if k in config})

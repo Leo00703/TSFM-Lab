@@ -34,10 +34,16 @@ def status(repo: str) -> dict[str, Any]:
     return out
 
 
-def download(repo: str) -> dict[str, Any]:
+def download(repo: str, revision: str | None = None) -> dict[str, Any]:
+    """Fetch config.json and model.safetensors (nothing else). With a ``revision`` (a commit sha, for custom checkpoints) exactly that
+    commit is fetched and recorded as the one ``status`` reports, so a later push to the repository cannot change what runs."""
     from huggingface_hub import snapshot_download
 
-    snapshot_download(repo, allow_patterns=["config.json", "model.safetensors"])
+    snapshot_download(repo, revision=revision, allow_patterns=["config.json", "model.safetensors"])
+    if revision:
+        ref = repo_dir(repo) / "refs" / "main"
+        ref.parent.mkdir(parents=True, exist_ok=True)
+        ref.write_text(revision)
     return status(repo)
 
 

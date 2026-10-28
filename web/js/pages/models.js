@@ -3,7 +3,7 @@ import { api, useAsync, useStore, useFocus, params, bytes, ms, num } from '../co
 import { isActive, stopJob } from '../activity.js';
 import { Logo, Icon } from '../icons.js';
 import { familyName } from './shared.js';
-import { Card, PageHeader, Section, Tag, Button, Spinner, ErrorBox, Notice, KV, Progress, Collapse } from '../ui.js';
+import { Card, PageHeader, Section, Tag, Button, Spinner, ErrorBox, Notice, KV, Progress, Collapse, Select, Check, Field } from '../ui.js';
 import { confirmDialog } from '../dialog.js';
 
 function CacheControls({ model, onChange }) {
@@ -57,20 +57,68 @@ function LocalBench({ b }) {
     <p class="mt-2 text-body-small text-text-muted">1 series, 2016 → 96 steps (Mistral's announced setup).</p></div>`;
 }
 
+function RemoveCustom({ model, onChange }) {
+  const remove = async () => {
+    const ok = await confirmDialog({ title: `Remove ${model.name}?`, confirmLabel: 'Remove model', busyLabel: 'Removing…', run: () => api(`/api/models/custom/${model.id}`, { method: 'DELETE' }),
+      body: html`The model is taken off this list and its downloaded weights (${bytes(model.cache.size_bytes)}) are deleted. Past runs that used it stay readable.` });
+    if (ok) onChange();
+  };
+  return html`<div class="mt-3 text-right"><${Button} small kind="ghost" icon="trash" onClick=${remove}>Remove this custom model<//></div>`;
+}
+
+function AddCustom({ models, onAdded }) {
+  const bases = models.filter((m) => m.kind === 'foundation' && !m.details.custom);
+  const [repo, setRepo] = useState(''), [base, setBase] = useState(bases[0] ? bases[0].id : ''), [name, setName] = useState('');
+  const [found, setFound] = useState(null), [error, setError] = useState(null), [busy, setBusy] = useState(false), [accept, setAccept] = useState(false);
+  const reset = () => { setFound(null); setAccept(false); setError(null); };
+  const inspect = async () => {
+    reset(); setBusy(true);
+    try { setFound(await api('/api/models/custom/inspect', { method: 'POST', body: { repo, base } })); } catch (e) { setError(e); }
+    setBusy(false);
+  };
+  const add = async () => {
+    setError(null); setBusy(true);
+    try { await api('/api/models/custom', { method: 'POST', body: { repo, base, name: name || null, accept } }); setRepo(''); setName(''); reset(); onAdded(); } catch (e) { setError(e); }
+    setBusy(false);
+  };
+  const ok = found && found.blocking.length === 0;
+  return html`<${Section} title="Add a checkpoint from Hugging Face" aside=${html`<span class="text-body-small text-text-muted">your own fine-tunes or another checkpoint of a supported model</span>`}>
+    <${Card}><div class="grid gap-4 md:grid-cols-2">
+      <${Field} label="Repository" hint="organisation/name, public"><input class="input" placeholder="organisation/model-name" value=${repo} onInput=${(e) => { setRepo(e.currentTarget.value); reset(); }} /><//>
+      <${Field} label="Runs on the adapter of" hint="its architecture and capabilities are assumed"><${Select} value=${base} onChange=${(v) => { setBase(v); reset(); }} aria-label="Base model" options=${bases.map((m) => ({ value: m.id, label: m.name, group: familyName(m.family) }))} /><//>
+      <${Field} label="Name (optional)"><input class="input" maxlength="60" value=${name} onInput=${(e) => setName(e.currentTarget.value)} /><//>
+      <div class="flex items-end"><${Button} kind="outline" disabled=${busy || !repo.trim() || !base} onClick=${inspect}>${busy && !found ? 'Checking…' : 'Check the repository'}<//></div></div>
+    ${error && html`<div class="mt-4"><${ErrorBox} error=${error} /></div>`}
+    ${found && html`<div class="mt-5 grid gap-3 border-t border-border-primary pt-5">
+      ${found.blocking.map((b) => html`<${Notice} kind="error" title="Cannot be added">${b}<//>`)}
+      ${found.sha && html`<${KV} items=${[['Repository', html`<a class="underline underline-offset-2" href=${found.url} target="_blank" rel="noreferrer">${found.repo}</a> · commit <span class="font-mono">${found.sha.slice(0, 10)}</span>`],
+        ['Author', found.author], ['Licence', found.license || 'not declared'], ['Weights', `${bytes(found.size_bytes)}${found.params ? ` · ${params(found.params)} parameters` : ''}`],
+        ['Popularity', `${found.downloads ?? '–'} downloads · ${found.likes ?? '–'} likes`], ['Last changed', found.last_modified ? found.last_modified.slice(0, 10) : '–']]} />`}
+      ${found.warnings.map((w) => html`<${Notice} kind="warning">${w}<//>`)}
+      ${ok && html`<div class="grid gap-3">
+        <p class="text-body-small text-text-muted">Only <span class="font-mono">config.json</span> and <span class="font-mono">model.safetensors</span> of this exact commit are downloaded (nothing is executed from the repository), after you press Download on the model's card. Context length, quantile levels and covariate support are taken from the base model: right for a fine-tune of it, wrong for another architecture.</p>
+        <${Check} checked=${accept} onChange=${setAccept}>I understand these are unverified third-party weights<//>
+        <div><${Button} kind="brand" disabled=${!accept || busy} onClick=${add}>Add to the library<//></div></div>`}</div>`}
+  <//><//>`;
+}
+
 function ModelCard({ m, reload }) {
   const d = m.details, c = m.capabilities;
   return html`<${Card} class="flex flex-col">
-    <div class="flex items-start justify-between gap-3"><div class="flex min-w-0 items-center gap-4">${m.family === 'timestral' ? html`<${Logo} size=${48} />` : html`<span class="grid size-12 shrink-0 place-items-center rounded-md bg-surface-brand-tertiary text-text-secondary"><${Icon} name="models" size=${24} /></span>`}<div class="min-w-0"><span class="eyebrow">${m.family}</span><h3 class="mt-1 font-mistral text-h3">${m.name}</h3></div></div><div class="flex flex-wrap justify-end gap-1.5"><${Tag}>${params(m.params)} params<//></div></div>
+    <div class="flex items-start justify-between gap-3"><div class="flex min-w-0 items-center gap-4">${m.family === 'timestral' ? html`<${Logo} size=${48} />` : html`<span class="grid size-12 shrink-0 place-items-center rounded-md bg-surface-brand-tertiary text-text-secondary"><${Icon} name="models" size=${24} /></span>`}<div class="min-w-0"><span class="eyebrow">${m.family}</span><h3 class="mt-1 font-mistral text-h3">${m.name}</h3></div></div><div class="flex flex-wrap justify-end gap-1.5">${d.custom && html`<${Tag}>custom checkpoint<//>`}<${Tag}>${params(m.params)} params<//></div></div>
     <p class="mt-3 text-body-small text-text-muted">${m.description}</p>
     ${d.restriction && html`<div class="mt-3"><${Notice} kind="warning" title="Non-commercial licence">${d.restriction_note}<//></div>`}
     <div class="mt-5"><${KV} items=${[
-      ['Layers × width', `${d.layers} × ${d.d_model}`], ['Attention heads', d.num_heads ?? 'download to read'], ['Patch size', `${d.patch_size} steps`],
+      ...(d.custom ? [['Runs on', `the ${d.base} adapter; ${d.repo} @ ${String(d.custom_revision).slice(0, 10)}`]]
+        : [['Layers × width', `${d.layers} × ${d.d_model}`], ['Attention heads', d.num_heads ?? 'download to read'], ['Patch size', `${d.patch_size} steps`]]),
       ['Context', `${c.max_context.toLocaleString()} steps`], ['Horizon per pass', `${c.max_horizon_per_pass.toLocaleString()} steps`],
       ['Quantiles', `${c.quantile_levels.length} (${c.quantile_levels[0]} … ${c.quantile_levels.at(-1)})`],
       ['Inputs', [c.multivariate && 'multivariate', c.past_covariates && 'past covariates', c.known_covariates && 'known covariates', c.categorical_covariates && 'categorical'].filter(Boolean).join(' · ')],
       ['Devices', c.device_kinds.join(', ').toUpperCase()],
     ]} /></div>
+    ${d.custom && html`<div class="mt-3"><${Notice} kind="warning" title="Unverified third-party checkpoint">Context, quantile levels and covariate support shown here are those of the base model. Only config.json and model.safetensors are downloaded; no code from the repository is ever run.<//></div>`}
     <${CacheControls} model=${m} onChange=${reload} />
+    ${d.custom && html`<${RemoveCustom} model=${m} onChange=${reload} />`}
     <${LocalBench} b=${m.local_benchmark} />
     <div class="mt-4"><${Reported} r=${d.vendor_reported} /><${Collapse} title="Known issues & license"><ul class="list-disc space-y-2 pl-5 text-body-small text-text-muted">${m.notes.map((n) => html`<li>${n}</li>`)}</ul><//></div>
   <//>`;
@@ -86,6 +134,7 @@ export function Models({ route }) {
     ${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : html`
       ${families.map((f, i) => html`<${Section} title=${familyName(f)} aside=${i === 0 ? html`<span class="text-body-small text-text-muted">New models plug in as adapters</span>` : null}>
         <div class="grid gap-4 lg:grid-cols-2">${foundation.filter((m) => m.family === f).map((m) => html`<div data-focus=${m.id} class="flex flex-col"><${ModelCard} m=${m} reload=${reload} /></div>`)}</div><//>`)}
+      <${AddCustom} models=${s.data} onAdded=${reload} />
       <${Section} title="Baselines">
         <p class="mb-4 max-w-3xl text-text-muted">Simple reference methods, always available, used as yardsticks. Their prediction intervals are built from their own in-sample errors.</p>
         <div class="grid gap-4 md:grid-cols-3">${baselines.map((m) => html`<${Card} tight><span class="eyebrow">baseline</span><h3 class="mt-1 font-mistral text-h4">${m.name}</h3><p class="mt-2 text-body-small text-text-muted">${m.description}</p><//>`)}</div><//>`}

@@ -24,6 +24,7 @@ from tsfm_lab.eval.benchmark import SCENARIOS
 from tsfm_lab.eval.runner import DEFAULT_BASELINES
 from tsfm_lab.isolation import find_root
 from tsfm_lab.models import cache as weights
+from tsfm_lab.models import custom
 from tsfm_lab.models.registry import Registry, default_registry
 from tsfm_lab.store.store import BenchmarkStore, RunStore, SuiteStore, to_jsonable
 from tsfm_lab.system.devices import list_devices
@@ -66,6 +67,13 @@ class ExperimentBody(BaseModel):
     use_covariates: bool = True
     options: dict[str, Any] = Field(default_factory=dict)
     label: str | None = Field(None, max_length=80)
+
+
+class CustomModelBody(BaseModel):
+    repo: str = Field(max_length=200)
+    base: str = Field(max_length=80)
+    name: str | None = Field(None, max_length=60)
+    accept: bool = False  # the user has read that these are unverified third-party weights
 
 
 class SuiteBody(BaseModel):
@@ -141,6 +149,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     jobs = JobManager(compute_lock)
     worker = WorkerClient(root)
     live_suites: set[str] = set()  # leaderboard runs this server is running right now
+    custom.sync(registry, root)  # custom checkpoints added in earlier sessions
     app = FastAPI(title="tsfm-lab", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
     def ok(payload: Any, status: int = 200) -> JSONResponse:
@@ -199,6 +208,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     # ------------------------------------------------------------------ models
     @app.get("/api/models")
     def models():
+        custom.sync(registry, root)
         latest: dict[str, dict] = {}
         for b in bench_store.list():
             if b["model"] not in latest:
@@ -226,8 +236,9 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         repo = registry.info(model_id).details.get("repo")
         if not repo:
             raise HTTPException(400, "this model has no weights to download")
+        revision = registry.info(model_id).details.get("custom_revision")  # a custom checkpoint is fetched at the commit that was inspected
         job = jobs.submit("download", f"Download {registry.info(model_id).name}", lambda j: worker.call(
-            "download", {"repo": repo}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set), link=f"models?focus={model_id}")
+            "download", {"repo": repo, "revision": revision}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set), link=f"models?focus={model_id}")
         return ok(job.to_dict(), 202)
 
     @app.delete("/api/models/{model_id}/cache")
@@ -241,6 +252,41 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
             return ok(worker.call("remove", {"repo": repo, "model": model_id}))
         finally:
             compute_lock.release()
+
+    # ------------------------------------------------------------------ custom checkpoints
+    @app.post("/api/models/custom/inspect")
+    def inspect_custom(body: CustomModelBody):
+        custom.sync(registry, root)
+        found = custom.inspect(body.repo, body.base, registry)
+        if any(e["repo"].lower() == found["repo"].lower() for e in custom.read_entries(root)):
+            found["blocking"].append("This repository is already added.")
+        return ok(found)
+
+    @app.post("/api/models/custom")
+    def add_custom(body: CustomModelBody):
+        if not body.accept:
+            raise HTTPException(422, "confirm that you understand these are unverified third-party weights")
+        custom.sync(registry, root)
+        try:
+            entry = custom.add(root, registry, body.repo, body.base, body.name)
+        except ValueError as error:
+            raise HTTPException(422, str(error)) from error
+        return ok(entry, 201)
+
+    @app.delete("/api/models/custom/{model_id}")
+    def remove_custom(model_id: str):
+        custom.sync(registry, root)
+        info = registry.info(model_id)
+        if not info.details.get("custom"):
+            raise HTTPException(400, "only custom checkpoints can be removed here")
+        if not compute_lock.acquire(blocking=False):
+            raise HTTPException(409, "a job is running; try again when it finishes")
+        try:
+            worker.call("remove", {"repo": info.details["repo"], "model": model_id})  # also frees the loaded copy and the weights
+            custom.remove(root, registry, model_id)
+        finally:
+            compute_lock.release()
+        return ok({"removed": model_id})
 
     # ------------------------------------------------------------------ datasets
     @app.get("/api/datasets")

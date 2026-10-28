@@ -20,6 +20,9 @@ class Registry:
             raise ValueError(f"model id already registered: {info.id}")
         self._specs[info.id] = (info, factory)
 
+    def remove(self, model_id: str) -> None:
+        self._specs.pop(model_id, None)
+
     def ids(self) -> list[str]:
         return list(self._specs)
 

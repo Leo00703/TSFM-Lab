@@ -88,6 +88,15 @@ before and after an install.
 | t0-gamma (The Forecasting Company) | 256M | Apache-2.0 (a very young model: read its notes) | past, known-future (numeric) |
 | TiRex-2 (NXAI) | 82M | Apache-2.0; one of its runtime libraries (`mlstm_kernels`) is under the NXAI Community Licence (free below EUR 100 million revenue, see its notes) | past, known-future (numeric), several variables together |
 
+**Your own checkpoints.** The Models page can add a public Hugging Face repository (for example a fine-tune of a supported model) and run it
+with the adapter of the model family you pick. This is deliberately narrow, not "run anything": the repository is inspected first (public,
+a single `model.safetensors` plus `config.json`, at most 4 GB, licence shown), **only those two files are ever downloaded, at the exact commit
+that was inspected**, so nothing in the repository can execute code (no pickle, no remote code) and a later push cannot change what runs.
+Gated and private repositories are refused (the app holds no credentials). Context length, quantile levels and covariate support are taken
+from the base model, which is right for a fine-tune of it and wrong for another architecture; you confirm that you understand these are
+unverified third-party weights. Custom models appear on the Models page with a "custom checkpoint" tag and work everywhere a model does
+(Playground, Experiments, Leaderboard); the list is kept in `data/user/custom_models.json` (git-ignored).
+
 Weights are downloaded only when you ask, from the Models page (Chronos-2 is 478 MB, its small variant 112 MB, TimesFM 2.5 925 MB,
 TimesFM 3.0 1.3 GB, t0-gamma 1 GB, TiRex-2 330 MB). **TimesFM 3.0's weights are under Google's non-commercial licence**: the card says so and asks you to
 acknowledge it before downloading; do not use them for commercial or production purposes, and do not redistribute them. In the Playground
