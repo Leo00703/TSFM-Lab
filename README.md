@@ -173,6 +173,9 @@ geometric mean over datasets of the model's error divided by seasonal naive's, o
 completed, and on which seasonal naive has an error to score against, count, and models with different quantile levels are scored on the levels they share. Missing datasets are downloaded first
 (after confirmation), results are stored under `runs/suites/` and can be reopened. The run is saved after every dataset: if you press Stop, or the
 computation fails, the datasets finished so far are kept and the ranking says how many it counts.
+The Leaderboard also ranks the models on **your own datasets** (the "Your datasets" tab, files added on the Datasets page): one horizon for
+all of them, the last windows of each series, the same scoring. Data recorded after the models' training data were collected cannot have been
+seen by them, which public benchmarks cannot promise.
 A dataset that a ranked model's own authors list as training data (the `trained_on_this_dataset` column of the fev-bench results they submitted: ten
 datasets for TimesFM 2.5, none for the other models) carries a warning in the Catalog and is left out of the ranking by default; the Leaderboard says so
 and a button counts it anyway. On one of them, `kdd_cup_2022_10T`, TimesFM 2.5 makes a quarter of every other model's error.

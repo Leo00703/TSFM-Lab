@@ -140,9 +140,12 @@ def do_suite(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
     for model in a["models"]:
         svc.drop(model)  # the suite loads its own copies and times them cleanly
     entries = hub_catalog.run_entries(a["datasets"])
+    if a.get("local_datasets"):
+        entries += svc.catalog.suite_entries(a["local_datasets"], a["local_horizon"], a["max_windows"])
     cfg = SuiteConfig(max_series=a["max_series"], max_windows=a["max_windows"], max_context=a["max_context"],
                       use_covariates=a["use_covariates"])
-    load = lambda e, n: svc.catalog.resolve({"source": "hub", "id": e["id"], "params": {"max_series": n}})
+    load = lambda e, n: (svc.catalog.resolve({"source": "local", "id": e["id"]}) if e.get("local")
+                         else svc.catalog.resolve({"source": "hub", "id": e["id"], "params": {"max_series": n}}))
     sid = a["suite_id"]
     save = lambda r, status="running": svc.suites.save({**r, "request": a}, a["label"], sid, status)
     result = run_suite(entries, a["models"], a["device"], cfg, svc.registry, load, progress, checkpoint=save)

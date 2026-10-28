@@ -175,6 +175,17 @@ class DatasetCatalog:
         ds, _ = load_dataframe(frame, ColumnMapping(**rec["mapping"]), rec["name"], rec["filename"])
         return ds
 
+    def suite_entries(self, dataset_ids: list[str], horizon: int, windows: int) -> list[dict[str, Any]]:
+        """Leaderboard entries for the user's own datasets, shaped like the online catalog's: one horizon for all of them."""
+        entries = []
+        for dataset_id in dict.fromkeys(dataset_ids):
+            if not re.fullmatch(r"local-[0-9a-f]{16}", dataset_id) or not (self.root / "datasets" / f"{dataset_id}.json").is_file():
+                raise KeyError(f"unknown local dataset '{dataset_id}'")
+            rec = json.loads((self.root / "datasets" / f"{dataset_id}.json").read_text(encoding="utf-8"))
+            entries.append({"id": dataset_id, "title": rec["name"], "source": "mine", "local": True,
+                            "pandas_freq": rec["summary"].get("freq") or "", "task": {"horizon": horizon, "num_windows": windows}})
+        return entries
+
     def forget_hub(self, entry_id: str) -> None:
         """Drop in-memory copies of a catalog dataset (after its file was removed)."""
         with self._lock:

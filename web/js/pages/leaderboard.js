@@ -5,7 +5,7 @@ import { Card, PageHeader, Section, Button, Field, NumberInput, Check, Notice, E
 import { confirmDialog } from '../dialog.js';
 
 const SIZE_LIMITS = [['5', 'Under 5 MB'], ['50', 'Under 50 MB'], ['any', 'Any size']];
-const SOURCE = { fev: 'fev-bench', gift: 'GIFT-Eval', monash: 'Monash' };
+const SOURCE = { fev: 'fev-bench', gift: 'GIFT-Eval', monash: 'Monash', mine: 'Your data' };
 const source = (g) => SOURCE[g] || g;
 const duration = (s) => (s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min` : s >= 120 ? `${Math.round(s / 60)} min` : `${Math.round(s)} s`);
 const dataset = (d) => `${d.title} · ${d.freq_label || d.freq}`;
@@ -24,7 +24,8 @@ function Form() {
   const { device, jobs } = useStore();
   const [cat, reloadCat] = useAsync(() => api('/api/catalog'), []);
   const [models] = useAsync(() => api('/api/models'), []);
-  const [c, setC] = useState({ source: 'fev', size: '50', models: null, maxSeries: 20, maxWindows: 3, maxContext: 2048, covariates: true, onlyDownloaded: false, label: '' });
+  const [dsets] = useAsync(() => api('/api/datasets'), []);
+  const [c, setC] = useState({ source: 'fev', size: '50', models: null, mineIds: null, horizon: 24, maxSeries: 20, maxWindows: 3, maxContext: 2048, covariates: true, onlyDownloaded: false, label: '' });
   const [error, setError] = useState(null), [startedId, setStartedId] = useState(() => { try { return sessionStorage.getItem('tsfm-suite-job'); } catch (e) { return null; } });
   const set = (p) => setC((x) => ({ ...x, ...p }));
   const mine = jobs.filter((j) => j.kind === 'suite'), active = mine.find(isActive), job = active || mine.find((j) => j.id === startedId) || null;
@@ -38,13 +39,15 @@ function Form() {
   if (cat.loading && !cat.data) return html`<${Spinner} />`;
   if (cat.error) return html`<${ErrorBox} error=${cat.error} />`;
   const sources = cat.data.sources, limit = c.size === 'any' ? Infinity : Number(c.size) * 1e6;
+  const own = c.source === 'mine', mineAll = (dsets.data || []).filter((d) => d.source === 'local');
+  const mineSel = c.mineIds === null ? mineAll : mineAll.filter((d) => c.mineIds.includes(d.id));
   const chosen = cat.data.entries.filter((e) => e.source === c.source && e.size_bytes < limit);
   const missing = chosen.filter((e) => !e.downloaded), ready = chosen.filter((e) => e.downloaded);
   const missingBytes = missing.reduce((n, e) => n + e.size_bytes, 0);
   const ready_models = (models.data || []).filter((m) => m.kind === 'foundation' && m.cache.downloaded);
   const picked = c.models || ready_models.slice(0, 2).map((m) => m.id);
-  const run = c.onlyDownloaded ? ready : chosen;
-  const blocked = (!c.onlyDownloaded && missing.length > 0) || run.length === 0 || picked.length === 0;
+  const run = own ? mineSel : c.onlyDownloaded ? ready : chosen;
+  const blocked = (!own && !c.onlyDownloaded && missing.length > 0) || run.length === 0 || picked.length === 0 || (own && !(c.horizon >= 1));
   const fetchMissing = async () => {
     const ok = await confirmDialog({ title: `Download ${missing.length} dataset${missing.length === 1 ? '' : 's'}?`, confirmLabel: `Download ${bytes(missingBytes)}`, busyLabel: 'Starting…',
       run: async () => { for (const e of missing) await api(`/api/catalog/${e.id}/download`, { method: 'POST' }); },
@@ -54,19 +57,23 @@ function Form() {
   const start = async () => {
     setError(null);
     try {
-      const j = await api('/api/jobs/suite', { method: 'POST', body: { datasets: run.map((e) => e.id), models: picked, device, max_series: c.maxSeries, max_windows: c.maxWindows, max_context: c.maxContext, use_covariates: c.covariates, label: c.label || null } });
+      const j = await api('/api/jobs/suite', { method: 'POST', body: { datasets: own ? [] : run.map((e) => e.id), ...(own ? { local_datasets: run.map((e) => e.id), local_horizon: c.horizon } : {}), models: picked, device, max_series: c.maxSeries, max_windows: c.maxWindows, max_context: c.maxContext, use_covariates: c.covariates, label: c.label || null } });
       setStartedId(j.id);
       try { sessionStorage.setItem('tsfm-suite-job', j.id); } catch (e) { /* ignore */ }
     } catch (e) { setError(e); }
   };
   return html`<div class="mt-8 grid gap-4 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
     <${Card} class="!p-5 h-fit"><div class="grid gap-5">
-      <${Field} label="Benchmark" hint="Each dataset is evaluated with the horizon and windows of its own benchmark."><${Tabs} value=${c.source} onChange=${(v) => set({ source: v })} label="Benchmark" items=${Object.values(sources).map((x) => ({ value: x.key, label: x.name }))} /><//>
-      <${Field} label="Dataset size"><${Tabs} value=${c.size} onChange=${(v) => set({ size: v })} label="Dataset size" items=${SIZE_LIMITS.map(([value, label]) => ({ value, label }))} /><//>
+      <${Field} label="Benchmark" hint=${own ? 'Your datasets are scored with the horizon you set below and the windows of "Windows per series".' : 'Each dataset is evaluated with the horizon and windows of its own benchmark.'}><${Tabs} value=${c.source} onChange=${(v) => set({ source: v })} label="Benchmark" items=${[...Object.values(sources).map((x) => ({ value: x.key, label: x.name })), { value: 'mine', label: 'Your datasets' }]} /><//>
+      ${own ? html`<div class="grid gap-3 rounded-lg border border-border-primary p-3 text-body-small">
+        ${mineAll.length === 0 ? html`<p class="text-text-muted">You have no dataset of your own yet. Add a file on the <a class="underline" href="#/datasets">Datasets</a> page, then come back: every model is ranked on it the same way as on a benchmark.</p>`
+          : html`<div><span class="label">Datasets</span><div class="grid gap-1">${mineAll.map((d) => html`<${Check} checked=${mineSel.some((x) => x.id === d.id)} onChange=${(on) => set({ mineIds: on ? [...mineSel.map((x) => x.id), d.id] : mineSel.filter((x) => x.id !== d.id).map((x) => x.id) })} hint=${`${d.summary.n_series} series · ${d.summary.length_min === d.summary.length_max ? d.summary.length_min : `${d.summary.length_min}–${d.summary.length_max}`} steps${d.summary.freq ? ' · ' + d.summary.freq : ''}${d.summary.n_known_covariates + d.summary.n_past_covariates ? ' · covariates' : ''}`}>${d.name}<//>`)}</div></div>
+            <${Field} label="Horizon (steps ahead)" hint="the same for every dataset; one too short for it is listed under Not counted"><${NumberInput} value=${c.horizon} min=${1} onChange=${(v) => set({ horizon: v || 1 })} /><//>`}</div>`
+      : html`<${Field} label="Dataset size"><${Tabs} value=${c.size} onChange=${(v) => set({ size: v })} label="Dataset size" items=${SIZE_LIMITS.map(([value, label]) => ({ value, label }))} /><//>
       <div class="rounded-lg border border-border-primary p-3 text-body-small">
         <b class="num">${chosen.length}</b> dataset${chosen.length === 1 ? '' : 's'} selected · <b class="num">${ready.length}</b> downloaded${missing.length ? html` · <b class="num text-text-warning">${missing.length}</b> to download (${bytes(missingBytes)})` : ''}
         ${missing.length > 0 && html`<div class="mt-2 flex flex-wrap items-center gap-3"><${Button} small kind="outline" icon="download" disabled=${downloading > 0} onClick=${fetchMissing}>${downloading > 0 ? 'Downloading…' : `Download ${missing.length} missing`}<//></div>`}
-        ${missing.length > 0 && ready.length > 0 && html`<div class="mt-2"><${Check} checked=${c.onlyDownloaded} onChange=${(v) => set({ onlyDownloaded: v })}>Run only on the ${ready.length} already downloaded<//></div>`}</div>
+        ${missing.length > 0 && ready.length > 0 && html`<div class="mt-2"><${Check} checked=${c.onlyDownloaded} onChange=${(v) => set({ onlyDownloaded: v })}>Run only on the ${ready.length} already downloaded<//></div>`}</div>`}
       <div class="border-t border-border-primary pt-5"><span class="label">Models</span>
         ${ready_models.length === 0 ? html`<p class="text-body-small text-text-muted">Download a model on the Models page first.</p>`
           : html`<div class="flex flex-wrap gap-x-5">${ready_models.map((m) => html`<${Check} checked=${picked.includes(m.id)} onChange=${(on) => set({ models: on ? [...picked, m.id] : picked.filter((x) => x !== m.id) })}>${m.name}<//>`)}</div>`}
@@ -79,15 +86,16 @@ function Form() {
         <${Field} label="Label (optional)"><input class="input" value=${c.label} maxlength="80" onInput=${(e) => set({ label: e.currentTarget.value })} /><//></div>
       <${Check} checked=${c.covariates} onChange=${(v) => set({ covariates: v })} hint="Ignored automatically by models that cannot use them">Use covariates<//>
       <div class="flex gap-3"><${Button} kind="brand" disabled=${!!active || blocked} onClick=${start}>${active ? 'Running…' : 'Start leaderboard run'}<//>${active && html`<${Button} kind="danger" onClick=${() => stopJob(active.id)}>Stop<//>`}</div>
-      ${blocked && !active && html`<p class="text-body-small text-text-muted">${picked.length === 0 ? 'Pick at least one model.' : run.length === 0 ? 'No dataset matches.' : 'Download the missing datasets first, or run only on the downloaded ones.'}</p>`}
+      ${blocked && !active && html`<p class="text-body-small text-text-muted">${picked.length === 0 ? 'Pick at least one model.' : run.length === 0 ? (own ? 'Pick at least one of your datasets.' : 'No dataset matches.') : 'Download the missing datasets first, or run only on the downloaded ones.'}</p>`}
     </div><//>
     <div class="min-w-0 grid grid-cols-[minmax(0,1fr)] content-start gap-4">
       ${error && html`<${ErrorBox} error=${error} />`}
       ${job && html`<${Card}><span class="eyebrow">${job.status}${active ? ' · keeps running if you leave this page' : ''}</span><h3 class="mt-1 font-mistral text-h4">${job.label}</h3><div class="mt-4"><${Progress} done=${job.done} total=${job.total} message=${job.message} /></div>
         ${job.status === 'cancelled' && html`<p class="mt-3 text-text-muted">Stopped. What was finished is kept: <a class="underline" href=${'#/' + job.link}>see the partial leaderboard</a>.</p>`}<//>`}
       <${Card} tight><span class="eyebrow">How it is scored</span>
-        <ol class="mt-3 list-decimal space-y-2 pl-5 text-body-small text-text-muted"><li>Every model is loaded once and forecasts exactly the same windows of every dataset, with the horizon of the benchmark's own task.</li><li>Per dataset the error is the mean over series and windows. The score is the geometric mean, over datasets, of the model's error divided by seasonal naive's: 0% matches seasonal naive, +30% means 30% lower error.</li><li>Only datasets that every ranked model completed count towards the ranking, so a model that cannot take multivariate data is not compared on an easier set. Models with different quantile levels are scored on the levels they share.</li></ol><//>
-      <${Notice} kind="warning" title="Read it as an indication">Public benchmark data may overlap what a model was trained on, and a sample of ${c.maxSeries} series per dataset is noisy. Use this to compare models with each other on the same footing, not as proof of out-of-sample skill.<//>
+        <ol class="mt-3 list-decimal space-y-2 pl-5 text-body-small text-text-muted"><li>Every model is loaded once and forecasts exactly the same windows of every dataset, with ${own ? 'the horizon you set' : "the horizon of the benchmark's own task"}.</li><li>Per dataset the error is the mean over series and windows. The score is the geometric mean, over datasets, of the model's error divided by seasonal naive's: 0% matches seasonal naive, +30% means 30% lower error.</li><li>Only datasets that every ranked model completed count towards the ranking, so a model that cannot take multivariate data is not compared on an easier set. Models with different quantile levels are scored on the levels they share.</li></ol><//>
+      ${own ? html`<${Notice} kind="info" title="Your own data is the cleanest test">A model cannot have seen data that was recorded after its training data were collected, which the public benchmarks cannot promise. The windows are the last ones of each series (as many as \u201cWindows per series\u201d), so the models never see what they are scored on. Series per dataset: the first ${c.maxSeries}.<//>`
+        : html`<${Notice} kind="warning" title="Read it as an indication">Public benchmark data may overlap what a model was trained on, and a sample of ${c.maxSeries} series per dataset is noisy. Use this to compare models with each other on the same footing, not as proof of out-of-sample skill.<//>`}
     </div></div>`;
 }
 
@@ -119,7 +127,7 @@ function Detail({ id }) {
   const partial = { running: 'This run is still going: the ranking below counts the datasets finished so far and updates by itself.',
     stopped: 'This run was stopped before the end: the ranking below counts only the datasets finished before that.',
     interrupted: 'This run was cut short (the server stopped or the computation failed): the ranking below counts only the datasets finished before that.' }[r.status];
-  return html`<div><${PageHeader} eyebrow="Leaderboard" title=${r.label || 'Leaderboard run'}>${when(r.created)} · ${deviceLabel(r.device)} · ${r.leaderboard.total_datasets} datasets (${board.common_datasets} counted${cautions.length > 0 && !withCautions ? `, ${cautions.length} left out` : ''}) · ${duration(r.elapsed_s)}<//>
+  return html`<div><${PageHeader} eyebrow="Leaderboard" title=${r.label || 'Leaderboard run'}>${when(r.created)} · ${deviceLabel(r.device)} · ${r.leaderboard.total_datasets} dataset${r.leaderboard.total_datasets === 1 ? '' : 's'} (${board.common_datasets} counted${cautions.length > 0 && !withCautions ? `, ${cautions.length} left out` : ''}) · ${duration(r.elapsed_s)}<//>
     ${partial && html`<div class="mt-6"><${Notice} kind=${r.status === 'running' ? 'info' : 'warning'} title=${`${board.total_datasets} of ${r.planned || board.total_datasets} datasets run`}>${partial}<//></div>`}
     ${cautions.length > 0 && html`<div class="mt-6"><${Notice} kind="warning" title=${withCautions ? `${cautions.length === 1 ? 'A dataset the catalog warns about is' : `${cautions.length} datasets the catalog warns about are`} counted in the ranking` : `${cautions.length === 1 ? 'A dataset is' : `${cautions.length} datasets are`} left out of the ranking`}>
       <p class="mt-1">${[...new Set(cautions.map((d) => d.caution))].join(' ')}</p>
@@ -128,7 +136,7 @@ function Detail({ id }) {
     <${Section} title="Ranking" aside=${html`<${Button} small kind="ghost" onClick=${() => go('leaderboard')}>Back<//>`}>
       <div class="mb-3"><${Tabs} value=${view} onChange=${setView} label="Group" items=${[{ value: 'overall', label: 'All datasets' }, ...groups.map((g) => ({ value: g, label: source(g) }))]} /></div>
       <${Card} tight><${Table} head=${['#', 'Model', 'SQL skill', 'MASE skill', 'Wins', 'Datasets', 'Time']} empty="Nothing completed." rows=${rowsOf(table).map((m, i) => [i + 1, html`<b>${name(m)}</b>`, html`<${SkillBar} value=${table[m].sql_skill} />`, skillText(table[m].mase_skill), table[m].wins, table[m].datasets, `${table[m].total_s} s`])} /><//>
-      <p class="mt-3 max-w-3xl text-body-small text-text-muted">Skill is measured against seasonal naive on the same windows (geometric mean of error ratios over datasets; higher is better). Only the ${board.common_datasets} datasets every ranked model completed${cautions.length > 0 && !withCautions ? ' (and the catalog does not warn about)' : ''} are counted. Settings: ${r.config.max_series} series, up to ${r.config.max_windows} windows, context ${r.config.max_context || 'unlimited'}, covariates ${r.config.use_covariates ? 'on' : 'off'}.</p><//>
+      <p class="mt-3 max-w-3xl text-body-small text-text-muted">Skill is measured against seasonal naive on the same windows (geometric mean of error ratios over datasets; higher is better). Only the ${board.common_datasets} dataset${board.common_datasets === 1 ? '' : 's'} every ranked model completed${cautions.length > 0 && !withCautions ? ' (and the catalog does not warn about)' : ''} are counted. Settings: ${r.config.max_series} series, up to ${r.config.max_windows} windows, context ${r.config.max_context || 'unlimited'}, covariates ${r.config.use_covariates ? 'on' : 'off'}.</p><//>
     ${problems.length > 0 && html`<${Section} title="Not counted"><${Card} tight><ul class="grid gap-1 text-body-small text-text-muted">${problems.map((d) => html`<li><b class="text-text-primary">${dataset(d)}</b> · ${d.error ? d.error : unscored(d) ? 'the series is constant over the window it is forecast from, so seasonal naive has no error to score against' : `${Object.keys(d.skipped).map(name).join(', ')} skipped: ${Object.values(d.skipped)[0]}`}</li>`)}</ul><//><//>`}
     <${Section} title="Every dataset" aside=${html`<span class="text-body-small text-text-muted">mean SQL (lower is better); the best model is marked</span>`}>
       <${Card} class="!p-3 md:!p-5"><${Table} head=${['Dataset', 'Horizon × windows', 'Series', ...all.map(name)]} rows=${r.datasets.map((d) => {

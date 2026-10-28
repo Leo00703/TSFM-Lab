@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import math
 
 import numpy as np
@@ -131,6 +132,44 @@ def test_the_api_refuses_a_run_over_datasets_that_are_unknown_or_not_downloaded(
         assert r.status_code in (404, 422) and ("not downloaded" in r.text or "at least one model" in r.text)
         assert client.get("/api/suites").json() == [] or client.get("/api/suites").json().get("data") == []
         assert client.get("/api/suites/missing").status_code == 404
+    finally:
+        app.state.worker.stop()
+
+
+def test_the_users_own_datasets_run_through_the_leaderboard_with_one_horizon(tmp_path) -> None:
+    from tsfm_lab.data.catalog import DatasetCatalog
+
+    catalog = DatasetCatalog(tmp_path)
+    rows = ["date,store,sales"]
+    for store in ("a", "b", "c"):
+        for i in range(200):
+            rows.append(f"{dt.date(2024, 1, 1) + dt.timedelta(days=i)},{store},{10 + i % 7 + (i * i) % 5}")  # not exactly periodic: seasonal naive must make an error to be scored against
+    up = catalog.upload("shops.csv", "\n".join(rows).encode())
+    rec = catalog.register_local(up["file_id"], {"timestamp": "date", "id": "store", "targets": ["sales"]}, "Shops")
+    entries = catalog.suite_entries([rec["id"], rec["id"]], 14, 2)  # the same dataset twice is one
+    assert len(entries) == 1 and entries[0]["source"] == "mine" and entries[0]["title"] == "Shops"
+    assert entries[0]["task"] == {"horizon": 14, "num_windows": 2} and entries[0]["pandas_freq"] == "D"
+    load = lambda e, n: catalog.resolve({"source": "local", "id": e["id"]})
+    out = suite.run_suite(entries, ["drift", "naive"], "cpu", suite.SuiteConfig(max_series=3, max_windows=2, max_context=64), build_default_registry(), load)
+    row = out["datasets"][0]
+    assert row["id"] == rec["id"] and row["group"] == "mine" and row["horizon"] == 14 and row["windows"] == 2 and row["error"] is None
+    assert set(out["leaderboard"]["by_group"]) == {"mine"} and out["leaderboard"]["common_datasets"] == 1
+    for bad in ("local-0000000000000000", "../x", "hospital"):
+        with pytest.raises(KeyError):
+            catalog.suite_entries([bad], 14, 2)
+
+
+def test_the_api_asks_for_a_horizon_and_a_known_dataset_when_the_run_is_on_the_users_own_data(tmp_path) -> None:
+    app = create_app(root=tmp_path, allowed_hosts=("testserver",))
+    client = TestClient(app)
+    try:
+        post = lambda body: client.post("/api/jobs/suite", json={"device": "cpu", "models": ["timestral-5m"], **body})
+        assert post({}).status_code == 422 and "at least one dataset" in post({}).text
+        r = post({"local_datasets": ["local-0123456789abcdef"]})
+        assert r.status_code == 422 and "horizon" in r.text
+        r = post({"local_datasets": ["local-0123456789abcdef"], "local_horizon": 14})
+        assert r.status_code == 404 and "unknown local dataset" in r.text
+        assert post({"local_datasets": ["local-0123456789abcdef"], "local_horizon": 0}).status_code == 422
     finally:
         app.state.worker.stop()
 

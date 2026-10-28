@@ -82,7 +82,9 @@ class CustomModelBody(BaseModel):
 
 
 class SuiteBody(BaseModel):
-    datasets: list[str] = Field(min_length=1, max_length=200)  # catalog ids
+    datasets: list[str] = Field(default_factory=list, max_length=200)  # catalog ids
+    local_datasets: list[str] = Field(default_factory=list, max_length=200)  # the user's own datasets (Datasets page)
+    local_horizon: int | None = Field(None, ge=1, le=100_000)  # steps ahead, the same for every one of them
     models: list[str] = Field(min_length=1, max_length=24)
     device: str = "cpu"
     max_series: int = Field(20, ge=1, le=200)
@@ -434,6 +436,15 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     def start_suite(body: SuiteBody):
         from tsfm_lab.data import hub_catalog
 
+        if not body.datasets and not body.local_datasets:
+            raise HTTPException(422, "pick at least one dataset")
+        if body.local_datasets:
+            if body.local_horizon is None:
+                raise HTTPException(422, "your own datasets need a horizon: how many steps ahead to forecast")
+            try:
+                catalog.suite_entries(body.local_datasets, body.local_horizon, body.max_windows)
+            except KeyError as error:
+                raise HTTPException(404, str(error.args[0])) from error
         known = hub_catalog.entries()
         unknown = [i for i in dict.fromkeys(body.datasets) if i not in known]
         if unknown:
@@ -445,7 +456,8 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         if not ranked:
             raise HTTPException(422, "pick at least one model (baselines are always included as the reference)")
         sid = suite_store.new_id()
-        payload = {**body.model_dump(), "datasets": list(dict.fromkeys(body.datasets)), "models": ranked, "suite_id": sid}
+        payload = {**body.model_dump(), "datasets": list(dict.fromkeys(body.datasets)),
+                   "local_datasets": list(dict.fromkeys(body.local_datasets)), "models": ranked, "suite_id": sid}
         names = ", ".join(registry.info(m).name for m in ranked)
 
         live_suites.add(sid)
@@ -457,7 +469,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
                 live_suites.discard(sid)
                 suite_store.finish(sid, "stopped" if j.cancel.is_set() else "interrupted")
 
-        return ok(jobs.submit("suite", f"Leaderboard: {names} on {len(payload['datasets'])} datasets · {body.device}", run,
+        return ok(jobs.submit("suite", f"Leaderboard: {names} on {len(payload['datasets']) + len(payload['local_datasets'])} datasets · {body.device}", run,
                               link=f"leaderboard/{sid}").to_dict(), 202)
 
     @app.post("/api/jobs/benchmark")
