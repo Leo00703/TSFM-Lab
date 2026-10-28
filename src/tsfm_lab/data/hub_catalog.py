@@ -26,12 +26,13 @@ DEFAULT_MAX_SERIES = 200  # a larger file is sampled (seeded, sorted) so memory 
 MAX_SERIES_LIMIT = 5000
 LARGE_BYTES = 50_000_000
 
-# Datasets where one model's result looks like memory, not forecasting: the Leaderboard leaves them out of the ranking by
-# default (they stay in the table), and the Catalog says why.
+# Datasets where one model's result is far beyond what the others reach and nothing explains it: the Leaderboard leaves them out
+# of the ranking by default (they stay in the table), and the Catalog says why.
 CAUTIONS = {
-    "kdd_cup_2022_10T": "On this dataset TimesFM 2.5 makes about a quarter of the error of every other model, which cannot be forecast "
-                        "(wind-turbine power two days ahead), so it has probably seen these data in training. Scores on it say "
-                        "nothing about forecasting skill; the Leaderboard leaves it out of the ranking unless asked.",
+    "kdd_cup_2022_10T": "On this dataset TimesFM 2.5 makes about a quarter of the error of every other model, from the first hours of the forecast on "
+                        "(wind-turbine power two days ahead), and none of the nine others comes near. The cause is not known; one possibility is "
+                        "that it saw these data in training, which is not public. Scores on it do not compare models; the Leaderboard "
+                        "leaves it out of the ranking unless asked.",
 }
 
 # What each source says about licence and about the chance that a model has already seen its data.
