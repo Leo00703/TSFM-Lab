@@ -262,4 +262,5 @@ the minutes are multiplied (Linux x1, Windows x2, macOS x10): a full run costs r
   git-ignored `web/assets/mistral/` for local private use only (`bootstrap.py` runs it unless you pass
   `--skip-brand-assets`). Without them the UI falls back to Inter.
 - Inter and Space Mono (`web/fonts/`) are licensed under the SIL Open Font License.
-- Licence for this project's own code: not yet chosen.
+- This project's own code is licensed under the Apache License 2.0 (see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE)); the licence covers
+  the code only, not the model weights, the datasets, the vendored libraries or the brand assets above, which keep their own terms.

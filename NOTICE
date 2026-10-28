@@ -1,0 +1,14 @@
+TSFM-Lab
+Copyright 2026 Leonardo Galli
+
+Licensed under the Apache License, Version 2.0 (see LICENSE). This licence covers the code of this repository only.
+
+Not covered, and under their own terms:
+- the model weights, downloaded at run time and never part of this repository (Timestral: Mistral's "Modified MIT" licence; TimesFM 3.0:
+  Google's non-commercial licence; the others as shown on the Models page);
+- the datasets, downloaded from Hugging Face on request, each with the terms of its source;
+- the libraries vendored in web/vendor/ (Preact, htm, ECharts: see the LICENSE-*.txt and NOTICE-*.txt files there) and the fonts in
+  web/fonts/ (SIL Open Font Licence: see the OFL-*.txt files there);
+- Mistral's brand assets, which are not in this repository.
+
+TSFM-Lab is an independent tool, not affiliated with or endorsed by Mistral AI.
