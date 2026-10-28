@@ -146,6 +146,14 @@ series straight from Hugging Face, checked a sample of each (missing values, tim
 from fev-bench which columns are the target, known in advance, past-only or static, plus the recommended horizon and seasonality.
 The result is committed as `src/tsfm_lab/data/catalog_fev.json`.
 
+Two more public benchmarks are listed the same way, **187 datasets in all**: [GIFT-Eval](https://huggingface.co/datasets/Salesforce/GiftEval)
+(55 datasets, about 1.2 GB, Arrow files; horizons and windows follow the benchmark's own rules, including the medium and long terms of
+sub-daily data) and the [Monash archive](https://huggingface.co/datasets/Monash-University/monash_tsf) (32 datasets, about 0.6 GB, `.tsf`
+files read by a parser that never executes anything). `scripts/build_catalog_ext.py gift|monash` read every file completely once and
+recorded exact lengths, missing values and the SHA-256 each download is checked against (`catalog_gift.json`, `catalog_monash.json`).
+Data that two benchmarks share are marked "also in", every entry carries its licence and a contamination note, and nothing is
+downloaded until you press Download.
+
 Nothing is downloaded until you press **Download** on an entry, which shows its size and the licence note first. The file is
 checked against the SHA-256 published by Hugging Face and discarded if it differs. Once downloaded, an entry can be previewed,
 forecast in the Playground and backtested in Experiments like any other dataset; a very large file (30,000 series) is sampled

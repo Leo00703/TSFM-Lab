@@ -178,7 +178,8 @@ def do_catalog_download(svc: Services, a: dict[str, Any], progress) -> dict[str,
     from tsfm_lab.data import hub_catalog
 
     e = hub_catalog.entry(a["entry"])
-    progress(0, 0, f"downloading {e['path']} ({e['size_bytes'] / 1e6:.1f} MB) and checking its SHA-256…")
+    what = e["files"][0]["path"] if len(e["files"]) == 1 else f"{len(e['files'])} files"
+    progress(0, 0, f"downloading {what} ({e['size_bytes'] / 1e6:.1f} MB) and checking the SHA-256…")
     hub_catalog.download(e)
     svc.catalog._cache.clear()  # a dataset resolved earlier must not outlive a re-download
     return {"downloaded": True}

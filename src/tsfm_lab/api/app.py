@@ -99,6 +99,13 @@ class RegisterBody(BaseModel):
     mapping: dict[str, Any]
 
 
+def _rules_url(src: dict[str, Any]) -> str:
+    """Where the task definition of a catalog source lives (a GitHub file, or a file of the dataset repository itself)."""
+    if src["key"] == "monash":
+        return f"https://huggingface.co/datasets/{src['rules_repo']}/blob/{src['rules_ref']}/{src['rules_path']}"
+    return f"https://github.com/{src['rules_repo']}/blob/{src['rules_ref']}/{src['rules_path']}"
+
+
 def clean_options(options: dict[str, Any]) -> dict[str, Any]:
     out = {}
     for key, value in options.items():
@@ -233,10 +240,9 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     def online_catalog():
         from tsfm_lab.data import hub_catalog
 
-        src = hub_catalog.source()
-        return ok({"source": {**src, "card_url": f"https://huggingface.co/datasets/{src['repo']}/tree/{src['revision']}",
-                              "tasks_url": f"https://github.com/{src['tasks_repo']}/blob/{src['tasks_ref']}/{src['tasks_path']}"},
-                   "entries": hub_catalog.listing(), "default_max_series": hub_catalog.DEFAULT_MAX_SERIES})
+        sources = {key: {**src, "card_url": f"https://huggingface.co/datasets/{src['repo']}/tree/{src['revision']}",
+                         "rules_url": _rules_url(src)} for key, src in hub_catalog.sources().items()}
+        return ok({"sources": sources, "entries": hub_catalog.listing(), "default_max_series": hub_catalog.DEFAULT_MAX_SERIES})
 
     @app.post("/api/catalog/{entry_id}/download")
     def catalog_download(entry_id: str):
@@ -248,6 +254,8 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
             raise HTTPException(404, str(error)) from error
         mb = e["size_bytes"] / 1e6
         name = f"{hub_catalog.title(e)} · {hub_catalog.freq_label(e['pandas_freq'])}"
+        if e["source"] != "fev":
+            name += f" ({hub_catalog.sources()[e['source']]['name']})"
         return ok(jobs.submit("download", f"Download {name} ({mb:.1f} MB)", lambda j: worker.call(
             "catalog_download", {"entry": entry_id}, lambda d, t, m: j.update(d, t, m), j.cancel.is_set), link=f"datasets?focus={entry_id}").to_dict(), 202)
 

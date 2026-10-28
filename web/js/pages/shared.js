@@ -27,7 +27,7 @@ export function DatasetPicker({ datasets, value, onChange }) {
     <${Field} label="Dataset" hint=${cur && cur.description}>
       <${Select} value=${value.key} onChange=${(k) => set({ key: k, params: {} })} aria-label="Dataset" options=${[...syn.map((d) => ({ value: keyOf(d), label: d.name, group: 'Bundled scenarios' })), ...loc.map((d) => ({ value: keyOf(d), label: d.name, group: 'Your data' })), ...hub.map((d) => ({ value: keyOf(d), label: d.name, group: 'Online benchmarks (downloaded)' }))]} /><//>
     ${cur && cur.source === 'hub' && html`<div class="grid gap-2"><${Field} label="Max series" hint="Large files are sampled (seeded, so the same series every time)."><${NumberInput} value=${value.params.max_series ?? cur.params.max_series} min=${1} max=${5000} onChange=${(v) => set({ params: { ...value.params, max_series: v ?? cur.params.max_series } })} /><//>
-      ${cur.task && html`<p class="text-body-small text-text-muted">fev-bench evaluates this dataset ${cur.task.horizon} steps ahead on ${cur.task.num_windows} window${cur.task.num_windows === 1 ? '' : 's'}.</p>`}</div>`}
+      ${cur.task && html`<p class="text-body-small text-text-muted">${cur.benchmark || 'The benchmark'} evaluates this dataset ${cur.task.horizon} steps ahead on ${cur.task.num_windows} window${cur.task.num_windows === 1 ? '' : 's'}.</p>`}</div>`}
     ${cur && cur.source === 'synthetic' && html`<div class="grid grid-cols-3 gap-3">
       ${['n_series', 'length', 'seed'].filter((k) => k in cur.params).map((k) => html`<${Field} label=${k.replace('_', ' ')}>
         <${NumberInput} value=${value.params[k] ?? cur.params[k]} min=${k === 'seed' ? 0 : 1} onChange=${(v) => set({ params: { ...value.params, [k]: v ?? cur.params[k] } })} /><//>`)}</div>`}

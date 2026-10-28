@@ -1,0 +1,1805 @@
+{
+ "generated": "2026-10-28",
+ "source": {
+  "key": "monash",
+  "name": "Monash archive",
+  "repo": "Monash-University/monash_tsf",
+  "revision": "58aafbe2712ff481c014f562e42723f2820fd5d4",
+  "format": "monash-tsf",
+  "card_license": "cc-by-4.0",
+  "benchmark": "Monash archive",
+  "rules_repo": "Monash-University/monash_tsf",
+  "rules_ref": "58aafbe2712ff481c014f562e42723f2820fd5d4",
+  "rules_path": "monash_tsf.py"
+ },
+ "entries": [
+  {
+   "id": "monash.australian_electricity_demand",
+   "config": "australian_electricity_demand",
+   "variant": null,
+   "title": "australian electricity demand",
+   "family": "Monash",
+   "freq": "half_hourly",
+   "pandas_freq": "30min",
+   "files": [
+    {
+     "path": "data/australian_electricity_demand_dataset.zip",
+     "size_bytes": 5770526,
+     "sha256": "b1439c28a631766bd05ee327f1f430a887b9f53b38a8cd5c0769ded1fd4aaf5a"
+    }
+   ],
+   "size_bytes": 5770526,
+   "n_series": 5,
+   "length": {
+    "min": 230736,
+    "median": 230736,
+    "max": 232272,
+    "total_points": 1155264
+   },
+   "task": {
+    "horizon": 48,
+    "num_windows": 1,
+    "seasonality": 48,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [
+    "state"
+   ],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "5 time series representing the half hourly electricity demand of 5 states in Australia: Victoria, New South Wales, Queensland, Tasmania and South Australia.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 5,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.bitcoin",
+   "config": "bitcoin",
+   "variant": null,
+   "title": "bitcoin",
+   "family": "Monash",
+   "freq": "daily",
+   "pandas_freq": "D",
+   "files": [
+    {
+     "path": "data/bitcoin_dataset_with_missing_values.zip",
+     "size_bytes": 220403,
+     "sha256": "aca43bae943dbf24617e885b5165f2493578fb195a888702ec85947e727f015f"
+    }
+   ],
+   "size_bytes": 220403,
+   "n_series": 18,
+   "length": {
+    "min": 4581,
+    "median": 4581,
+    "max": 4581,
+    "total_points": 82458
+   },
+   "task": {
+    "horizon": 30,
+    "num_windows": 1,
+    "seasonality": 7,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "18 daily time series including hash rate, block size, mining difficulty etc. as well as public opinion in the form of tweets and google searches mentioning the keyword bitcoin as potential influencer of the bitcoin price.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 18,
+    "target_missing_pct": 9.809,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.car_parts",
+   "config": "car_parts",
+   "variant": null,
+   "title": "car parts",
+   "family": "Monash",
+   "freq": "monthly",
+   "pandas_freq": "MS",
+   "files": [
+    {
+     "path": "data/car_parts_dataset_with_missing_values.zip",
+     "size_bytes": 39656,
+     "sha256": "80557703397c7dca6c007bd28930b0e213e529f428afd02e5af87804fdc38ee1"
+    }
+   ],
+   "size_bytes": 39656,
+   "n_series": 2674,
+   "length": {
+    "min": 51,
+    "median": 51,
+    "max": 51,
+    "total_points": 136374
+   },
+   "task": {
+    "horizon": 12,
+    "num_windows": 1,
+    "seasonality": 12,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "2674 intermittent monthly time series that represent car parts sales from January 1998 to March 2002.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 2674,
+    "target_missing_pct": 4.489,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.cif_2016",
+   "config": "cif_2016",
+   "variant": null,
+   "title": "cif 2016",
+   "family": "Monash",
+   "freq": "monthly",
+   "pandas_freq": "MS",
+   "files": [
+    {
+     "path": "data/cif_2016_dataset.zip",
+     "size_bytes": 53344,
+     "sha256": "e0a7d93d6fb66dd2bb3ceb23bec73c2f39fe9cec909b4599ca35fef22b8d8f59"
+    }
+   ],
+   "size_bytes": 53344,
+   "n_series": 72,
+   "length": {
+    "min": 28,
+    "median": 120,
+    "max": 120,
+    "total_points": 7108
+   },
+   "task": {
+    "horizon": 12,
+    "num_windows": 1,
+    "seasonality": 12,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [
+    "horizon"
+   ],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "72 monthly time series originated from the banking domain used in the CIF 2016 forecasting competition.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 72,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.covid_deaths",
+   "config": "covid_deaths",
+   "variant": null,
+   "title": "covid deaths",
+   "family": "Monash",
+   "freq": "daily",
+   "pandas_freq": "D",
+   "files": [
+    {
+     "path": "data/covid_deaths_dataset.zip",
+     "size_bytes": 27335,
+     "sha256": "baf11e0982c307f2dae25ff0a6faeb70ac14db8f2dcc71da75ff57563008f1b2"
+    }
+   ],
+   "size_bytes": 27335,
+   "n_series": 266,
+   "length": {
+    "min": 212,
+    "median": 212,
+    "max": 212,
+    "total_points": 56392
+   },
+   "task": {
+    "horizon": 30,
+    "num_windows": 1,
+    "seasonality": 7,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "266 daily time series that represent the COVID-19 deaths in a set of countries and states from 22/01/2020 to 20/08/2020.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 266,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 33,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.fred_md",
+   "config": "fred_md",
+   "variant": null,
+   "title": "fred md",
+   "family": "Monash",
+   "freq": "monthly",
+   "pandas_freq": "MS",
+   "files": [
+    {
+     "path": "data/fred_md_dataset.zip",
+     "size_bytes": 169107,
+     "sha256": "305c0edd2b5e97159c6339be4990ea97fdf86772c1edef2a0dfc836bf29f45c3"
+    }
+   ],
+   "size_bytes": 169107,
+   "n_series": 107,
+   "length": {
+    "min": 728,
+    "median": 728,
+    "max": 728,
+    "total_points": 77896
+   },
+   "task": {
+    "horizon": 12,
+    "num_windows": 1,
+    "seasonality": 12,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "107 monthly time series showing a set of macro-economic indicators from the Federal Reserve Bank.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 107,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.hospital",
+   "config": "hospital",
+   "variant": null,
+   "title": "hospital",
+   "family": "Monash",
+   "freq": "monthly",
+   "pandas_freq": "MS",
+   "files": [
+    {
+     "path": "data/hospital_dataset.zip",
+     "size_bytes": 78110,
+     "sha256": "8fd4085efb4517508e30fc69247eee9b74b300765bc6e94482c5d250efba66e5"
+    }
+   ],
+   "size_bytes": 78110,
+   "n_series": 767,
+   "length": {
+    "min": 84,
+    "median": 84,
+    "max": 84,
+    "total_points": 64428
+   },
+   "task": {
+    "horizon": 12,
+    "num_windows": 1,
+    "seasonality": 12,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "767 monthly time series that represent the patient counts related to medical products from January 2000 to December 2006.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 767,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.kaggle_web_traffic",
+   "config": "kaggle_web_traffic",
+   "variant": null,
+   "title": "kaggle web traffic",
+   "family": "Monash",
+   "freq": "daily",
+   "pandas_freq": "D",
+   "files": [
+    {
+     "path": "data/kaggle_web_traffic_dataset_with_missing_values.zip",
+     "size_bytes": 145485324,
+     "sha256": "44e10fc187475f673e2aac837f5f54cf32333fed25222d006f287355ec8699a9"
+    }
+   ],
+   "size_bytes": 145485324,
+   "n_series": 145063,
+   "length": {
+    "min": 803,
+    "median": 803,
+    "max": 803,
+    "total_points": 116485589
+   },
+   "task": {
+    "horizon": 59,
+    "num_windows": 1,
+    "seasonality": 7,
+    "horizon_source": "header"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "145063 daily time series representing the number of hits or web traffic for a set of Wikipedia pages from 2015-07-01 to 2017-09-10.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 145063,
+    "target_missing_pct": 6.033,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 36,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.kaggle_web_traffic_weekly",
+   "config": "kaggle_web_traffic_weekly",
+   "variant": null,
+   "title": "kaggle web traffic weekly",
+   "family": "Monash",
+   "freq": "weekly",
+   "pandas_freq": "W-WED",
+   "files": [
+    {
+     "path": "data/kaggle_web_traffic_weekly_dataset.zip",
+     "size_bytes": 28930900,
+     "sha256": "5d286ff0c9e4485eae74525edec9540ff4b689ec9b580cf9e85c8ab7225d29c1"
+    }
+   ],
+   "size_bytes": 28930900,
+   "n_series": 145063,
+   "length": {
+    "min": 114,
+    "median": 114,
+    "max": 114,
+    "total_points": 16537182
+   },
+   "task": {
+    "horizon": 8,
+    "num_windows": 1,
+    "seasonality": 1,
+    "horizon_source": "header"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "145063 daily time series representing the number of hits or web traffic for a set of Wikipedia pages from 2015-07-01 to 2017-09-10.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 145063,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 28,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.kdd_cup_2018",
+   "config": "kdd_cup_2018",
+   "variant": null,
+   "title": "kdd cup 2018",
+   "family": "Monash",
+   "freq": "hourly",
+   "pandas_freq": "h",
+   "files": [
+    {
+     "path": "data/kdd_cup_2018_dataset_with_missing_values.zip",
+     "size_bytes": 2456948,
+     "sha256": "3d0d2dbec3621b20c7a8ae6e6f00a63bfaebb962dca34d9f60f0ddbbde03e9bd"
+    }
+   ],
+   "size_bytes": 2456948,
+   "n_series": 270,
+   "length": {
+    "min": 9504,
+    "median": 10898,
+    "max": 10920,
+    "total_points": 2942364
+   },
+   "task": {
+    "horizon": 48,
+    "num_windows": 1,
+    "seasonality": 24,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [
+    "city",
+    "station",
+    "air_quality_measurement"
+   ],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "Hourly time series representing the air quality levels in 59 stations in 2 cities from 01/01/2017 to 31/03/2018.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 270,
+    "target_missing_pct": 17.119,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.london_smart_meters",
+   "config": "london_smart_meters",
+   "variant": null,
+   "title": "london smart meters",
+   "family": "Monash",
+   "freq": "half_hourly",
+   "pandas_freq": "30min",
+   "files": [
+    {
+     "path": "data/london_smart_meters_dataset_with_missing_values.zip",
+     "size_bytes": 219673439,
+     "sha256": "20a0ead3ad2ed7c073a9372062cbd473fdbbcf5d86d73d1c97bd3909a0cf7ac8"
+    }
+   ],
+   "size_bytes": 219673439,
+   "n_series": 5560,
+   "length": {
+    "min": 288,
+    "median": 30864,
+    "max": 39648,
+    "total_points": 166528896
+   },
+   "task": {
+    "horizon": 48,
+    "num_windows": 1,
+    "seasonality": 48,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "5560 half hourly time series that represent the energy consumption readings of London households in kilowatt hour (kWh) from November 2011 to February 2014.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 5560,
+    "target_missing_pct": 0.003,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 1,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.nn5_daily",
+   "config": "nn5_daily",
+   "variant": null,
+   "title": "nn5 daily",
+   "family": "Monash",
+   "freq": "daily",
+   "pandas_freq": "D",
+   "files": [
+    {
+     "path": "data/nn5_daily_dataset_with_missing_values.zip",
+     "size_bytes": 287708,
+     "sha256": "7022d158f6e49e323f3bd76f48fb18ba78b6d013972a97980af01c56f6f4c74b"
+    }
+   ],
+   "size_bytes": 287708,
+   "n_series": 111,
+   "length": {
+    "min": 791,
+    "median": 791,
+    "max": 791,
+    "total_points": 87801
+   },
+   "task": {
+    "horizon": 56,
+    "num_windows": 1,
+    "seasonality": 7,
+    "horizon_source": "header"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "111 time series to predicting the daily cash withdrawals from ATMs in UK.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 111,
+    "target_missing_pct": 1.91,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.nn5_weekly",
+   "config": "nn5_weekly",
+   "variant": null,
+   "title": "nn5 weekly",
+   "family": "Monash",
+   "freq": "weekly",
+   "pandas_freq": "W-MON",
+   "files": [
+    {
+     "path": "data/nn5_weekly_dataset.zip",
+     "size_bytes": 62043,
+     "sha256": "ce6ad3aee8cb6b665a587a40c7884e9e23d1b0f238a32dc2bdc34de7a57f3d54"
+    }
+   ],
+   "size_bytes": 62043,
+   "n_series": 111,
+   "length": {
+    "min": 113,
+    "median": 113,
+    "max": 113,
+    "total_points": 12543
+   },
+   "task": {
+    "horizon": 8,
+    "num_windows": 1,
+    "seasonality": 1,
+    "horizon_source": "header"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "111 time series to predicting the weekly cash withdrawals from ATMs in UK.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 111,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.oikolab_weather",
+   "config": "oikolab_weather",
+   "variant": null,
+   "title": "oikolab weather",
+   "family": "Monash",
+   "freq": "hourly",
+   "pandas_freq": "h",
+   "files": [
+    {
+     "path": "data/oikolab_weather_dataset.zip",
+     "size_bytes": 1326101,
+     "sha256": "6f0d2dce3a5aa17c26627ea6107cbf4e5b10050f8a1648d6d03306cd0777f735"
+    }
+   ],
+   "size_bytes": 1326101,
+   "n_series": 8,
+   "length": {
+    "min": 100057,
+    "median": 100057,
+    "max": 100057,
+    "total_points": 800456
+   },
+   "task": {
+    "horizon": 48,
+    "num_windows": 1,
+    "seasonality": 24,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [
+    "type"
+   ],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "Eight time series representing the hourly climate data nearby Monash University, Clayton, Victoria, Australia from 2010-01-01 to 2021-05-31",
+   "notes": [],
+   "checks": {
+    "sampled_series": 8,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.pedestrian_counts",
+   "config": "pedestrian_counts",
+   "variant": null,
+   "title": "pedestrian counts",
+   "family": "Monash",
+   "freq": "hourly",
+   "pandas_freq": "h",
+   "files": [
+    {
+     "path": "data/pedestrian_counts_dataset.zip",
+     "size_bytes": 4587054,
+     "sha256": "6e81cb8cad43650e7e0f754a1103fc75c960e03387bae9b91146aa3241c9aa50"
+    }
+   ],
+   "size_bytes": 4587054,
+   "n_series": 66,
+   "length": {
+    "min": 576,
+    "median": 45870,
+    "max": 96424,
+    "total_points": 3132346
+   },
+   "task": {
+    "horizon": 48,
+    "num_windows": 1,
+    "seasonality": 24,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "Hourly pedestrian counts captured from 66 sensors in Melbourne city starting from May 2009.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 66,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.rideshare",
+   "config": "rideshare",
+   "variant": null,
+   "title": "rideshare",
+   "family": "Monash",
+   "freq": "hourly",
+   "pandas_freq": "h",
+   "files": [
+    {
+     "path": "data/rideshare_dataset_with_missing_values.zip",
+     "size_bytes": 1031826,
+     "sha256": "5f83feec4970ff306108f50ac3c13f1adddbf96274226bc0b03655dfdab04567"
+    }
+   ],
+   "size_bytes": 1031826,
+   "n_series": 2304,
+   "length": {
+    "min": 541,
+    "median": 541,
+    "max": 541,
+    "total_points": 1246464
+   },
+   "task": {
+    "horizon": 48,
+    "num_windows": 1,
+    "seasonality": 24,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [
+    "source_location",
+    "provider_name",
+    "provider_service",
+    "type"
+   ],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "156 hourly time series representations of attributes related to Uber and Lyft rideshare services for various locations in New York between 26/11/2018 and 18/12/2018.",
+   "notes": [
+    "The loader on Hugging Face groups some lines into multivariate series; here every line of the file is its own univariate series, which is how the archive publishes it."
+   ],
+   "checks": {
+    "sampled_series": 2304,
+    "target_missing_pct": 39.684,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 340,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.saugeenday",
+   "config": "saugeenday",
+   "variant": null,
+   "title": "saugeenday",
+   "family": "Monash",
+   "freq": "daily",
+   "pandas_freq": "D",
+   "files": [
+    {
+     "path": "data/saugeenday_dataset.zip",
+     "size_bytes": 28721,
+     "sha256": "061cb56ee6829d5686e5e08f1a61f4c0af682e32c37824e79926fc11148747df"
+    }
+   ],
+   "size_bytes": 28721,
+   "n_series": 1,
+   "length": {
+    "min": 23741,
+    "median": 23741,
+    "max": 23741,
+    "total_points": 23741
+   },
+   "task": {
+    "horizon": 30,
+    "num_windows": 1,
+    "seasonality": 7,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "A single very long time series representing the daily mean flow of the Saugeen River at Walkerton in cubic meters per second from 01/01/1915 to 31/12/1979.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 1,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.solar_10_minutes",
+   "config": "solar_10_minutes",
+   "variant": null,
+   "title": "solar 10 minutes",
+   "family": "Monash",
+   "freq": "10_minutes",
+   "pandas_freq": "10min",
+   "files": [
+    {
+     "path": "data/solar_10_minutes_dataset.zip",
+     "size_bytes": 4559353,
+     "sha256": "63ec43cefc45d87af17f06255daad8343cc2593d3572e4d7178d791ab9387390"
+    }
+   ],
+   "size_bytes": 4559353,
+   "n_series": 137,
+   "length": {
+    "min": 52560,
+    "median": 52560,
+    "max": 52560,
+    "total_points": 7200720
+   },
+   "task": {
+    "horizon": 48,
+    "num_windows": 1,
+    "seasonality": 144,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "137 time series representing the solar power production recorded per every 10 minutes in Alabama state in 2006.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 137,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.solar_4_seconds",
+   "config": "solar_4_seconds",
+   "variant": null,
+   "title": "solar 4 seconds",
+   "family": "Monash",
+   "freq": "4_seconds",
+   "pandas_freq": "4s",
+   "files": [
+    {
+     "path": "data/solar_4_seconds_dataset.zip",
+     "size_bytes": 794502,
+     "sha256": "9aff580f3cce6b8864572117b2b1cbbf410cc46e9ec40a90201c14bd0296f4fd"
+    }
+   ],
+   "size_bytes": 794502,
+   "n_series": 1,
+   "length": {
+    "min": 7397222,
+    "median": 7397222,
+    "max": 7397222,
+    "total_points": 7397222
+   },
+   "task": {
+    "horizon": 60,
+    "num_windows": 1,
+    "seasonality": 900,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "A single very long daily time series representing the solar power production in MW recorded per every 4 seconds starting from 01/08/2019.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 1,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.solar_weekly",
+   "config": "solar_weekly",
+   "variant": null,
+   "title": "solar weekly",
+   "family": "Monash",
+   "freq": "weekly",
+   "pandas_freq": "W-SUN",
+   "files": [
+    {
+     "path": "data/solar_weekly_dataset.zip",
+     "size_bytes": 24375,
+     "sha256": "421426b22c22997697aeeaadb8e71cc73a7a0a36ed8097037ff6b378650f428f"
+    }
+   ],
+   "size_bytes": 24375,
+   "n_series": 137,
+   "length": {
+    "min": 52,
+    "median": 52,
+    "max": 52,
+    "total_points": 7124
+   },
+   "task": {
+    "horizon": 5,
+    "num_windows": 1,
+    "seasonality": 1,
+    "horizon_source": "header"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "137 time series representing the weekly solar power production in Alabama state in 2006.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 137,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.sunspot",
+   "config": "sunspot",
+   "variant": null,
+   "title": "sunspot",
+   "family": "Monash",
+   "freq": "daily",
+   "pandas_freq": "D",
+   "files": [
+    {
+     "path": "data/sunspot_dataset_with_missing_values.zip",
+     "size_bytes": 68865,
+     "sha256": "f83d60e56830b30890d0c938dd87e3446658d5fc2b65164b8b3003d8d52ca19e"
+    }
+   ],
+   "size_bytes": 68865,
+   "n_series": 1,
+   "length": {
+    "min": 73924,
+    "median": 73924,
+    "max": 73924,
+    "total_points": 73924
+   },
+   "task": {
+    "horizon": 30,
+    "num_windows": 1,
+    "seasonality": 7,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "A single very long daily time series of sunspot numbers from 1818-01-08 to 2020-05-31.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 1,
+    "target_missing_pct": 4.383,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.temperature_rain",
+   "config": "temperature_rain",
+   "variant": null,
+   "title": "temperature rain",
+   "family": "Monash",
+   "freq": "daily",
+   "pandas_freq": "D",
+   "files": [
+    {
+     "path": "data/temperature_rain_dataset_with_missing_values.zip",
+     "size_bytes": 25747139,
+     "sha256": "36a8c8cce2a99a8372ff8f82450b50dcc1b5eff653820c7a828d56730fe325fb"
+    }
+   ],
+   "size_bytes": 25747139,
+   "n_series": 32072,
+   "length": {
+    "min": 725,
+    "median": 725,
+    "max": 725,
+    "total_points": 23252200
+   },
+   "task": {
+    "horizon": 30,
+    "num_windows": 1,
+    "seasonality": 7,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [
+    "station_id",
+    "obs_or_fcst"
+   ],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "32072 daily time series showing the temperature observations and rain forecasts, gathered by the Australian Bureau of Meteorology for 422 weather stations across Australia, between 02/05/2015 and 26/04/2017",
+   "notes": [
+    "The loader on Hugging Face groups some lines into multivariate series; here every line of the file is its own univariate series, which is how the archive publishes it."
+   ],
+   "checks": {
+    "sampled_series": 32072,
+    "target_missing_pct": 2.575,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 19,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.tourism_monthly",
+   "config": "tourism_monthly",
+   "variant": null,
+   "title": "tourism monthly",
+   "family": "Monash",
+   "freq": "monthly",
+   "pandas_freq": "MS",
+   "files": [
+    {
+     "path": "data/tourism_monthly_dataset.zip",
+     "size_bytes": 199791,
+     "sha256": "6e434ad8a0ef6acb55ebee0e1d1ffe22707ea4e62c05e091326267f3a5b4a93c"
+    }
+   ],
+   "size_bytes": 199791,
+   "n_series": 366,
+   "length": {
+    "min": 91,
+    "median": 330,
+    "max": 333,
+    "total_points": 109280
+   },
+   "task": {
+    "horizon": 24,
+    "num_windows": 1,
+    "seasonality": 12,
+    "horizon_source": "header"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "This dataset contains 366 monthly time series used in the Kaggle Tourism forecasting competition.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 366,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.tourism_quarterly",
+   "config": "tourism_quarterly",
+   "variant": null,
+   "title": "tourism quarterly",
+   "family": "Monash",
+   "freq": "quarterly",
+   "pandas_freq": "QS",
+   "files": [
+    {
+     "path": "data/tourism_quarterly_dataset.zip",
+     "size_bytes": 93833,
+     "sha256": "fa16da64f29aa04df447756cb65a5d58f8bc3d860fc22751c76850a3ffb048c3"
+    }
+   ],
+   "size_bytes": 93833,
+   "n_series": 427,
+   "length": {
+    "min": 30,
+    "median": 110,
+    "max": 130,
+    "total_points": 42544
+   },
+   "task": {
+    "horizon": 8,
+    "num_windows": 1,
+    "seasonality": 4,
+    "horizon_source": "header"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "This dataset contains 427 quarterly time series used in the Kaggle Tourism forecasting competition.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 427,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.tourism_yearly",
+   "config": "tourism_yearly",
+   "variant": null,
+   "title": "tourism yearly",
+   "family": "Monash",
+   "freq": "yearly",
+   "pandas_freq": "YS",
+   "files": [
+    {
+     "path": "data/tourism_yearly_dataset.zip",
+     "size_bytes": 36749,
+     "sha256": "20238ddb9b11465b061bbfadcc398ef01f0896a8791199381b3edc706abf0263"
+    }
+   ],
+   "size_bytes": 36749,
+   "n_series": 518,
+   "length": {
+    "min": 11,
+    "median": 27,
+    "max": 47,
+    "total_points": 12757
+   },
+   "task": {
+    "horizon": 4,
+    "num_windows": 1,
+    "seasonality": 1,
+    "horizon_source": "header"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "This dataset contains 518 yearly time series used in the Kaggle Tourism forecasting competition.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 518,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.traffic_hourly",
+   "config": "traffic_hourly",
+   "variant": null,
+   "title": "traffic hourly",
+   "family": "Monash",
+   "freq": "hourly",
+   "pandas_freq": "h",
+   "files": [
+    {
+     "path": "data/traffic_hourly_dataset.zip",
+     "size_bytes": 22868806,
+     "sha256": "3db12ba866a9c9d3c8109b7b6d189a990c38d0e5002fa2617022157358d08299"
+    }
+   ],
+   "size_bytes": 22868806,
+   "n_series": 862,
+   "length": {
+    "min": 17544,
+    "median": 17544,
+    "max": 17544,
+    "total_points": 15122928
+   },
+   "task": {
+    "horizon": 48,
+    "num_windows": 1,
+    "seasonality": 24,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "862 hourly time series showing the road occupancy rates on the San Francisco Bay area freeways from 2015 to 2016.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 862,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.traffic_weekly",
+   "config": "traffic_weekly",
+   "variant": null,
+   "title": "traffic weekly",
+   "family": "Monash",
+   "freq": "weekly",
+   "pandas_freq": "W-THU",
+   "files": [
+    {
+     "path": "data/traffic_weekly_dataset.zip",
+     "size_bytes": 245126,
+     "sha256": "df3fc458fb1d6f770451fc45c43b930c091e69e86d508410dae4843918851525"
+    }
+   ],
+   "size_bytes": 245126,
+   "n_series": 862,
+   "length": {
+    "min": 104,
+    "median": 104,
+    "max": 104,
+    "total_points": 89648
+   },
+   "task": {
+    "horizon": 8,
+    "num_windows": 1,
+    "seasonality": 1,
+    "horizon_source": "header"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "862 weekly time series showing the road occupancy rates on the San Francisco Bay area freeways from 2015 to 2016.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 862,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.us_births",
+   "config": "us_births",
+   "variant": null,
+   "title": "us births",
+   "family": "Monash",
+   "freq": "daily",
+   "pandas_freq": "D",
+   "files": [
+    {
+     "path": "data/us_births_dataset.zip",
+     "size_bytes": 16332,
+     "sha256": "cca9ebce263e6a8cd7c776c002e01ff1f904d8bce5dd2c8103cbed8bc6f8b391"
+    }
+   ],
+   "size_bytes": 16332,
+   "n_series": 1,
+   "length": {
+    "min": 7305,
+    "median": 7305,
+    "max": 7305,
+    "total_points": 7305
+   },
+   "task": {
+    "horizon": 30,
+    "num_windows": 1,
+    "seasonality": 7,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "A single very long daily time series representing the number of births in US from 01/01/1969 to 31/12/1988.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 1,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.vehicle_trips",
+   "config": "vehicle_trips",
+   "variant": null,
+   "title": "vehicle trips",
+   "family": "Monash",
+   "freq": "daily",
+   "pandas_freq": "D",
+   "files": [
+    {
+     "path": "data/vehicle_trips_dataset_with_missing_values.zip",
+     "size_bytes": 44914,
+     "sha256": "f0e4df4d85705567cfe5489267f3fdbb398155e1d29796d2b4690cbbfd054730"
+    }
+   ],
+   "size_bytes": 44914,
+   "n_series": 329,
+   "length": {
+    "min": 70,
+    "median": 122,
+    "max": 243,
+    "total_points": 42382
+   },
+   "task": {
+    "horizon": 30,
+    "num_windows": 1,
+    "seasonality": 7,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [
+    "base_number",
+    "base_name",
+    "type"
+   ],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "329 daily time series representing the number of trips and vehicles belonging to a set of for-hire vehicle (FHV) companies.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 329,
+    "target_missing_pct": 17.163,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 10,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.weather",
+   "config": "weather",
+   "variant": null,
+   "title": "weather",
+   "family": "Monash",
+   "freq": "daily",
+   "pandas_freq": "D",
+   "files": [
+    {
+     "path": "data/weather_dataset.zip",
+     "size_bytes": 38820451,
+     "sha256": "adc9195b4b842673892fec1ba22cced9c42d5c4cba9a261f455ffbe96db7847b"
+    }
+   ],
+   "size_bytes": 38820451,
+   "n_series": 3010,
+   "length": {
+    "min": 1332,
+    "median": 10828,
+    "max": 65981,
+    "total_points": 43032000
+   },
+   "task": {
+    "horizon": 30,
+    "num_windows": 1,
+    "seasonality": 7,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [
+    "series_type"
+   ],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "3010 daily time series representing the variations of four weather variables: rain, mintemp, maxtemp and solar radiation, measured at the weather stations in Australia.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 3010,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.wind_4_seconds",
+   "config": "wind_4_seconds",
+   "variant": null,
+   "title": "wind 4 seconds",
+   "family": "Monash",
+   "freq": "4_seconds",
+   "pandas_freq": "4s",
+   "files": [
+    {
+     "path": "data/wind_4_seconds_dataset.zip",
+     "size_bytes": 2226184,
+     "sha256": "4214cbf21c1b0f27e4ce06e5ed4fe3b900d49ce81b57c27b1495cf3d81792bca"
+    }
+   ],
+   "size_bytes": 2226184,
+   "n_series": 1,
+   "length": {
+    "min": 7397147,
+    "median": 7397147,
+    "max": 7397147,
+    "total_points": 7397147
+   },
+   "task": {
+    "horizon": 60,
+    "num_windows": 1,
+    "seasonality": 900,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "A single very long daily time series representing the wind power production in MW recorded per every 4 seconds starting from 01/08/2019.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 1,
+    "target_missing_pct": 0.0,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 0,
+    "series_with_time_gaps": 0,
+    "declares_missing": false,
+    "equal_length": true,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  },
+  {
+   "id": "monash.wind_farms_minutely",
+   "config": "wind_farms_minutely",
+   "variant": null,
+   "title": "wind farms minutely",
+   "family": "Monash",
+   "freq": "minutely",
+   "pandas_freq": "min",
+   "files": [
+    {
+     "path": "data/wind_farms_minutely_dataset_with_missing_values.zip",
+     "size_bytes": 71383130,
+     "sha256": "4633a7255b6720347fc682003b5441e7bbd1a1097a4834cac0492852fb42e47a"
+    }
+   ],
+   "size_bytes": 71383130,
+   "n_series": 339,
+   "length": {
+    "min": 6345,
+    "median": 527040,
+    "max": 527040,
+    "total_points": 172178060
+   },
+   "task": {
+    "horizon": 60,
+    "num_windows": 1,
+    "seasonality": 1440,
+    "horizon_source": "default"
+   },
+   "targets": [
+    "target"
+   ],
+   "known": [],
+   "past": [],
+   "static": [],
+   "columns": {
+    "target": {
+     "kind": "list-numeric"
+    }
+   },
+   "description": "Minutely time series representing the wind power production of 339 wind farms in Australia.",
+   "notes": [],
+   "checks": {
+    "sampled_series": 339,
+    "target_missing_pct": 17.044,
+    "known_missing_pct": null,
+    "past_missing_pct": null,
+    "constant_series": 11,
+    "series_with_time_gaps": 0,
+    "declares_missing": true,
+    "equal_length": false,
+    "starts_after_day_28": 0,
+    "duplicate_names": 0
+   }
+  }
+ ]
+}

@@ -43,11 +43,13 @@ class DatasetCatalog:
                         "contamination_risk": "none"})
         for e in hub_catalog.listing():
             if e["downloaded"]:
-                out.append({"source": "hub", "id": e["id"], "name": e["title"] + " · " + e["freq_label"],
+                src = hub_catalog.sources()[e["source"]]
+                out.append({"source": "hub", "id": e["id"], "name": e["title"] + " · " + e["freq_label"] + ("" if e["source"] == "fev" else f" ({src['name']})"),
                             "description": f"{e['n_series']} series, {e['length']['min']}-{e['length']['max']} steps; "
                                            f"{len(e['known'])} known and {len(e['past'])} past covariates. Online benchmark.",
-                            "tags": ["online", e["family"]], "params": {"max_series": hub_catalog.DEFAULT_MAX_SERIES},
-                            "task": e["task"], "license": "other (see the catalog entry)", "contamination_risk": "possible"})
+                            "tags": ["online", e["source"], e["family"]], "params": {"max_series": hub_catalog.DEFAULT_MAX_SERIES},
+                            "task": e["task"], "benchmark": src["benchmark"],
+                            "license": f"{src.get('card_license') or 'other'} (see the catalog entry)", "contamination_risk": "possible"})
         for meta in sorted(self.root.joinpath("datasets").glob("*.json")):
             d = json.loads(meta.read_text(encoding="utf-8"))
             out.append({"source": "local", "id": d["id"], "name": d["name"], "description": d["description"],
