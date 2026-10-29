@@ -207,3 +207,15 @@ def test_the_real_checkpoints_continue_a_clean_cycle_when_they_are_present(model
     assert (np.diff(res.quantiles, axis=-1) >= -1e-6).all()
     assert np.abs(res.quantiles[0, 0, :, 4] - (10 + np.sin(2 * np.pi * np.arange(512, 560) / 24))).max() < 0.5
     adapter.unload()
+
+
+def test_only_timesfm_3_offers_the_apple_gpu_and_2_5_falls_back_to_the_cpu() -> None:
+    """TimesFM 2.5's package moves float64 arrays to the GPU, which Metal lacks (found on a MacBook Air M5): the Mac runs it on the CPU."""
+    from tsfm_lab.system.devices import pick_device
+
+    infos = {m["id"]: timesfm.info_from_manifest(m) for m in timesfm.load_manifests()}
+    assert "mps" in infos["timesfm-3"].capabilities.device_kinds
+    assert "mps" not in infos["timesfm-2-5"].capabilities.device_kinds and "cuda" in infos["timesfm-2-5"].capabilities.device_kinds
+    device, note = pick_device("mps", infos["timesfm-2-5"].capabilities.device_kinds)
+    assert device == "cpu" and "not supported" in note
+    assert any("MPS" in n for n in infos["timesfm-2-5"].notes) and any("MPS" in n for n in infos["timesfm-3"].notes)
