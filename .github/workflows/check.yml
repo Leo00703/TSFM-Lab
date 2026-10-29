@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: "3.13"
       - name: Bootstrap (uv sync --locked, Tailwind CLI with pinned checksum)
-        run: python scripts/bootstrap.py --device ${{ inputs.device }} --skip-brand-assets
+        run: python scripts/bootstrap.py --device ${{ inputs.device }}
       - name: Environment report
         run: ${{ inputs.python }} scripts/doctor.py
       - name: The right timestral build was installed (macOS gets the Apple GPU fix, the others the official package)

@@ -1,20 +1,69 @@
-# TSFM-Lab
+<h1 align="center">TSFM-Lab</h1>
 
-A local sandbox to **run, compare and inspect time-series foundation models**. Ten models from five families run on the same data
-and are compared side by side: Mistral's [Timestral](https://github.com/mistralai/timestral) (5M / 28M / 123M / 209M), Amazon's
-[Chronos-2](https://github.com/amazon-science/chronos-forecasting) (120M and 28M), Google's
+<p align="center">
+  <b>Run, compare and inspect time-series foundation models on your own machine.</b><br>
+  Ten models from five families · 187 public benchmark datasets · your own data · CPU or GPU · nothing leaves your computer
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img alt="Licence: Apache-2.0" src="https://img.shields.io/badge/licence-Apache--2.0-blue"></a>
+  <img alt="Python 3.12 and 3.13" src="https://img.shields.io/badge/python-3.12%20%7C%203.13-3776ab">
+  <img alt="Windows, Linux and macOS" src="https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey">
+  <a href="https://github.com/Leo00703/TSFM-Lab/actions/workflows/ci.yml"><img alt="Cross-platform check" src="https://github.com/Leo00703/TSFM-Lab/actions/workflows/ci.yml/badge.svg"></a>
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="docs/images/showcase-light.png">
+    <img alt="The Showcase page: a forecast of daily store sales with its likely range, the scenario tabs and the model menu" src="docs/images/showcase-dark.png" width="900">
+  </picture>
+</p>
+
+> **Unofficial.** This is an independent tool, not affiliated with or endorsed by Mistral AI, Amazon, Google, The Forecasting Company or NXAI.
+
+Ten models run on the same data and are compared side by side: Mistral's [Timestral](https://github.com/mistralai/timestral) (5M / 28M / 123M / 209M),
+Amazon's [Chronos-2](https://github.com/amazon-science/chronos-forecasting) (120M and 28M), Google's
 [TimesFM](https://github.com/google-research/timesfm) 3.0 and 2.5, The Forecasting Company's
 [t0-gamma](https://huggingface.co/theforecastingcompany/t0-gamma) and NXAI's [TiRex-2](https://github.com/NX-AI/tirex-2).
-Any other model plugs in as one adapter file.
-Models run entirely on your machine, on the CPU or a GPU (NVIDIA CUDA, Apple Metal), and every result is shown with the
-measurements and configuration needed to judge it honestly.
+Any other model plugs in as one adapter file. They run entirely on your machine, on the CPU or a GPU (NVIDIA CUDA, Apple Metal), and every
+result is shown with the measurements and configuration needed to judge it honestly.
 
-> **Unofficial.** This is an independent tool, not affiliated with or endorsed by Mistral AI.
+## What you can do
 
-**Status:** working local web app and command line. The home page is a **Showcase** of real-data forecasts explained in plain
-language (six scenarios, with the measured effect of the factors known in advance); the Playground, Experiments, Leaderboard, Runs and
-System pages hold the technical detail. The measured results (ranking of the ten models on 187 public datasets, with the caveats) are in [`RESULTS.md`](RESULTS.md);
-the full plan, research notes, every run and decision are in [`RESOCONTO.md`](RESOCONTO.md) (Italian).
+- **See what a model does, in plain language.** The Showcase forecasts six real-data situations (electricity, store sales, solar power, groceries,
+  store traffic, retail): drag the point where the forecast starts, read the likely range, and see how much the factors known in advance help.
+- **Compare ten models on the same footing.** One forecast with every quantile (Playground), rolling-window backtests against simple baselines
+  (Experiments), and a Leaderboard that ranks the models on a whole benchmark.
+- **Test on 187 public datasets, scored the way fev-bench scores.** fev-bench, GIFT-Eval and the Monash archive, downloaded only when you ask,
+  checked against their SHA-256. Datasets that a model's own authors list as training data are flagged and left out of the ranking by default.
+- **Use your own data.** Add a CSV, Parquet or Excel file, backtest on it, or rank the models on your own datasets: data recorded after the models
+  were trained is the cleanest test there is.
+- **Inspect everything.** Every run stores its configuration, environment and raw forecasts: calibration, error by forecast step, spread across
+  series, reproducibility, CSV export, and comparison of runs.
+- **Keep it contained.** Everything the project installs or caches lives inside its folder; the server answers to local hosts only; weights are
+  loaded from `safetensors` files only, never pickle.
+
+<table>
+  <tr>
+    <td width="50%"><img alt="The Leaderboard: ten models ranked on 125 datasets with skill against seasonal naive" src="docs/images/leaderboard-dark.png"><br><sub><b>Leaderboard.</b> Ten models on the same windows of 125 public datasets, scored against seasonal naive (a dataset the models' authors list as training data is left out, with a button to count it).</sub></td>
+    <td width="50%"><img alt="A run page: the summary table of five models and its metrics" src="docs/images/run-dark.png"><br><sub><b>A run.</b> Every metric, the calibration of the uncertainty ranges, the error by forecast step, and the configuration needed to reproduce it.</sub></td>
+  </tr>
+</table>
+
+### Results at a glance
+
+Measured here, on a single GPU, 100 series per dataset, up to 3 windows each, with seasonal naive as the reference (skill: 0% matches it, +40% means
+40% lower error). The details, the three rankings (without covariates, with covariates, the largest datasets), the uncertainty bars and the
+caveats are in **[`RESULTS.md`](RESULTS.md)**.
+
+- On **125 public datasets without covariates**, Timestral-209M (+39.4%) and t0-gamma (+39.1%) lead and **cannot be told apart**, Timestral-123M
+  (+38.9%) is just behind, and the small Timestral models hold up for their compute time (the 5M, in 25 seconds for the whole run, beats Chronos-2 small).
+- With covariates the top three (t0-gamma, Timestral-209M, Timestral-123M) are again within noise of each other.
+- These are public datasets and most makers do not list the real data their models were trained on, so read them as a comparison on equal footing,
+  not as proof of out-of-sample skill; the clean test is your own recent data.
+
+**Documentation:** [`RESULTS.md`](RESULTS.md) (measured results and caveats) · [`docs/RESOCONTO.md`](docs/RESOCONTO.md) (the development log, in Italian) ·
+[`SECURITY.md`](SECURITY.md) · [`NOTICE`](NOTICE) (what the licence does and does not cover).
 
 ## Quick start
 
@@ -74,7 +123,7 @@ before and after an install.
 | `scripts/clean.py` | Remove `.venv` and/or `.cache` |
 | `scripts/build_catalog.py` | Rebuild and verify the online-dataset catalog from the pinned sources (maintainers only; reads from Hugging Face, stores nothing) |
 | `scripts/download_models.py` | Download Timestral weights without opening the app |
-| `scripts/fetch_brand_assets.py` | Optional: fetch Mistral brand assets for local private use (see below) |
+| `scripts/fetch_brand_assets.py` | Optional, off by default: fetch Mistral's font and logos for local private use (see Licences) |
 | `scripts/fetch_vendor.py` | Re-fetch the two vendored JavaScript libraries (integrity-checked) |
 
 ## Models
@@ -259,9 +308,9 @@ the minutes are multiplied (Linux x1, Windows x2, macOS x10): a full run costs r
   <https://huggingface.co/mistralai/Timestral-209M/blob/main/LICENSE>. Weights are downloaded
   at run time and are never part of this repository.
 - Mistral's brand assets (the ALTMistral font and the Timestral logos) belong to Mistral AI.
-  They are **not** in this repository; `scripts/fetch_brand_assets.py` downloads them to the
-  git-ignored `web/assets/mistral/` for local private use only (`bootstrap.py` runs it unless you pass
-  `--skip-brand-assets`). Without them the UI falls back to Inter.
+  They are **not** in this repository, and nothing fetches them unless you ask: `scripts/fetch_brand_assets.py` (or
+  `bootstrap.py --brand-assets`) downloads them, from the public URLs Mistral's own sites serve, to the git-ignored
+  `web/assets/mistral/` for local private use only. Without them the UI uses Inter and a built-in mark, as in the pictures above.
 - Inter and Space Mono (`web/fonts/`) are licensed under the SIL Open Font License.
 - This project's own code is licensed under the Apache License 2.0 (see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE)); the licence covers
   the code only, not the model weights, the datasets, the vendored libraries or the brand assets above, which keep their own terms.

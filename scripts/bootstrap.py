@@ -5,7 +5,7 @@ Everything is installed inside the project folder; the script can be re-run safe
 
     python scripts/bootstrap.py                  # auto: CUDA build if an NVIDIA GPU is found
     python scripts/bootstrap.py --device cpu     # force the small CPU-only PyTorch
-    python scripts/bootstrap.py --skip-tailwind --skip-brand-assets
+    python scripts/bootstrap.py --skip-tailwind
 """
 
 from __future__ import annotations
@@ -110,7 +110,9 @@ def main() -> None:
     parser.add_argument("--device", choices=["auto", "cuda", "cpu", "pypi"], default="auto",
                         help="PyTorch build to install (default: auto-detect)")
     parser.add_argument("--skip-tailwind", action="store_true")
-    parser.add_argument("--skip-brand-assets", action="store_true")
+    parser.add_argument("--brand-assets", action="store_true",
+                        help="also fetch Mistral's font and logos for local private use (they belong to Mistral AI; off by default)")
+    parser.add_argument("--skip-brand-assets", action="store_true", help=argparse.SUPPRESS)  # the old default, still accepted
     args = parser.parse_args()
 
     env = project_env()
@@ -128,7 +130,7 @@ def main() -> None:
 
     if not args.skip_tailwind:
         ensure_tailwind()
-    if not args.skip_brand_assets:
+    if args.brand_assets and not args.skip_brand_assets:
         run([sys.executable, ROOT / "scripts" / "fetch_brand_assets.py"], env=env)
 
     print("\nDone. Next:")

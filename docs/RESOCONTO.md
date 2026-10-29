@@ -1,6 +1,8 @@
-# Resoconto pre-sviluppo — Timestral Sandbox
+# Resoconto di sviluppo — TSFM-Lab
 
-Data: 2026-10-27 · Stato: **Fasi 0-3 e Showcase completati (§12); prossima: dataset online (resto della Fase 4)**. Repository: `tsfm-lab` (privato)
+> Registro di lavoro in italiano, scritto durante lo sviluppo e conservato come documentazione. I risultati leggibili sono in inglese in [`RESULTS.md`](../RESULTS.md); il registro mantiene anche le decisioni e le correzioni, in ordine cronologico.
+
+Data: 2026-10-27 · Stato: **Fasi 0-3 e Showcase completati (§12); prossima: dataset online (resto della Fase 4)**. Repository: `TSFM-Lab`
 
 Questo documento riassume requisiti, ricerca (modello + identità visiva Mistral), architettura proposta, rischi e piano di lavoro. Ogni dato è marcato come **verificato** (letto da fonte primaria o misurato), **dichiarato dal vendor** o **inferenza/proposta**.
 

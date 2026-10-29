@@ -21,6 +21,14 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
+# --- Secrets and keys must never be committed ---
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.log
+
 # --- OS / editor noise ---
 .DS_Store
 Thumbs.db

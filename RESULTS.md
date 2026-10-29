@@ -1,7 +1,7 @@
 # Results: ten time-series foundation models on 187 public datasets
 
 Measured with the Leaderboard page of this app on 28 October 2026. This is an independent comparison, not affiliated with any of the
-model makers. The full working log (plans, research notes, every run, in Italian) is [`RESOCONTO.md`](RESOCONTO.md); this file is
+model makers. The full working log (plans, research notes, every run, in Italian) is [`docs/RESOCONTO.md`](docs/RESOCONTO.md); this file is
 the part of it that matters to a reader, in English.
 
 **Read it as an indication.** The datasets are public and most makers do not list the real data their model was trained on (see
