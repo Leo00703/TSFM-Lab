@@ -153,8 +153,16 @@ def test_the_menus_open_and_close_and_the_phone_menu_lists_every_page(live, brow
         _open(page, live["base"], "showcase", "main h1", problems)
         page.get_by_role("button", name="Evaluate").click()
         page.get_by_role("link", name="Leaderboard").first.wait_for(state="visible")  # the page redraws after the click: wait for it, do not read it at once
-        page.keyboard.press("Escape")
-        page.get_by_text("Rank the models on a benchmark or your data").wait_for(state="hidden")
+        blurb = page.get_by_text("Rank the models on a benchmark or your data")
+        for _ in range(20):  # the page listens for Escape from an effect that runs a moment after the menu appears: press again until it has
+            page.keyboard.press("Escape")
+            try:
+                blurb.wait_for(state="hidden", timeout=500)
+                break
+            except PlaywrightError:
+                continue
+        else:
+            raise AssertionError("Escape did not close the Evaluate menu")
         page.get_by_role("link", name="Models").first.click()
         page.wait_for_selector("text=Model library")
         page.get_by_role("button", name="Light theme").click()
