@@ -45,7 +45,7 @@ result is shown with the measurements and configuration needed to judge it hones
 
 <table>
   <tr>
-    <td width="50%"><img alt="The Leaderboard: ten models ranked on 125 datasets with skill against seasonal naive" src="docs/images/leaderboard-dark.png"><br><sub><b>Leaderboard.</b> Ten models on the same windows of 125 public datasets, scored against seasonal naive (a dataset the models' authors list as training data is left out, with a button to count it).</sub></td>
+    <td width="50%"><img alt="The Leaderboard: ten models ranked on 125 datasets (the one that TimesFM 2.5 lists as training data is left out) with skill against seasonal naive" src="docs/images/leaderboard-dark.png"><br><sub><b>Leaderboard.</b> Ten models on the same windows of 125 public datasets, scored against seasonal naive (a dataset the models' authors list as training data is left out, with a button to count it).</sub></td>
     <td width="50%"><img alt="A run page: the summary table of five models and its metrics" src="docs/images/run-dark.png"><br><sub><b>A run.</b> Every metric, the calibration of the uncertainty ranges, the error by forecast step, and the configuration needed to reproduce it.</sub></td>
   </tr>
 </table>
@@ -56,8 +56,10 @@ Measured here, on a single GPU, 100 series per dataset, up to 3 windows each, wi
 40% lower error). The details, the three rankings (without covariates, with covariates, the largest datasets), the uncertainty bars and the
 caveats are in **[`RESULTS.md`](RESULTS.md)**.
 
-- On **125 public datasets without covariates**, Timestral-209M (+39.4%) and t0-gamma (+39.1%) lead and **cannot be told apart**, Timestral-123M
-  (+38.9%) is just behind, and the small Timestral models hold up for their compute time (the 5M, in 25 seconds for the whole run, beats Chronos-2 small).
+- On **125 public datasets without covariates** (the 126 that count, minus `fred_md_2025--macro`, which TimesFM 2.5's authors list as training data:
+  the Leaderboard's default view), Timestral-209M (+39.4%) and t0-gamma (+39.1%) lead and **cannot be told apart**, Timestral-123M
+  (+38.9%) is just behind (counting all 126: +39.3%, +39.0% and +38.8%, the same order, as in the main table of `RESULTS.md`), and the small Timestral
+  models hold up for their compute time (the 5M, in 25 seconds for the whole run, beats Chronos-2 small).
 - With covariates the top three (t0-gamma, Timestral-209M, Timestral-123M) are again within noise of each other.
 - These are public datasets and most makers do not list the real data their models were trained on, so read them as a comparison on equal footing,
   not as proof of out-of-sample skill; the clean test is your own recent data.
