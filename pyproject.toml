@@ -49,7 +49,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-tsfm_lab = ["models/manifests/*.toml", "data/catalog_fev.json"]
+tsfm_lab = ["models/manifests/*.toml", "data/catalog_*.json"]  # fev, gift and monash catalogues
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
