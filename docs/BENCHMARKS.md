@@ -38,4 +38,4 @@ forecast in the Playground and backtested in Experiments like any other dataset;
 with a fixed seed (200 series by default, adjustable) and says so. Text columns such as holiday names become on/off flags;
 static per-series attributes are not used. The cards declare the licence as "other" and the data come from public sources:
 check their terms before reusing the data. Because the real training data of most models is not listed, these datasets are marked as
-possibly seen: Mistral says Timestral's was mostly synthetic and that nothing it backtests was seen in pre-training, but names no real source and publishes no overlap analysis. Synthetic scenarios are the only guaranteed-unseen ones.
+possibly seen: Mistral says Timestral's was mostly synthetic, but names no real source and publishes no overlap analysis. Synthetic scenarios are the only guaranteed-unseen ones.

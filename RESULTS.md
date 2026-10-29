@@ -112,8 +112,9 @@ What the makers state, checked on 28–29 October 2026 (the fev-bench result fil
 the declarations are the same):
 
 - **Timestral** (Mistral AI): "the majority of the training data was synthetic"; real data only in a second stage, with a
-  context four times longer; no real source is named; Mistral says nothing it backtests was seen in pre-training, which is a
-  statement about its process and not an overlap analysis. The model card and the repository add nothing; a technical report is
+  context four times longer; no real source is named and no analysis of overlap with the benchmarks is given. (The announcement also says
+  that nothing Mistral backtests was seen in pre-training; that sentence describes Mistral Forge, the service where a customer trains on
+  its own data, not the released models.) The model card and the repository add nothing; a technical report is
   announced. The fev-bench result files it submitted declare no overlap on any of the 100 tasks.
 - **TimesFM 2.5** (Google): the result files it submitted list ten fev-bench datasets as training data: `favorita_transactions_1D`,
   `favorita_transactions_1W`, `fred_md_2025--cee`, `fred_md_2025--macro`, `kdd_cup_2022_10T`, `m5_1D`, `m5_1W`, `proenfo_gfc12`,

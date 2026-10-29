@@ -51,14 +51,14 @@ TEXT = {
     "fev": {
         "name": "fev-bench", "benchmark": "fev-bench", "format": "fev-parquet",
         "license": "The dataset card declares the licence as “other”: the data come from public sources whose own terms apply.",
-        "contamination": "Public benchmark. Mistral says most of Timestral's training data was synthetic and that nothing it backtests was seen in pre-training, but names no real source and has published no overlap analysis; TimesFM 2.5's authors list ten of these datasets as training data "
+        "contamination": "Public benchmark. Mistral says most of Timestral's training data was synthetic, but names no real source and has published no overlap analysis; TimesFM 2.5's authors list ten of these datasets as training data "
                          "(marked here). Scores are indications, not proof of out-of-sample skill.",
     },
     "gift": {
         "name": "GIFT-Eval", "benchmark": "GIFT-Eval", "format": "gift-arrow",
         "license": "The dataset card declares Apache-2.0 for the compilation; each dataset keeps the terms of its original source.",
         "contamination": "Built as a held-out benchmark, but it reuses well-known public series (M4, ETT, electricity, solar…) that also "
-                         "sit in public pretraining corpora. Mistral says most of Timestral's training data was synthetic and that nothing it backtests was seen in pre-training, but names no real source and has published no overlap analysis. Scores here are "
+                         "sit in public pretraining corpora. Mistral says most of Timestral's training data was synthetic, but names no real source and has published no overlap analysis. Scores here are "
                          "indications, not proof of out-of-sample skill.",
     },
     "monash": {
@@ -66,7 +66,7 @@ TEXT = {
         "license": "The dataset card declares CC BY 4.0 for the archive; the series come from competitions and public agencies whose "
                    "own terms apply.",
         "contamination": "A classic public archive: its datasets appear in public pretraining corpora (the Chronos corpus "
-                         "autogluon/chronos_datasets carries Monash datasets). Mistral says most of Timestral's training data was synthetic and that nothing it backtests was seen in pre-training, but names no real source and has published no overlap analysis. Scores "
+                         "autogluon/chronos_datasets carries Monash datasets). Mistral says most of Timestral's training data was synthetic, but names no real source and has published no overlap analysis. Scores "
                          "here are indications, not proof of out-of-sample skill.",
     },
 }
