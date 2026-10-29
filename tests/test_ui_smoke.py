@@ -162,6 +162,7 @@ def test_the_menus_open_and_close_and_the_phone_menu_lists_every_page(live, brow
         page.get_by_role("button", name="Dark theme").click()
         page.set_viewport_size({"width": 390, "height": 844})
         page.get_by_role("button", name="Open menu").click()
+        page.wait_for_timeout(350)  # the menu grows open over 200 ms
         names = {page.get_by_role("link", name=n).first.inner_text().strip() for n in ("Showcase", "Models", "Datasets", "Playground", "Experiments", "Leaderboard", "Runs", "System", "About")}
         assert len(names) == 9
         assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"), "the page scrolls sideways on a phone"

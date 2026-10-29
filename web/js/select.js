@@ -77,7 +77,7 @@ export function Select({ value, onChange, options, compact, placeholder = 'Selec
       <span class=${'min-w-0 flex-1 truncate ' + (cur ? '' : 'text-text-muted')}>${cur ? cur.label : placeholder}</span>
       <${Icon} name="chevron" size=${compact ? 12 : 12} class=${'shrink-0 text-text-muted transition-transform ' + (open ? 'rotate-180' : '')} /></button>
     ${open && pos && html`<div ref=${list} id=${id.current} role="listbox" tabindex="-1" style=${`position:fixed;z-index:60;left:${pos.left}px;width:${pos.width}px;max-height:${pos.maxH}px;` + (pos.top !== undefined ? `top:${pos.top}px` : `bottom:${pos.bottom}px`)}
-      class="overflow-y-auto rounded-lg border border-border-primary bg-surface-brand-secondary p-1.5 shadow-xl"
+      class="menu-in overflow-y-auto rounded-lg border border-border-primary bg-surface-brand-secondary p-1.5 shadow-xl"
       onMouseDown=${(e) => e.preventDefault()} onClick=${(e) => { e.preventDefault(); e.stopPropagation(); }}>
       ${options.map((o, i) => { const header = o.group && o.group !== lastGroup ? html`<div class="eyebrow px-3 pb-1.5 pt-3 first:pt-2" role="presentation">${o.group}</div>` : null; lastGroup = o.group || lastGroup;
         return html`${header}<div role="option" data-i=${i} aria-selected=${o.value === value} aria-disabled=${o.disabled || undefined}

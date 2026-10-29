@@ -67,7 +67,7 @@ function NavGroup({ group, page }) {
   return html`<div ref=${root} class="relative border-r border-border-primary">
     <button ref=${button} type="button" aria-expanded=${open} aria-controls="nav-evaluate" onClick=${() => setOpen(!open)}
       class=${CELL + ' ' + (current || open ? 'bg-surface-brand-secondary' : '')}>${group.label}<${Icon} name="chevron" size=${10} class=${'text-text-muted transition-transform ' + (open ? 'rotate-180' : '')} /></button>
-    ${open && html`<div id="nav-evaluate" class="absolute left-0 top-full z-40 mt-px w-[22rem] rounded-b-xl border border-t-0 border-border-primary bg-surface-brand-secondary p-2 shadow-xl">
+    ${open && html`<div id="nav-evaluate" class="menu-in absolute left-0 top-full z-40 mt-px w-[22rem] rounded-b-xl border border-t-0 border-border-primary bg-surface-brand-secondary p-2 shadow-xl">
       ${group.items.map((id) => { const p = PAGES.find((x) => x.id === id); return html`<a href=${'#/' + id} aria-current=${page === id ? 'page' : undefined}
         class="block rounded-md px-3 py-3 transition-colors hover:bg-action-ghost-1 aria-[current=page]:bg-action-ghost-1">
         <span class="flex items-center gap-2 font-mistral text-base font-medium">${page === id && html`<span class="size-1.5 bg-surface-brand" aria-hidden="true"></span>`}${p.label}</span>
@@ -88,9 +88,10 @@ function Nav({ page }) {
         <div class="flex items-center border-l border-border-primary px-4 xl:hidden"><button type="button" class="btn btn-outline" aria-label=${open ? 'Close menu' : 'Open menu'} aria-expanded=${open} onClick=${() => setOpen(!open)}><${Icon} name=${open ? 'close' : 'menu'} size=${16} /></button></div>
       </div>
     </div>
-    ${open && html`<div class="border-t border-border-primary bg-surface-brand-primary xl:hidden"><div class="mx-auto max-w-6xl border-x border-border-primary">
-      ${PAGES.filter((p) => !p.hidden).map((p) => html`<div class="border-b border-border-primary last:border-0">${link(p, 'w-full')}</div>`)}
-      <div class="flex flex-wrap items-center justify-between gap-4 border-t border-border-primary p-4"><${DeviceSelect} class="sm:hidden w-full" /><${ThemeSwitch} /></div></div></div>`}
+    <div class=${'grid bg-surface-brand-primary transition-[grid-template-rows,opacity] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none xl:hidden ' + (open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')} inert=${!open} aria-hidden=${!open}>
+      <div class="min-h-0 overflow-hidden"><div class="border-t border-border-primary"><div class="mx-auto max-w-6xl border-x border-border-primary">
+        ${PAGES.filter((p) => !p.hidden).map((p) => html`<div class="border-b border-border-primary last:border-0">${link(p, 'w-full')}</div>`)}
+        <div class="flex flex-wrap items-center justify-between gap-4 border-t border-border-primary p-4"><${DeviceSelect} class="sm:hidden w-full" /><${ThemeSwitch} /></div></div></div></div></div>
   </nav>`;
 }
 
