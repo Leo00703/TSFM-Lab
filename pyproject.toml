@@ -27,12 +27,13 @@ dependencies = [
 ]
 
 # PyTorch comes from exactly one of these extras (chosen by scripts/bootstrap.py):
-#   cu128 -> CUDA 12.8 build (Windows/Linux + NVIDIA, incl. RTX 50xx). It also runs on CPU.
+#   cu130 -> CUDA 13.0 build (Windows/Linux + NVIDIA Turing or newer, incl. RTX 50xx; needs a driver 580 or newer). It also runs on CPU.
 #   cpu   -> small CPU-only build (Windows/Linux without NVIDIA)
-#   pypi  -> the standard PyPI wheel (macOS)
+#   pypi  -> the standard PyPI wheel (macOS); stays on 2.11.0 until the Apple GPU path is re-checked with a newer PyTorch
+# PyTorch stopped publishing CUDA 12.8 builds after 2.11, so 2.13 (which fixes GHSA-rrmf-rvhw-rf47) needs the CUDA 13.0 index.
 [project.optional-dependencies]
-cu128 = ["torch==2.11.0"]
-cpu = ["torch==2.11.0"]
+cu130 = ["torch==2.13.0"]
+cpu = ["torch==2.13.0"]
 pypi = ["torch==2.11.0"]
 
 [project.scripts]
@@ -65,7 +66,7 @@ cache_dir = ".cache/pytest_cache"
 [tool.uv]
 conflicts = [
     [
-        { extra = "cu128" },
+        { extra = "cu130" },
         { extra = "cpu" },
         { extra = "pypi" },
     ],
@@ -82,13 +83,13 @@ timestral = [
     { git = "https://github.com/paschembri/timestral.git", rev = "c49d40f08dc75c05d7489a3ef26fb3fd565584c7", marker = "sys_platform == 'darwin'" },
 ]
 torch = [
-    { index = "pytorch-cu128", extra = "cu128" },
+    { index = "pytorch-cu130", extra = "cu130" },
     { index = "pytorch-cpu", extra = "cpu" },
 ]
 
 [[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
 explicit = true
 
 [[tool.uv.index]]
