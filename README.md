@@ -290,15 +290,16 @@ Chrome or Edge, driven by Playwright) and fails on the first script error; it is
 `web/dist/app.css`, with the pinned Tailwind CLI); the JavaScript is plain modules, so there is no build step.
 `src/tsfm_lab/` holds `models/` (adapters and manifests), `data/` (loaders, catalogs), `eval/` (backtests, metrics, the leaderboard),
 `api/` (FastAPI app, jobs, the worker process), `store/` (runs on disk), `showcase/` and `system/`; `web/` is the interface and `tests/` the tests.
+Contributions are welcome: see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` ("Cross-platform check") runs Linux, Windows and macOS through the reusable `check.yml` (one system). It
-**never runs by itself**: start it from the Actions tab (Run workflow) or with `gh workflow run ci.yml -f systems=all` (or `linux`,
-`windows`, `macos`). Each system runs the real
+`.github/workflows/ci.yml` ("Cross-platform check") runs Linux, Windows and macOS through the reusable `check.yml` (one system). It runs
+on every push to `main` and every pull request that touches code (documentation-only changes are skipped), and by hand from the Actions tab
+(Run workflow) or with `gh workflow run ci.yml -f systems=macos` (or `all`, `linux`, `windows`). Each system runs the real
 installation (`scripts/bootstrap.py`), the environment report, the tests without model weights, and the tests with the real
-Timestral-5M checkpoint on the CPU. Hosted runners have no GPU, so the GPU paths are checked by hand. On private repositories
-the minutes are multiplied (Linux x1, Windows x2, macOS x10): a full run costs roughly 15 billable minutes.
+Timestral-5M checkpoint on the CPU. Hosted runners have no GPU, so the GPU paths are checked by hand. The workflow uses no secrets and
+only reads the repository.
 
 ## Licences and third-party material
 

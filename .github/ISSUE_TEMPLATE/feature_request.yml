@@ -1,0 +1,22 @@
+name: Feature or model request
+description: Suggest a feature, or a model to add
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like to do?
+      description: Describe the problem first, then the idea. For a model, give the link to its weights and its licence.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why does it matter?
+      description: What you do today instead, and what it costs you.
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Helping
+      options:
+        - label: I could write a pull request for it

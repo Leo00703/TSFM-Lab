@@ -1,9 +1,15 @@
-# Manual cross-platform check. It never runs on its own: start it from the Actions tab (or `gh workflow run ci.yml`)
-# when a batch of substantial changes is ready, so the minutes of the plan are spent deliberately.
-# Billing multipliers on private repositories: Linux x1, Windows x2, macOS x10.
+# Cross-platform check: Linux, Windows and macOS. It runs on every push to main and on every pull request that touches code
+# (documentation-only changes are skipped), and by hand from the Actions tab (or `gh workflow run ci.yml -f systems=macos`)
+# to re-run one system. The repository is public, so hosted runners cost nothing; the workflow needs no secrets and only
+# reads the repository, which is also why it is safe for pull requests from forks.
 name: Cross-platform check
 
 on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**", "LICENSE", "NOTICE", ".github/ISSUE_TEMPLATE/**", ".github/pull_request_template.md"]
+  pull_request:
+    paths-ignore: ["**.md", "docs/**", "LICENSE", "NOTICE", ".github/ISSUE_TEMPLATE/**", ".github/pull_request_template.md"]
   workflow_dispatch:
     inputs:
       systems:
@@ -13,7 +19,7 @@ on:
         options: [all, linux, windows, macos]
 
 concurrency:
-  group: cross-platform-check
+  group: cross-platform-check-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -21,14 +27,14 @@ permissions:
 
 jobs:
   linux:
-    if: inputs.systems == 'all' || inputs.systems == 'linux'
+    if: github.event_name != 'workflow_dispatch' || inputs.systems == 'all' || inputs.systems == 'linux'
     uses: ./.github/workflows/check.yml
     with: { runner: ubuntu-latest, device: cpu, python: .venv/bin/python }
   windows:
-    if: inputs.systems == 'all' || inputs.systems == 'windows'
+    if: github.event_name != 'workflow_dispatch' || inputs.systems == 'all' || inputs.systems == 'windows'
     uses: ./.github/workflows/check.yml
     with: { runner: windows-latest, device: cpu, python: .venv/Scripts/python.exe }
   macos:
-    if: inputs.systems == 'all' || inputs.systems == 'macos'
+    if: github.event_name != 'workflow_dispatch' || inputs.systems == 'all' || inputs.systems == 'macos'
     uses: ./.github/workflows/check.yml
     with: { runner: macos-latest, device: pypi, python: .venv/bin/python }
