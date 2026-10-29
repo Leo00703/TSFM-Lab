@@ -1,6 +1,6 @@
 import { html, useState } from '/vendor/htm-preact.js';
 import { api, useAsync, go, num, pct, pct0, ms, when, int } from '../core.js';
-import { Card, PageHeader, Section, Button, Tabs, Select, Field, Spinner, ErrorBox, Notice, Table, KV, Collapse, Tag, Eyebrow, download } from '../ui.js';
+import { Card, PageHeader, Section, Button, Tabs, Select, Field, Spinner, ErrorBox, Notice, Table, KV, Collapse, Tag, Eyebrow, download, PageError } from '../ui.js';
 import { confirmDialog } from '../dialog.js';
 import { Figure, barOption, linesOption, fanOption, baseOption, axisStyle, modelColors, quantileStats, isNarrow } from '../charts.js';
 
@@ -18,7 +18,7 @@ function RunList() {
   return html`<div><${PageHeader} eyebrow="History" title="Runs">Every experiment is stored with its configuration, environment and raw forecasts, so any chart can be redrawn and any number traced back.<//>
     <${Section}>${s.loading ? html`<${Spinner} />` : s.error ? html`<${ErrorBox} error=${s.error} />` : !s.data.length ? html`<${Card}><p class="text-text-muted">No runs yet. <a class="underline" href="#/experiments">Start an experiment</a>.</p><//>` : html`
       <div class="mb-3 flex flex-wrap items-center gap-3"><${Button} kind="brand" disabled=${sel.length < 2} onClick=${() => go('compare?runs=' + sel.join(','))}>Compare selected (${sel.length})<//><span class="text-body-small text-text-muted">Tick two or more runs of the same dataset and horizon (up to 6).</span></div>
-      <${Card} class="!p-3 md:!p-5"><${Table} head=${['', 'When', 'Dataset', 'Models', 'Device', 'Horizon', 'Items', 'MASE (main model)', '']} rows=${s.data.map((r) => [html`<input type="checkbox" class="size-4 accent-[var(--color-surface-brand)]" aria-label="Select run to compare" checked=${sel.includes(r.id)} onChange=${() => toggle(r.id)} />`, when(r.created), r.dataset_name, r.model_names.join(', '), r.devices.join(', '), r.horizon, r.n_items,
+      <${Card} class="!p-3 md:!p-5"><${Table} head=${['', 'When', 'Dataset', 'Models', 'Device', 'Horizon', 'Items', 'MASE (main model)', '']} rows=${s.data.map((r) => [html`<input type="checkbox" class="size-4 accent-[var(--color-surface-brand)]" aria-label="Select run to compare" checked=${sel.includes(r.id)} onChange=${() => toggle(r.id)} />`, when(r.created), r.dataset_name, html`<span class="block min-w-[14rem] max-w-[24rem] whitespace-normal">${r.model_names.join(', ')}</span>`, r.devices.join(', '), r.horizon, r.n_items,
         num((r.headline[r.models[0]] || {}).mase), html`<span class="flex gap-2"><${Button} small kind="outline" onClick=${() => go('runs/' + r.id)}>Open<//><${Button} small kind="danger" icon="trash" aria-label="Delete run" onClick=${() => del(r)} /></span>`])} /><//>`}<//></div>`;
 }
 
@@ -58,13 +58,18 @@ function RunDetail({ id }) {
   const model = aModel || focus;
   const [an] = useAsync(() => (meta ? api(`/api/runs/${id}/analysis?model=${model}`) : Promise.resolve(null)), [id, model, !!meta]);
   if (m.loading) return html`<${Spinner} />`;
-  if (m.error) return html`<div class="pt-10"><${ErrorBox} error=${m.error} /></div>`;
+  if (m.error) return html`<${PageError} error=${m.error} eyebrow="Run" title="This run could not be opened" back="runs" backLabel="All runs" />`;
 
   const names = Object.fromEntries(ids.map((i) => [i, meta.models[i].name || i]));
   const S = (i, k) => (meta.models[i].summary[k] || {}).mean;
   const baseline = ids.includes('seasonal-naive') ? 'seasonal-naive' : ids.find((i) => meta.models[i].kind === 'baseline');
   const horizonLen = meta.config.horizon;
-  const warns = ids.flatMap((i) => [...meta.models[i].warnings.map((w) => [i, w, 'warning']), ...meta.models[i].notes.map((w) => [i, w, 'info'])]);
+  // the same note on several models is shown once, with the models it applies to
+  const warns = [];
+  for (const i of ids) for (const [list, k] of [[meta.models[i].warnings, 'warning'], [meta.models[i].notes, 'info']]) for (const w of list) {
+    const g = warns.find((x) => x.w === w && x.k === k);
+    if (g) g.ids.push(i); else warns.push({ w, k, ids: [i] });
+  }
   const rows = ids.map((i) => { const mm = meta.models[i], sk = baseline && i !== baseline ? (mm.skill[baseline] || {}).mase : null, load = mm.load || {};
     return [html`<b>${names[i]}</b>${i === focus ? html` <${Tag}>main<//>` : ''}`, mm.device, num(S(i, 'mase')), num(S(i, 'sql')), num(S(i, 'wql')), num(S(i, 'bias')), pct0(S(i, 'coverage_80')), pct0(S(i, 'coverage_90')),
       sk ? pct(sk.skill) : '–', ms(mm.batch_ms.reduce((a, b) => a + b, 0)), mm.warmup_ms == null ? '–' : ms(mm.warmup_ms), mm.peak_vram_mb ? `${num(mm.peak_vram_mb, 0)} MB` : '–']; });
@@ -95,7 +100,7 @@ function RunDetail({ id }) {
     <${Section} title="Summary">
       <${Card} class="!p-3 md:!p-5"><${Table} head=${['Model', 'Device', 'MASE', 'SQL', 'WQL', 'Bias', 'Cover 80%', 'Cover 90%', baseline ? `Skill vs ${names[baseline]}` : 'Skill', 'Compute', 'Cold start', 'Peak VRAM']} rows=${rows} /><//>
       <p class="mt-3 max-w-4xl text-body-small text-text-muted">Lower is better for MASE, SQL and WQL; coverage should match its label (an 80% interval should contain about 80% of the actuals). Skill = 1 − geometric mean of per-item MASE ratios (positive = better than the baseline). “Compute” is the warm model time summed over batches; the cold start (first call: CUDA init, kernel compilation) is reported separately. Definitions on the <a class="underline" href="#/about">About</a> page.</p>
-      ${warns.length > 0 && html`<div class="mt-4 grid gap-2">${warns.map(([i, w, k]) => html`<${Notice} kind=${k} title=${names[i]}>${w}<//>`)}</div>`}<//>
+      ${warns.length > 0 && html`<div class="mt-4 grid gap-2">${warns.map((g) => html`<${Notice} kind=${g.k} title=${g.ids.length === ids.length && ids.length > 1 ? 'All models' : g.ids.map((i) => names[i]).join(', ')}>${g.w}<//>`)}</div>`}<//>
 
     <${Section} title="Accuracy" aside=${html`<${Tabs} value=${metric} onChange=${setMetric} label="Metric" items=${Object.entries(METRICS).map(([v, label]) => ({ value: v, label }))} />`}>
       <${Figure} title=${`${METRICS[metric]}, mean over all forecasts`} subtitle="Lower is better ↓" build=${barBuild} deps=${[meta, metric]} height=${Math.max(160, ids.length * 52 + 40)} filename=${'accuracy-' + metric}

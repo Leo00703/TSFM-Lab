@@ -112,7 +112,7 @@ def run_suite(entries: list[dict[str, Any]], model_ids: list[str], device: str, 
             adapters[mid] = adapter
         for n, e in enumerate(entries):
             if progress:
-                progress(n, len(entries), e["id"])
+                progress(n, len(entries), f"{e['title']} · {freq_label(e['pandas_freq'])}" if e.get("pandas_freq") else e["title"])
             ds = load(e, cfg.max_series)
             task = e["task"]
             bt = BacktestConfig(horizon=task["horizon"], n_windows=min(task["num_windows"], cfg.max_windows), max_series=cfg.max_series,

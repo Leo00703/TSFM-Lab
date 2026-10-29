@@ -459,6 +459,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         payload = {**body.model_dump(), "datasets": list(dict.fromkeys(body.datasets)),
                    "local_datasets": list(dict.fromkeys(body.local_datasets)), "models": ranked, "suite_id": sid}
         names = ", ".join(registry.info(m).name for m in ranked)
+        total = len(payload["datasets"]) + len(payload["local_datasets"])
 
         live_suites.add(sid)
 
@@ -469,7 +470,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
                 live_suites.discard(sid)
                 suite_store.finish(sid, "stopped" if j.cancel.is_set() else "interrupted")
 
-        return ok(jobs.submit("suite", f"Leaderboard: {names} on {len(payload['datasets']) + len(payload['local_datasets'])} datasets · {body.device}", run,
+        return ok(jobs.submit("suite", f"Leaderboard: {names} on {total} dataset{'' if total == 1 else 's'} · {body.device}", run,
                               link=f"leaderboard/{sid}").to_dict(), 202)
 
     @app.post("/api/jobs/benchmark")

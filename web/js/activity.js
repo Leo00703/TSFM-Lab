@@ -38,9 +38,11 @@ const TITLES = {
   download: { queued: 'Download queued', running: 'Downloading', done: 'Downloaded', error: 'Download failed', cancelled: 'Download stopped' },
   benchmark: { queued: 'Benchmark queued', running: 'Benchmarking', done: 'Benchmark finished', error: 'Benchmark failed', cancelled: 'Benchmark stopped' },
   experiment: { queued: 'Backtest queued', running: 'Running a backtest', done: 'Backtest finished', error: 'Backtest failed', cancelled: 'Backtest stopped' },
+  suite: { queued: 'Leaderboard run queued', running: 'Ranking the models', done: 'Leaderboard run finished', error: 'Leaderboard run failed', cancelled: 'Leaderboard run stopped' },
   showcase: { queued: 'Measurement queued', running: 'Measuring the effect of the factors', done: 'Measurement finished', error: 'Measurement failed', cancelled: 'Measurement stopped' },
 };
 const detail = (j) => (j.kind === 'download' ? j.label.replace(/^Download /, '') : j.kind === 'benchmark' ? j.label.replace(/^Benchmark /, '')
+  : j.kind === 'suite' ? j.label.replace(/^Leaderboard: /, '')
   : j.kind === 'showcase' ? j.label.split(' · ').slice(1).join(' · ') : j.label);
 // The server says where each job's outcome lives (`link`, e.g. 'models?focus=timestral-209m'); a finished backtest leads to its run.
 // A button is only offered when it would take you somewhere else, and it lands on the exact thing, not just the page.

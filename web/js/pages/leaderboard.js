@@ -1,7 +1,7 @@
 import { html, useState, useEffect } from '/vendor/htm-preact.js';
 import { api, useAsync, useStore, go, bytes, num, when, deviceLabel } from '../core.js';
 import { isActive, stopJob } from '../activity.js';
-import { Card, PageHeader, Section, Button, Field, NumberInput, Check, Notice, ErrorBox, Progress, DeviceSelect, Table, Tag, Tabs, Spinner } from '../ui.js';
+import { Card, PageHeader, Section, Button, Field, NumberInput, Check, Notice, ErrorBox, Progress, DeviceSelect, Table, Tag, Tabs, Spinner, PageError } from '../ui.js';
 import { confirmDialog } from '../dialog.js';
 
 const SIZE_LIMITS = [['5', 'Under 5 MB'], ['50', 'Under 50 MB'], ['any', 'Any size']];
@@ -117,7 +117,7 @@ function Detail({ id }) {
   const running = !!s.data && s.data.status === 'running';
   useEffect(() => { if (!running) return undefined; const t = setInterval(reload, 4000); return () => clearInterval(t); }, [running]);
   if (s.loading && !s.data) return html`<${Spinner} />`;
-  if (s.error) return html`<${ErrorBox} error=${s.error} />`;
+  if (s.error) return html`<${PageError} error=${s.error} eyebrow="Leaderboard" title="This run could not be opened" back="leaderboard" backLabel="Back to the leaderboard" />`;
   const r = s.data, cautions = r.datasets.filter((d) => d.caution), board = r.leaderboard_trusted && !withCautions ? r.leaderboard_trusted : r.leaderboard, name = (m) => (r.models[m] || {}).name || m;
   const rowsOf = (table) => board.ranked.slice().sort((a, b) => (table[b].sql_skill ?? -1e9) - (table[a].sql_skill ?? -1e9));
   const table = (view !== 'overall' && board.by_group[view]) || board.overall;

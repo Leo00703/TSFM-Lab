@@ -184,7 +184,7 @@ def test_a_run_is_checkpointed_after_every_dataset_and_can_be_cut_short(tmp_path
         snapshots.append(len(store.get(sid)["datasets"]))
 
     def progress(done, total, message):
-        if message == "c":  # the user presses Stop while the third dataset is about to start
+        if message == "c · hourly":  # the user presses Stop while the third dataset is about to start (the message names the dataset)
             raise RuntimeError("stopped")
 
     entries = [_entry(i) for i in "abc"]

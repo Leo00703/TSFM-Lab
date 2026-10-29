@@ -34,15 +34,23 @@ export const axisStyle = (p, extra = {}) => ({ axisLine: { lineStyle: { color: p
 
 // ---------------------------------------------------------------- chart + figure
 export function Chart({ build, deps = [], height = 320, name = 'chart', onInstance }) {
-  const el = useRef(null), inst = useRef(null), tick = useThemeTick();
+  const el = useRef(null), inst = useRef(null), tick = useThemeTick(), latest = useRef(build);
+  latest.current = build;
+  // the builder also gets the width of the box: a legend that wraps onto a second line needs room above the plot
+  const make = () => latest.current({ ...palette(), width: el.current ? el.current.clientWidth : 0 });
   useEffect(() => {
     const c = echarts.init(el.current, null, { renderer: 'canvas' });
     inst.current = c; onInstance && onInstance(c);
-    const ro = new ResizeObserver(() => c.resize());
+    let last = el.current.clientWidth;
+    const ro = new ResizeObserver(() => {
+      c.resize();
+      const w = el.current ? el.current.clientWidth : 0;
+      if (Math.abs(w - last) > 24) { last = w; c.setOption(make(), true); }  // wide enough a change to re-flow the legend
+    });
     ro.observe(el.current);
     return () => { ro.disconnect(); c.dispose(); inst.current = null; };
   }, []);
-  useEffect(() => { if (inst.current) inst.current.setOption(build(palette()), true); }, [tick, ...deps]);
+  useEffect(() => { if (inst.current) inst.current.setOption(make(), true); }, [tick, ...deps]);
   return html`<div ref=${el} role="img" aria-label=${name} style=${`height:${height}px;width:100%`}></div>`;
 }
 
@@ -128,8 +136,10 @@ export function barOption(p, rows, { focus, lowerIsBetter = true, unit = '', dig
 
 export function linesOption(p, { x, series, xName, yName, yMin, yLog, xType = 'category', focus, legend = true, smooth = false, diagonal }) {
   const colors = modelColors(series.map((s) => s.id), focus, p);
+  // rows the legend wraps onto at this width (about 7 px a letter plus the key and the gap)
+  const legendRows = legend ? Math.max(1, Math.ceil(series.reduce((n, s) => n + String(s.label).length * 7 + 36, 0) / Math.max(200, (p.width || 600) - 24))) : 0;
   return {
-    ...baseOption(p), grid: { left: isNarrow() ? 48 : 60, right: isNarrow() ? 12 : 24, top: legend ? (yName ? 64 : 44) : 24, bottom: xName ? 52 : 36 },
+    ...baseOption(p), grid: { left: isNarrow() ? 48 : 60, right: isNarrow() ? 12 : 24, top: legendRows * 22 + (legend ? (yName ? 32 : 14) : (yName ? 34 : 24)), bottom: xName ? 52 : 36 },
     legend: legend ? { top: 0, data: series.map((s) => s.label), textStyle: { color: p.text, fontSize: 12 }, icon: 'roundRect', itemWidth: 14, itemHeight: 4 } : { show: false },
     xAxis: { type: xType, data: xType === 'category' ? x : undefined, name: xName, nameLocation: 'middle', nameGap: 30, nameTextStyle: { color: p.muted }, boundaryGap: xType === 'category' ? false : undefined, ...axisStyle(p, { splitLine: { show: false } }), ...(xType === 'log' ? { logBase: 2 } : {}) },
     yAxis: { type: yLog ? 'log' : 'value', name: yName, nameTextStyle: { color: p.muted, align: 'left' }, min: yMin, ...axisStyle(p) },

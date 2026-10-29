@@ -1,6 +1,6 @@
 import { html, useState } from '/vendor/htm-preact.js';
 import { api, useAsync, go, num, pct, pct0, ms, when } from '../core.js';
-import { Card, PageHeader, Section, Button, Tabs, Select, Field, Spinner, ErrorBox, Notice, Table, Tag, Eyebrow } from '../ui.js';
+import { Card, PageHeader, Section, Button, Tabs, Select, Field, Spinner, ErrorBox, Notice, Table, Tag, Eyebrow, PageError } from '../ui.js';
 import { Figure, barOption, baseOption, axisStyle, isNarrow } from '../charts.js';
 
 const LETTERS = 'ABCDEF';
@@ -26,7 +26,8 @@ function ConfigDiff({ runs }) {
 }
 
 function Paired({ entries, runs }) {
-  const [a, setA] = useState(entries[0].key), [b, setB] = useState((entries.find((e) => e.run.id !== entries[0].run.id) || entries[1] || entries[0]).key)  // default: main model of run A vs main model of run B, [metric, setMetric] = useState('mase');
+  // default: the main model of run A against the main model of run B
+  const [a, setA] = useState(entries[0].key), [b, setB] = useState((entries.find((e) => e.run.id !== entries[0].run.id) || entries[1] || entries[0]).key), [metric, setMetric] = useState('mase');
   const [d] = useAsync(() => api(`/api/compare/paired?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}&metric=${metric}`), [a, b, metric]);
   const opts = entries.map((e) => ({ value: e.key, label: e.label }));
   const la = (entries.find((e) => e.key === a) || {}).label, lb = (entries.find((e) => e.key === b) || {}).label;
@@ -52,7 +53,7 @@ export function Compare({ route }) {
   const [metric, setMetric] = useState('mase');
   if (ids.length < 2) return html`<div><${PageHeader} eyebrow="Compare" title="Compare runs">Pick two or more runs in the list to put their results side by side.<//><div class="mt-8"><a class="btn btn-brand" href="#/runs">Choose runs</a></div></div>`;
   if (c.loading) return html`<${Spinner} />`;
-  if (c.error) return html`<div class="pt-10"><${ErrorBox} error=${c.error} /></div>`;
+  if (c.error) return html`<${PageError} error=${c.error} eyebrow="Compare" title="These runs could not be compared" back="runs" backLabel="All runs" />`;
   const { runs, comparable } = c.data, entries = entriesOf(runs);
   const S = (e, k) => (e.m.summary[k] || {}).mean;
   const rows = entries.map((e) => [html`<b>${e.label}</b>`, num(S(e, 'mase')), num(S(e, 'sql')), num(S(e, 'wql')), pct0(S(e, 'coverage_80')), pct0(S(e, 'coverage_90')), ms(e.m.compute_ms), e.m.warmup_ms == null ? '–' : ms(e.m.warmup_ms), e.m.peak_vram_mb ? `${num(e.m.peak_vram_mb, 0)} MB` : '–']);

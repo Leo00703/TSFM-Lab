@@ -33,6 +33,7 @@
   --text-h2: 1.75rem;           --text-h2--line-height: 2.5rem;
   --text-h3: 1.5rem;            --text-h3--line-height: 1.75rem;
   --text-h4: 1.25rem;           --text-h4--line-height: 1.5rem;
+  --text-h5: 1.125rem;          --text-h5--line-height: 1.5rem;
   --text-h6: 1rem;              --text-h6--line-height: 1.5rem;
   --text-body-large: 1rem;      --text-body-large--line-height: 1.5rem;
   --text-body-small: 0.8125rem; --text-body-small--line-height: 1.25rem;
@@ -165,7 +166,7 @@
   .tabs-fill .tab { @apply px-2 text-center; }
   .tab[aria-selected="true"] { @apply bg-action-primary text-text-invert border-transparent; }
   .data-table { @apply w-full text-left text-body-small; }
-  .data-table th { @apply font-mono uppercase text-[0.6875rem] text-text-muted font-normal px-3 py-2 border-b border-border-primary whitespace-nowrap; letter-spacing: .02em; }
+  .data-table th { @apply align-bottom font-mono uppercase text-[0.6875rem] text-text-muted font-normal px-3 py-2 border-b border-border-primary; letter-spacing: .02em; }
   .data-table td { @apply px-3 py-2.5 border-b border-border-primary whitespace-nowrap; }
   .data-table tr:last-child td { border-bottom: 0; }
   .num { font-variant-numeric: tabular-nums; }

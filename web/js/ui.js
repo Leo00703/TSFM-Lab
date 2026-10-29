@@ -2,7 +2,7 @@
 import { html, useState } from '/vendor/htm-preact.js';
 import { Icon } from './icons.js';
 import { Select } from './select.js';
-import { useStore, setDevice, deviceLabel } from './core.js';
+import { useStore, setDevice, deviceLabel, go } from './core.js';
 
 export const Eyebrow = ({ children, class: c = '' }) => html`<div class=${'eyebrow ' + c}>${children}</div>`;
 
@@ -94,6 +94,12 @@ export function Collapse({ title, children, open: o = false }) {
   const [open, set] = useState(o);
   return html`<div class="border-t border-border-primary"><button type="button" class="flex w-full items-center justify-between gap-3 py-3 text-left min-h-10" aria-expanded=${open} onClick=${() => set(!open)}>
     <span>${title}</span><span class=${'font-mono text-text-muted transition-transform ' + (open ? 'rotate-90' : '')}>›</span></button>${open && html`<div class="pb-4">${children}</div>`}</div>`;
+}
+
+// A page whose data could not be loaded (a run that was deleted, a link with a wrong id): says what happened and leads back.
+export function PageError({ error, eyebrow, title, back, backLabel = 'Back' }) {
+  return html`<div><${PageHeader} eyebrow=${eyebrow} title=${title}>${error.message || String(error)}<//>
+    ${back && html`<div class="mt-6"><${Button} kind="outline" onClick=${() => go(back)}>${backLabel}<//></div>`}</div>`;
 }
 
 export function ErrorBox({ error }) {
