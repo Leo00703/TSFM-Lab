@@ -121,7 +121,7 @@ before and after an install.
 | `scripts/bootstrap.py` | Create the environment, install PyTorch, `timestral` (pinned commit) and the Tailwind CLI (pinned checksum) |
 | `scripts/doctor.py` | Versions, GPUs, disk usage, tool status |
 | `scripts/smoke_test.py` | Run Timestral on every available device |
-| `scripts/check_device_parity.py` | Compare a GPU with the CPU: same forecasts? how much faster? (`--device mps`, `--model timestral-28m`) |
+| `scripts/check_device_parity.py` | Compare a GPU with the CPU: same forecasts? how much faster? (`--device mps`, `--model timestral-28m`, or `--all --download` for every model) |
 | `scripts/leakcheck.py` | `--mark` before installing, `--report` after: verifies nothing was written elsewhere |
 | `scripts/clean.py` | Remove `.venv` and/or `.cache` |
 | `scripts/build_catalog.py` | Rebuild and verify the online-dataset catalog from the pinned sources (maintainers only; reads from Hugging Face, stores nothing) |
