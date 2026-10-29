@@ -39,7 +39,7 @@ pypi = ["torch==2.11.0"]
 tsfm-lab = "tsfm_lab.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6", "httpx>=0.27"]
+dev = ["pytest>=8", "ruff>=0.6", "httpx>=0.27", "playwright>=1.48"]  # playwright drives the installed Chrome/Edge in the interface smoke test
 
 [build-system]
 requires = ["setuptools>=77"]
@@ -56,6 +56,7 @@ testpaths = ["tests"]
 markers = [
     "model: loads real model weights (slow, may download the 21 MB Timestral-5M checkpoint)",
     "online: needs the network (downloads a tiny public dataset from Hugging Face)",
+    "ui: opens the interface in a real browser (an installed Chrome or Edge, through Playwright); skipped where there is none",
 ]
 # Keep pytest's temp dirs and cache inside the project (nothing in the system temp folder).
 addopts = "--basetemp=.cache/pytest"

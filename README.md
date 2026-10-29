@@ -236,7 +236,8 @@ The app is built to be safe to leave running on your own machine, and to say pla
 .venv/bin/ruff check .            # Windows: .venv\Scripts\ruff check .      (clean; the code is not auto-formatted, so do not run `ruff format`)
 ```
 
-Set `CUDA_VISIBLE_DEVICES=""` to keep the tests off the GPU. The styles are built by the app itself when it starts (`web/src/app.css` into
+Set `CUDA_VISIBLE_DEVICES=""` to keep the tests off the GPU. `tests/test_ui_smoke.py` opens every page of the interface in a real browser (an installed
+Chrome or Edge, driven by Playwright) and fails on the first script error; it is skipped where there is no such browser. The styles are built by the app itself when it starts (`web/src/app.css` into
 `web/dist/app.css`, with the pinned Tailwind CLI); the JavaScript is plain modules, so there is no build step.
 `src/tsfm_lab/` holds `models/` (adapters and manifests), `data/` (loaders, catalogs), `eval/` (backtests, metrics, the leaderboard),
 `api/` (FastAPI app, jobs, the worker process), `store/` (runs on disk), `showcase/` and `system/`; `web/` is the interface and `tests/` the tests.
