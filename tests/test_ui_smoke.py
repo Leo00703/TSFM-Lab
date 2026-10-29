@@ -152,9 +152,9 @@ def test_the_menus_open_and_close_and_the_phone_menu_lists_every_page(live, brow
         problems = _problems(page)
         _open(page, live["base"], "showcase", "main h1", problems)
         page.get_by_role("button", name="Evaluate").click()
-        assert page.get_by_role("link", name="Leaderboard").first.is_visible()
+        page.get_by_role("link", name="Leaderboard").first.wait_for(state="visible")  # the page redraws after the click: wait for it, do not read it at once
         page.keyboard.press("Escape")
-        assert not page.get_by_text("Rank the models on a benchmark or your data").is_visible()
+        page.get_by_text("Rank the models on a benchmark or your data").wait_for(state="hidden")
         page.get_by_role("link", name="Models").first.click()
         page.wait_for_selector("text=Model library")
         page.get_by_role("button", name="Light theme").click()
