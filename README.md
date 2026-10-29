@@ -64,8 +64,8 @@ caveats are in **[`RESULTS.md`](RESULTS.md)**.
 - These are public datasets and most makers do not list the real data their models were trained on, so read them as a comparison on equal footing,
   not as proof of out-of-sample skill; the clean test is your own recent data.
 
-**Documentation:** [`RESULTS.md`](RESULTS.md) (measured results and caveats) · [`docs/RESOCONTO.md`](docs/RESOCONTO.md) (the development log, in Italian) ·
-[`SECURITY.md`](SECURITY.md) · [`NOTICE`](NOTICE) (what the licence does and does not cover).
+**Documentation:** [`RESULTS.md`](RESULTS.md) (measured results and caveats) · [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) (the online benchmarks and the Leaderboard score) ·
+[`docs/SECURITY-MODEL.md`](docs/SECURITY-MODEL.md) · [`docs/RESOCONTO.md`](docs/RESOCONTO.md) (the development log, in Italian) · [`SECURITY.md`](SECURITY.md) · [`NOTICE`](NOTICE) (what the licence does and does not cover).
 
 ## Quick start
 
@@ -201,43 +201,10 @@ only. There is no login, so anyone on your tailnet can use it.
 
 ### Online benchmarks
 
-The Datasets page lists **187 curated datasets** from three public benchmarks, none of them downloaded until you ask. The first is
-[fev-bench](https://github.com/autogluon/fev): 100 tasks over 96 files of
-[`autogluon/fev_datasets`](https://huggingface.co/datasets/autogluon/fev_datasets) at a fixed revision (about 650 MB in all).
-It is a finite, verified list, not a search box: `scripts/build_catalog.py` read every file's schema and the exact length of every
-series straight from Hugging Face, checked a sample of each (missing values, time axis, constant series, text columns) and took
-from fev-bench which columns are the target, known in advance, past-only or static, plus the recommended horizon and seasonality.
-The result is committed as `src/tsfm_lab/data/catalog_fev.json`.
-
-The other two are listed the same way: [GIFT-Eval](https://huggingface.co/datasets/Salesforce/GiftEval)
-(55 datasets, about 1.2 GB, Arrow files; horizons and windows follow the benchmark's own rules, including the medium and long terms of
-sub-daily data) and the [Monash archive](https://huggingface.co/datasets/Monash-University/monash_tsf) (32 datasets, about 0.6 GB, `.tsf`
-files read by a parser that never executes anything). `scripts/build_catalog_ext.py gift|monash` read every file completely once and
-recorded exact lengths, missing values and the SHA-256 each download is checked against (`catalog_gift.json`, `catalog_monash.json`).
-Data that two benchmarks share are marked "also in", every entry carries its licence and a contamination note, and nothing is
-downloaded until you press Download.
-
-The **Leaderboard** page runs several models on a whole benchmark (fev-bench, GIFT-Eval or the Monash archive, optionally limited by file
-size) and ranks them. Every model is loaded once and forecasts the same windows of every dataset, with the horizon and windows of the
-benchmark's own task (windows capped, a seeded sample of series, the same context cap for all). The score is the fev-bench skill: the
-geometric mean over datasets of the model's error divided by seasonal naive's, on SQL and MASE; only datasets that every ranked model
-completed, and on which seasonal naive has an error to score against, count, and models with different quantile levels are scored on the levels they share. Missing datasets are downloaded first
-(after confirmation), results are stored under `runs/suites/` and can be reopened. The run is saved after every dataset: if you press Stop, or the
-computation fails, the datasets finished so far are kept and the ranking says how many it counts.
-The Leaderboard also ranks the models on **your own datasets** (the "Your datasets" tab, files added on the Datasets page): one horizon for
-all of them, the last windows of each series, the same scoring. Data recorded after the models' training data were collected cannot have been
-seen by them, which public benchmarks cannot promise.
-A dataset that a ranked model's own authors list as training data (the `trained_on_this_dataset` column of the fev-bench results they submitted: ten
-datasets for TimesFM 2.5, none for the other models) carries a warning in the Catalog and is left out of the ranking by default; the Leaderboard says so
-and a button counts it anyway. On one of them, `kdd_cup_2022_10T`, TimesFM 2.5 makes a quarter of every other model's error.
-
-Nothing is downloaded until you press **Download** on an entry, which shows its size and the licence note first. The file is
-checked against the SHA-256 published by Hugging Face and discarded if it differs. Once downloaded, an entry can be previewed,
-forecast in the Playground and backtested in Experiments like any other dataset; a very large file (30,000 series) is sampled
-with a fixed seed (200 series by default, adjustable) and says so. Text columns such as holiday names become on/off flags;
-static per-series attributes are not used. The cards declare the licence as "other" and the data come from public sources:
-check their terms before reusing the data. Because the real training data of most models is not listed, these datasets are marked as
-possibly seen: Mistral says Timestral's was mostly synthetic and that nothing it backtests was seen in pre-training, but names no real source and publishes no overlap analysis. Synthetic scenarios are the only guaranteed-unseen ones.
+The Datasets page lists **187 curated datasets** from three public benchmarks (fev-bench, GIFT-Eval and the Monash archive), none of them
+downloaded until you ask, each one checked against a SHA-256 before use. The **Leaderboard** runs several models on a whole benchmark, or on your
+own datasets, and ranks them by skill against seasonal naive; a dataset that a ranked model's authors list as training data is flagged and left
+out by default. How the catalogues were built, how the score works and what the contamination notes say: **[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md)**.
 
 ### Showcase data
 
@@ -262,23 +229,12 @@ To add a model, write one `ModelAdapter` and register it (see `src/tsfm_lab/mode
 
 ## Security
 
-The app is built to be safe to leave running on your own machine, and to say plainly where it is not.
-
-- **Local only by default.** The server listens on `127.0.0.1` and refuses any request whose `Host` is not a local name (which also blocks
-  DNS-rebinding), and any state-changing request from another origin. With `--tailscale` it also listens on your tailnet address; **there
-  is no login**, so anyone on your tailnet can use the app and see your runs and datasets.
-- **Nothing from outside is ever executed.** Weights are loaded from `safetensors` files only (never pickle, never `trust_remote_code`);
-  the Monash `.tsf` files are read by a parser, and your uploads by `pandas` readers for CSV, TSV, Parquet and Excel. Catalog dataset downloads
-  are pinned to a commit and checked against a SHA-256 before use, and a custom checkpoint is fetched at the exact commit that was inspected.
-- **Uploads** are limited to 100 MB (refused as soon as the limit is passed, before the body is held in memory), must be one of the
-  supported types, and are stored under `data/user/` with a name stripped of anything but letters, digits and `._-`.
-- **The page** is served with a Content-Security-Policy (only its own scripts, no inline script, no framing), `X-Frame-Options: DENY` and
-  `nosniff`; it loads nothing from another site. Run ids that come from a URL are checked against the exact shape the app generates, so
-  no URL can reach a file outside `runs/`. CSV exports quote cells that a spreadsheet would run as a formula.
-- **Inference runs in a separate process**, so a crash of PyTorch or the GPU driver cannot take the server down, and a dataset or a leaderboard
-  run cannot be deleted while a job is using it.
-- **Not covered:** a malicious file that exploits a bug in `pandas`, `pyarrow` or `openpyxl` while it is being read (keep them updated with
-  `uv sync`; the lock file pins what was tested), and anything a person with access to your tailnet or to this folder can do.
+The app is built to be safe to leave running on your own machine, and to say plainly where it is not. It listens on `127.0.0.1` only and refuses
+requests from other hosts and origins; with `--tailscale` it also listens on your tailnet address and **there is no login**, so anyone on your
+tailnet can use the app and see your runs and datasets. Weights are loaded from `safetensors` files only (never pickle), nothing from outside is
+executed, uploads are limited and sanitised, and inference runs in a separate process. What is protected, what is not (a malicious file that
+exploits a bug in `pandas`, `pyarrow` or `openpyxl`) and why: **[`docs/SECURITY-MODEL.md`](docs/SECURITY-MODEL.md)**. To report a vulnerability, see
+[`SECURITY.md`](SECURITY.md).
 
 ## Development
 

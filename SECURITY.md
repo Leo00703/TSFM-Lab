@@ -1,8 +1,8 @@
 # Security policy
 
 TSFM-Lab is a **local** tool: it runs on your own machine, listens on `127.0.0.1` by default and sends nothing anywhere except the downloads you
-ask for (model weights and public datasets from Hugging Face, pinned to a commit and checked against a SHA-256). The README section
-[Security](README.md#security) says what it protects against and, as plainly, what it does not (for example, there is no login when you use
+ask for (model weights and public datasets from Hugging Face, pinned to a commit and checked against a SHA-256). The page
+[Security model](docs/SECURITY-MODEL.md) says what it protects against and, as plainly, what it does not (for example, there is no login when you use
 `--tailscale`).
 
 ## Reporting a vulnerability
