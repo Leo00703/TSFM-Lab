@@ -19,10 +19,16 @@ answer as soon as the maintainer reads it; this is a one-person project, so ther
 
 ## Dependencies
 
-The pinned versions in `uv.lock` were checked against the OSV database with `pip-audit` on 29 October 2026. One package has known advisories:
-`setuptools` 81.0.0 (PYSEC-2026-3447 and GHSA-xmj3-9gf7-h52w, fixed in 83 and 84.1). PyTorch 2.11 requires `setuptools<82`, so it cannot be moved
-yet. The advisories concern converting an untrusted legacy wheel at install time on Windows, which the app never does (it does not call
-`setuptools` at all; it is only a dependency of PyTorch). The audit is not run automatically: repeat it after updating the lock file
+GitHub's Dependabot alerts are on, and the pinned versions in `uv.lock` were also checked against the OSV database with `pip-audit` on
+29 October 2026. Open advisories, none of which the app can reach:
+
+- `setuptools` 81.0.0 (GHSA-xmj3-9gf7-h52w, GHSA-h35f-9h28-mq5c and PYSEC-2026-3447, fixed in 83 and 84.1). PyTorch 2.11 requires
+  `setuptools<82`, so it cannot be moved yet. They concern converting an untrusted legacy wheel on Windows and building a source distribution on
+  macOS, which the app never does (it does not call `setuptools` at all; it is only a dependency of PyTorch).
+- `torch` 2.11.0 (GHSA-rrmf-rvhw-rf47, low, fixed in 2.13.0): memory corruption through `torch.jit.script`. The app never calls it. Moving to 2.13 has
+  not been tried yet: it needs the models re-checked on every system.
+
+The OSV audit is not run automatically: repeat it after updating the lock file
 (`uv export --no-hashes -o requirements.txt`, then `uvx pip-audit -r requirements.txt --no-deps`).
 
 Out of scope: vulnerabilities in the libraries the app depends on (report them upstream; `uv.lock` pins the tested versions), and the models'
