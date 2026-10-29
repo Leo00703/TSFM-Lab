@@ -36,8 +36,6 @@ COMMON_ISSUES = (
     "intervals is not available and a multi-model backtest scores every model on the levels they share."),
     ("Timestral's options map as follows: symmetric averaging -> flip invariance / symmetric averaging, clip non-negative -> "
     "keep non-negative inputs non-negative. Masking of flat covariates is ignored."),
-    ("The Apple GPU (MPS) has not been verified for TimesFM: compare it with the CPU first (scripts/check_device_parity.py). "
-    "A GPU that fails continues on the CPU."),
 )
 
 
@@ -54,7 +52,7 @@ def info_from_manifest(manifest: dict[str, Any]) -> ModelInfo:
     caps = Capabilities(
         multivariate=True, past_covariates=v3, known_covariates=v3, categorical_covariates=False,
         max_context=manifest["max_context"], max_horizon_per_pass=manifest["max_horizon_per_pass"],
-        quantile_levels=tuple(manifest["quantile_levels"]), device_kinds=("cpu", "cuda", "mps"))
+        quantile_levels=tuple(manifest["quantile_levels"]), device_kinds=("cpu", "cuda", "mps") if v3 else ("cpu", "cuda"))
     details = dict(manifest.get("details", {}))
     details["repo"] = manifest["repo"]
     details["vendor_reported"] = manifest.get("reported", {})
@@ -64,8 +62,13 @@ def info_from_manifest(manifest: dict[str, Any]) -> ModelInfo:
     own: list[str] = []
     if manifest.get("restriction"):
         own.append(manifest["restriction_note"])
-    if not v3:
-        own += [("Covariates are ignored: TimesFM 2.5 has them only through an external regression (XReg) that needs JAX, "
+    if v3:
+        own.append("Apple GPU (MPS): checked on a MacBook Air M5 with PyTorch 2.13, same forecasts as the CPU (relative difference below 1e-6) "
+                   "and about 1.1 times as fast (scripts/check_device_parity.py).")
+    else:
+        own += [("The Apple GPU (MPS) is not offered: Google's package hands float64 arrays to the GPU, which Metal cannot hold, so the forecast "
+                 "fails there (checked on a MacBook Air M5). On a Mac it runs on the CPU."),
+                ("Covariates are ignored: TimesFM 2.5 has them only through an external regression (XReg) that needs JAX, "
                 "which this project does not install."),
                 "Several variables of one series are forecast one at a time (no joint modelling)."]
     return ModelInfo(
