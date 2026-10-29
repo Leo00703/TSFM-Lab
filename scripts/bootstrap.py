@@ -30,7 +30,22 @@ TAILWIND_SHA256 = {
     "tailwindcss-macos-x64": "7922e0953f2110c05976e3bf58f14e643d90427575e766b7d433f5f80cbee7e1",
     "tailwindcss-macos-arm64": "cdf646702987a743464dff4d9c60fd4480d1c1e73dd819a9a67f1078815dce9d",
 }
-EXTRA_FOR_DEVICE = {"cuda": "cu128", "cpu": "cpu", "pypi": "pypi"}
+EXTRA_FOR_DEVICE = {"cuda": "cu130", "cpu": "cpu", "pypi": "pypi"}
+MIN_NVIDIA_DRIVER = 580  # the CUDA 13.0 build of PyTorch needs a driver of the 580 series or newer
+
+
+def cuda_build_usable(driver_version: str | None) -> bool:
+    """True if the NVIDIA driver (e.g. "621.01" or "580.65.06") can run the CUDA 13.0 build; an unreadable version counts as usable."""
+    try:
+        return int((driver_version or "").strip().split(".")[0]) >= MIN_NVIDIA_DRIVER
+    except ValueError:
+        return True
+
+
+def nvidia_driver_version() -> str | None:
+    probe = subprocess.run(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"], capture_output=True, text=True, check=False)
+    lines = probe.stdout.strip().splitlines() if probe.returncode == 0 else []
+    return lines[0].strip() if lines else None
 
 
 def detect_device(choice: str) -> str:
@@ -41,6 +56,11 @@ def detect_device(choice: str) -> str:
     if shutil.which("nvidia-smi"):
         probe = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True, check=False)
         if probe.returncode == 0 and "GPU" in probe.stdout:
+            driver = nvidia_driver_version()
+            if not cuda_build_usable(driver):
+                print(f"NVIDIA driver {driver} is older than {MIN_NVIDIA_DRIVER}, which the CUDA 13.0 build of PyTorch needs: installing the CPU build.\n"
+                      f"Update the driver and run `python scripts/bootstrap.py --device cuda` to use the GPU.")
+                return "cpu"
             return "cuda"
     return "cpu"
 

@@ -19,7 +19,7 @@ out-of-sample skill.
 | Covariates | used where the dataset has them and the model can take them; ignored automatically otherwise |
 | Score | **skill** = 100 × (1 − geometric mean over datasets of the model's error ÷ seasonal naive's error), on SQL (scaled quantile loss; MASE is reported too). 0% = as good as seasonal naive, +40% = 40% lower error. Each ratio is clipped to [0.01, 100] so one dataset cannot dominate |
 | Counted | only datasets that every ranked model completed and on which seasonal naive has an error to score against. In the app's Leaderboard, datasets that a ranked model's authors list as its training data are also left out by default (see "Training data"); the tables below give both |
-| Hardware | one RTX 5060 Ti 16 GB, Windows 11, PyTorch 2.11 (CUDA 12.8); times are a single pass on an otherwise idle GPU |
+| Hardware | one RTX 5060 Ti 16 GB, Windows 11, PyTorch 2.11 (CUDA 12.8); times are a single pass on an otherwise idle GPU. The project now installs PyTorch 2.13 (CUDA 13.0) on Windows and Linux: the forecasts of all ten models on a fixed test input were compared between the two builds, on CPU and GPU, and differ by at most 1.1e-6 relative, so these results stand |
 | Uncertainty | bootstrap over datasets, 2000 resamples; differences are given as median and 90% interval |
 
 Files above 50 MB were measured in a separate run (third table). The ranked numbers below come from three runs, because the datasets

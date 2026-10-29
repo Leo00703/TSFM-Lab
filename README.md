@@ -95,8 +95,9 @@ python3 scripts/bootstrap.py          # python3.12 or python3.13
 ```
 
 `serve` opens `http://127.0.0.1:8765` in your browser (add `--no-browser` to skip that, `--port N` to change the port).
-`bootstrap.py` picks the PyTorch build for you: the CUDA build when an NVIDIA GPU is found, the small CPU build otherwise, the
-standard macOS build on a Mac. Force one with `--device cpu`, `--device cuda` or `--device pypi`.
+`bootstrap.py` picks the PyTorch build for you: the CUDA 13.0 build when an NVIDIA GPU is found and its driver is 580 or newer (an older
+driver gets the CPU build and a message), the small CPU build otherwise, the standard macOS build on a Mac. Force one with `--device cpu`,
+`--device cuda` or `--device pypi`.
 
 In every command below, `.venv\Scripts\python` is the Windows interpreter and `.venv/bin/python` the Linux/macOS one.
 
@@ -165,7 +166,7 @@ Adding a model means writing one `ModelAdapter` (see `src/tsfm_lab/models/chrono
 
 | Platform | Compute | Notes |
 |---|---|---|
-| Windows | CPU, NVIDIA CUDA | Developed and tested here, including the GPU |
+| Windows | CPU, NVIDIA CUDA | Developed and tested here, including the GPU (RTX 5060 Ti, driver 621; CUDA 13.0 needs a driver 580 or newer, a GPU from Turing on) |
 | Linux | CPU, NVIDIA CUDA | Installation and tests pass on a hosted Linux runner (CPU); CUDA on Linux is not tested by the author |
 | macOS (Apple Silicon) | CPU, Apple GPU (MPS) | Installation and tests pass on a hosted macOS runner; the Apple GPU was verified on a MacBook Air M5 (see below) |
 
