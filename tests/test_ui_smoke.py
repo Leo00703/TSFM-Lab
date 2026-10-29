@@ -158,7 +158,7 @@ def test_the_menus_open_and_close_and_the_phone_menu_lists_every_page(live, brow
         page.get_by_role("link", name="Models").first.click()
         page.wait_for_selector("text=Model library")
         page.get_by_role("button", name="Light theme").click()
-        assert "dark" not in (page.evaluate("document.documentElement.className") or "")
+        page.wait_for_function("!document.documentElement.className.includes('dark')")  # the theme class is set by the page a moment after the click
         page.get_by_role("button", name="Dark theme").click()
         page.set_viewport_size({"width": 390, "height": 844})
         page.get_by_role("button", name="Open menu").click()

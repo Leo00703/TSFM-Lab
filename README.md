@@ -255,7 +255,7 @@ Contributions are welcome: see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 `.github/workflows/ci.yml` ("Cross-platform check") runs Linux, Windows and macOS through the reusable `check.yml` (one system). It runs
 on every push to `main` and every pull request that touches code (documentation-only changes are skipped), and by hand from the Actions tab
 (Run workflow) or with `gh workflow run ci.yml -f systems=macos` (or `all`, `linux`, `windows`). Each system runs the real
-installation (`scripts/bootstrap.py`), the environment report, the tests without model weights, and the tests with the real
+installation (`scripts/bootstrap.py`), the environment report, `ruff check .`, the tests without model weights, and the tests with the real
 Timestral-5M checkpoint on the CPU. Hosted runners have no GPU, so the GPU paths are checked by hand. The workflow uses no secrets and
 only reads the repository.
 

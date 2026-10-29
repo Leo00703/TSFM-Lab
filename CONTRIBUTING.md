@@ -33,7 +33,7 @@ bury your change in noise. The README's [Development](README.md#development) sec
   from a copy without them.
 - **Say what you measured.** A claim about model quality (a ranking, a number in `RESULTS.md`) needs the run that produced it and its caveats.
 
-The cross-platform check (Linux, Windows, macOS) runs on every pull request that touches code; it needs to be green. It runs on CPU: GPU paths
+The cross-platform check (Linux, Windows, macOS) runs on every pull request that touches code; it needs to be green (it includes `ruff check .`). It runs on CPU: GPU paths
 are checked by hand, so say in the pull request if you tested one.
 
 ## Licence
