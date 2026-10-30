@@ -1,4 +1,5 @@
 import datetime as dt
+import threading
 import time
 
 import pytest
@@ -278,6 +279,29 @@ def test_stop_really_stops_a_long_computation_and_the_worker_recovers(tmp_path, 
         out = w.call("forecast", {"dataset": SPEC, "series": 0, "origin": 200, "horizon": 12, "model": "naive", "baselines": [],
                                   "device": "cpu", "use_covariates": True, "context_length": None, "options": {}})
         assert out["horizon"] == 12 and w.alive  # a fresh worker serves the next request
+    finally:
+        w.stop()
+
+
+def test_a_cancel_raised_by_the_progress_callback_still_stops_the_worker(tmp_path, monkeypatch) -> None:
+    from tsfm_lab.api.jobs import JobCancelled
+    from tsfm_lab.api.worker import WorkerClient
+
+    monkeypatch.setenv("TSFM_LAB_TEST_OPS", "1")
+    w = WorkerClient(tmp_path)
+    w.STOP_GRACE_S = 1.0
+    cancelled = threading.Event()
+
+    def on_progress(done: int, total: int, message: str) -> None:
+        cancelled.set()  # the user cancels while the computation is running, as Job.update does: it raises from inside the callback
+        raise JobCancelled()
+
+    try:
+        t0 = time.time()
+        with pytest.raises(JobCancelled):
+            w.call("sleep", {"seconds": 120, "report_progress": True}, on_progress, cancelled.is_set)
+        assert time.time() - t0 < 30, "stopping took too long"
+        assert not w.alive, "the cancelled computation must not keep running in the worker after the job is reported as cancelled"
     finally:
         w.stop()
 

@@ -180,6 +180,8 @@ def do_selftest_crash(svc: Services, a: dict[str, Any], progress) -> dict[str, A
 
 
 def do_selftest_sleep(svc: Services, a: dict[str, Any], progress) -> dict[str, Any]:
+    if a.get("report_progress"):
+        progress(0, 0, "started")  # one message, then no further look at the cancel flag
     time.sleep(a.get("seconds", 60))  # a long, uninterruptible computation; only when TSFM_LAB_TEST_OPS=1
     return {"slept": True}
 
@@ -317,7 +319,11 @@ class WorkerClient:
                     continue
                 if kind == "progress":
                     if on_progress:
-                        on_progress(*data)
+                        try:
+                            on_progress(*data)
+                        except JobCancelled:  # Job.update raises this once the user cancels: it must not skip the stop below, or the worker keeps computing
+                            self._cancel.set()
+                            asked_at = asked_at or time.time()
                 elif kind == "done":
                     return data
                 elif kind == "error":
