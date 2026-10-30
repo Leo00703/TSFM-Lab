@@ -35,6 +35,14 @@ def test_forecast_shape_levels_and_ordering(model) -> None:
     assert model.info.details["num_heads"] and model.info.details["d_model"] == 192
 
 
+def test_a_cap_asked_for_in_one_request_does_not_stay_on_the_model_for_the_next(model) -> None:
+    default = model._model.quantile_real_cap_k
+    model.forecast(ForecastRequest(_ctx(), 12, options={"quantile_real_cap_k": 0.5}))
+    assert model._model.quantile_real_cap_k == 0.5
+    model.forecast(ForecastRequest(_ctx(), 12))  # the interactive page reuses the loaded model: a request without the option gets the default
+    assert model._model.quantile_real_cap_k == default
+
+
 def test_chunking_does_not_change_the_forecast(model) -> None:
     ctx = _ctx(batch=6)
     whole = model.forecast(ForecastRequest(ctx, 24, options={"max_packed_rows": 1000}))

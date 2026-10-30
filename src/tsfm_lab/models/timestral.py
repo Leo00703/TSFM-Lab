@@ -77,6 +77,7 @@ class TimestralAdapter(TorchAdapter):
             source = str(cache.repo_dir(source) / "snapshots" / status["revision"])
         checkpoint = resolve_checkpoint(source)
         self._model = TimestralForecaster.from_pretrained(source, device=device)
+        self._default_cap_k = self._model.quantile_real_cap_k
         config = json.loads((Path(checkpoint) / "config.json").read_text(encoding="utf-8"))
         self.info.details.update({k: config[k] for k in ("num_heads", "mlp_hidden_dim", "d_model", "patch_size")
                                   if k in config})
@@ -91,8 +92,7 @@ class TimestralAdapter(TorchAdapter):
         clip_nonneg = bool(opts.get("clip_nonnegative", True))
         cap_k = opts.get("quantile_real_cap_k")
         max_rows = int(opts.get("max_packed_rows", MPS_MAX_PACKED_ROWS if self._device == "mps" else DEFAULT_MAX_PACKED_ROWS))
-        if cap_k is not None:
-            self._model.quantile_real_cap_k = float(cap_k)
+        self._model.quantile_real_cap_k = self._default_cap_k if cap_k is None else float(cap_k)  # set on every call: a loaded model is reused by later requests
 
         warnings: list[str] = []
         known = request.known_covariates
