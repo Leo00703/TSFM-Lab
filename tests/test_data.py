@@ -3,7 +3,13 @@ import pandas as pd
 import pytest
 
 from tsfm_lab.data import synthetic
-from tsfm_lab.data.local import ColumnMapping, load_dataframe, load_file
+from tsfm_lab.data.local import (
+    READERS,
+    ColumnMapping,
+    load_dataframe,
+    load_file,
+    read_table,
+)
 from tsfm_lab.data.schema import Dataset, Series, seasonal_period_for
 
 
@@ -84,3 +90,14 @@ def test_local_loader_validates_columns_and_files(tmp_path) -> None:
     assert ds.source == "local" and len(ds.series) >= 1
     with pytest.raises(ValueError, match="unsupported"):
         load_file(tmp_path / "x.json")
+
+
+def test_every_file_type_the_upload_accepts_can_be_read(tmp_path) -> None:
+    frame = pd.DataFrame({"time": pd.date_range("2024-01-01", periods=3), "y": [1.0, 2.0, 3.0]})
+    writers = {".csv": frame.to_csv, ".txt": frame.to_csv, ".tsv": lambda p, **kw: frame.to_csv(p, sep="	", **kw),
+               ".parquet": lambda p, **kw: frame.to_parquet(p), ".xlsx": frame.to_excel}
+    assert set(READERS) == set(writers), "a file type was added or removed: extend this test with how to write it"
+    for suffix, write in writers.items():
+        path = tmp_path / f"sample{suffix}"
+        write(path, **({} if suffix in (".parquet",) else {"index": False}))
+        assert read_table(path).shape == (3, 2), suffix

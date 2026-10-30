@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from tsfm_lab.api.app import create_app
+from tsfm_lab.data.catalog import DatasetCatalog
 
 SPEC = {"source": "synthetic", "id": "multi_seasonality", "params": {"n_series": 3, "length": 300}}
 
@@ -51,6 +52,23 @@ def test_models_datasets_and_system(client) -> None:
     assert system["environment"]["python"] and system["devices"][0]["id"] == "cpu"
     disk = client.get("/api/system/disk").json()
     assert {d["label"] for d in disk} >= {".venv", "runs and benchmarks (runs/)"}
+
+
+def test_a_download_first_message_reaches_the_user_instead_of_a_bare_500(client, monkeypatch) -> None:
+    def not_downloaded(self, spec):
+        raise FileNotFoundError("'hospital' is not downloaded yet: download it from the Datasets page first")
+
+    monkeypatch.setattr(DatasetCatalog, "resolve", not_downloaded)
+    for path, body in (("/api/datasets/inspect", SPEC), ("/api/forecast", {"dataset": SPEC, "model": "naive"})):
+        answer = client.post(path, json=body)
+        assert answer.status_code == 409 and "download it from the Datasets page" in answer.json()["detail"]
+
+    def os_error(self, spec):
+        raise FileNotFoundError(2, "No such file or directory", "C:/Users/someone/private/file.parquet")
+
+    monkeypatch.setattr(DatasetCatalog, "resolve", os_error)
+    answer = client.post("/api/datasets/inspect", json=SPEC)
+    assert answer.status_code == 409 and "private" not in answer.text, "an operating-system error must not leak a local path"
 
 
 def test_invalid_inputs_are_rejected_cleanly(client) -> None:

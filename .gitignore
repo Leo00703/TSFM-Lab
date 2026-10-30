@@ -37,3 +37,8 @@ desktop.ini
 # Local tooling config
 /.claude/
 /web/dist/
+
+# desloppify local state
+.desloppify/
+scorecard.png
+query.json

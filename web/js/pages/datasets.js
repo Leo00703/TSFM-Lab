@@ -72,7 +72,7 @@ function Wizard({ onDone }) {
         class="grid place-items-center gap-3 rounded-xl border border-dashed border-border-secondary px-4 py-10 text-center">
         <p class="text-body-large">Drop a CSV, TSV, Parquet or Excel file here</p>
         <p class="max-w-md text-body-small text-text-muted">One row per timestamp (and per series if there is an id column). The file stays on this machine, in <span class="font-mono">data/user/</span>.</p>
-        <input ref=${input} type="file" class="sr-only" accept=".csv,.tsv,.txt,.parquet,.xlsx,.xls" onChange=${(e) => send(e.currentTarget.files[0])} />
+        <input ref=${input} type="file" class="sr-only" accept=".csv,.tsv,.txt,.parquet,.xlsx" onChange=${(e) => send(e.currentTarget.files[0])} />
         <${Button} kind="primary" icon="upload" disabled=${busy} onClick=${() => input.current.click()}>${busy ? 'Reading…' : 'Choose a file'}<//></div>
       ${error && html`<${ErrorBox} error=${error} />`}
       ${up && m && html`<div class="grid gap-5">

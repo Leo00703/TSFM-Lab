@@ -67,6 +67,11 @@ def _dataset(args: argparse.Namespace):
     return synthetic.build(args.dataset)
 
 
+def _mean(summary: dict[str, dict[str, float]], metric: str, digits: int) -> str:
+    """Mean of a metric as text, or "-" when the model does not give it (the 90% coverage needs the 5% and 95% quantiles, which decile-only models lack)."""
+    return f"{summary[metric]['mean']:.{digits}f}" if metric in summary else "-"
+
+
 def cmd_run(args: argparse.Namespace) -> None:
     ds = _dataset(args)
     cfg = BacktestConfig(horizon=args.horizon, n_windows=args.windows, max_series=args.max_series,
@@ -82,8 +87,8 @@ def cmd_run(args: argparse.Namespace) -> None:
     rows = []
     for mid, o in result.models.items():
         s = o.summary
-        rows.append([mid, o.device, f"{s['mase']['mean']:.3f}", f"{s['sql']['mean']:.3f}",
-                     f"{s['coverage_80']['mean']:.2f}", f"{s['coverage_90']['mean']:.2f}",
+        rows.append([mid, o.device, _mean(s, "mase", 3), _mean(s, "sql", 3),
+                     _mean(s, "coverage_80", 2), _mean(s, "coverage_90", 2),
                      f"{sum(o.batch_ms):.0f}", "-" if o.warmup_ms is None else f"{o.warmup_ms:.0f}"])
     _table(rows, ["model", "device", "MASE", "SQL", "cov80", "cov90", "warm ms", "cold ms"])
     main_model = result.models[args.model]

@@ -53,6 +53,16 @@ def test_a_run_id_from_a_url_cannot_leave_the_runs_folder(tmp_path) -> None:
     assert (decoy / "meta.json").is_file() and (tmp_path / "runs" / "index.db").is_file()
 
 
+def test_a_dataset_id_from_a_url_cannot_delete_a_file_outside_the_datasets_folder(tmp_path) -> None:
+    catalog = DatasetCatalog(tmp_path / "user")
+    victim = tmp_path / "victim.json"
+    victim.write_text("{}", encoding="utf-8")
+    for evil in ("..\\..\\victim", "../../victim", "../victim", "..", "victim", "local-0123456789abcde", ""):
+        with pytest.raises(KeyError):
+            catalog.delete_local(evil)
+    assert victim.is_file()
+
+
 def test_the_run_endpoints_answer_404_for_ids_that_are_not_runs(client) -> None:
     for evil in ("..", "..%5C..%5Cdata", "benchmarks"):
         assert client.get(f"/api/runs/{evil}").status_code in (404, 405)
