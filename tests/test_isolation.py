@@ -1,4 +1,8 @@
+import subprocess
+import sys
 from pathlib import Path
+
+import pytest
 
 from tsfm_lab import isolation
 
@@ -44,3 +48,13 @@ def test_on_macos_unsupported_gpu_operations_fall_back_to_the_cpu_unless_the_use
     mine: dict[str, str] = {"PYTORCH_ENABLE_MPS_FALLBACK": "0"}
     isolation.apply(root=tmp_path, environ=mine)
     assert mine["PYTORCH_ENABLE_MPS_FALLBACK"] == "0"
+
+
+@pytest.mark.parametrize("script", ["download_models", "smoke_test"])
+def test_a_script_points_huggingface_at_the_project_cache(script: str) -> None:
+    """The scripts import timestral, which imports huggingface_hub and reads its cache path once: tsfm_lab has to be imported first."""
+    root = isolation.find_root()
+    code = (f"import sys; sys.path.insert(0, {str(root / 'scripts')!r}); import {script}; "
+            "from huggingface_hub import constants; print(constants.HF_HUB_CACHE)")
+    out = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, text=True, check=True, timeout=120).stdout.strip()
+    assert Path(out).is_relative_to(root / ".cache"), out

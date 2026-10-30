@@ -17,11 +17,13 @@ import statistics
 import sys
 import time
 
+import tsfm_lab  # noqa: F401  (applies cache isolation before torch / huggingface_hub are used)
+
+# isort: split
 import numpy as np
 import torch
 from timestral import TimestralForecaster
 
-import tsfm_lab  # noqa: F401  (applies cache isolation before torch / huggingface_hub are used)
 from tsfm_lab.isolation import find_root
 
 
