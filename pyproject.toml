@@ -29,12 +29,12 @@ dependencies = [
 # PyTorch comes from exactly one of these extras (chosen by scripts/bootstrap.py):
 #   cu130 -> CUDA 13.0 build (Windows/Linux + NVIDIA Turing or newer, incl. RTX 50xx; needs a driver 580 or newer). It also runs on CPU.
 #   cpu   -> small CPU-only build (Windows/Linux without NVIDIA)
-#   pypi  -> the standard PyPI wheel (macOS); stays on 2.11.0 until the Apple GPU path is re-checked with a newer PyTorch
+#   pypi  -> the standard PyPI wheel (macOS)
 # PyTorch stopped publishing CUDA 12.8 builds after 2.11, so 2.13 (which fixes GHSA-rrmf-rvhw-rf47) needs the CUDA 13.0 index.
 [project.optional-dependencies]
 cu130 = ["torch==2.13.0"]
 cpu = ["torch==2.13.0"]
-pypi = ["torch==2.11.0"]
+pypi = ["torch==2.13.0"]
 
 [project.scripts]
 tsfm-lab = "tsfm_lab.cli:main"
