@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import datetime as dt
+import threading
+import time
 from types import SimpleNamespace as NS
 
 import pytest
@@ -121,3 +123,33 @@ def test_the_api_adds_lists_and_removes_a_custom_model(tmp_path, monkeypatch) ->
         assert "custom-someone-my-tirex" not in {m["id"] for m in client.get("/api/models").json()}
     finally:
         app.state.worker.stop()
+
+
+def test_requests_that_sync_the_registry_at_the_same_time_do_not_register_a_model_twice(tmp_path) -> None:
+    registry = build_default_registry()
+    custom.add(tmp_path, registry, "someone/my-tirex", "tirex-2", "My TiRex", fake_api())
+    other = build_default_registry()
+    ids = other.ids
+
+    def slow_ids():
+        names = ids()
+        time.sleep(0.02)  # widens the gap between "is it there?" and "add it", which two requests can hit at once
+        return names
+
+    other.ids = slow_ids
+    errors: list[BaseException] = []
+    start = threading.Barrier(6)
+
+    def run() -> None:
+        start.wait()
+        try:
+            custom.sync(other, tmp_path)
+        except BaseException as error:  # noqa: BLE001
+            errors.append(error)
+
+    threads = [threading.Thread(target=run) for _ in range(6)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert errors == [] and "custom-someone-my-tirex" in ids()

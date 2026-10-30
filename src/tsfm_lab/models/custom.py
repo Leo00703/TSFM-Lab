@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -25,6 +26,7 @@ from tsfm_lab.models.registry import Registry
 REPO_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}/[A-Za-z0-9][A-Za-z0-9._-]{0,95}$")
 MAX_BYTES = 4_000_000_000
 FILE = ("data", "user", "custom_models.json")
+_LOCK = threading.RLock()  # requests run on several threads: the file and the registry change together, and sync() is called from add() and remove()
 RISKY_SUFFIXES = (".bin", ".pt", ".pth", ".ckpt", ".pkl", ".pickle", ".py", ".onnx")
 
 CUSTOM_NOTES = (
@@ -118,26 +120,28 @@ def add(root: Path, registry: Registry, repo: str, base_id: str, name: str | Non
     found = inspect(repo, base_id, registry, api)
     if found["blocking"]:
         raise ValueError(" ".join(found["blocking"]))
-    entries = read_entries(root)
-    model_id = slug(found["repo"])
-    if any(e["id"] == model_id or e["repo"].lower() == found["repo"].lower() for e in entries):
-        raise ValueError("This repository is already added.")
-    entry = {"id": model_id, "name": (name or found["repo"].split("/")[1]).strip()[:60] or model_id, "repo": found["repo"], "base": base_id,
-             "revision": found["sha"], "params": found.get("params"), "license": found.get("license"), "author": found.get("author"),
-             "size_bytes": found.get("size_bytes"), "added": datetime.now(UTC).isoformat(timespec="seconds")}
-    _write(root, [*entries, entry])
-    sync(registry, root)
-    return entry
+    with _LOCK:
+        entries = read_entries(root)
+        model_id = slug(found["repo"])
+        if any(e["id"] == model_id or e["repo"].lower() == found["repo"].lower() for e in entries):
+            raise ValueError("This repository is already added.")
+        entry = {"id": model_id, "name": (name or found["repo"].split("/")[1]).strip()[:60] or model_id, "repo": found["repo"], "base": base_id,
+                 "revision": found["sha"], "params": found.get("params"), "license": found.get("license"), "author": found.get("author"),
+                 "size_bytes": found.get("size_bytes"), "added": datetime.now(UTC).isoformat(timespec="seconds")}
+        _write(root, [*entries, entry])
+        sync(registry, root)
+        return entry
 
 
 def remove(root: Path, registry: Registry, model_id: str) -> str:
-    entries = read_entries(root)
-    entry = next((e for e in entries if e["id"] == model_id), None)
-    if entry is None:
-        raise KeyError(f"unknown custom model '{model_id}'")
-    _write(root, [e for e in entries if e["id"] != model_id])
-    sync(registry, root)
-    return entry["repo"]
+    with _LOCK:
+        entries = read_entries(root)
+        entry = next((e for e in entries if e["id"] == model_id), None)
+        if entry is None:
+            raise KeyError(f"unknown custom model '{model_id}'")
+        _write(root, [e for e in entries if e["id"] != model_id])
+        sync(registry, root)
+        return entry["repo"]
 
 
 def _derive(registry: Registry, entry: dict[str, Any]) -> tuple[ModelInfo, Any]:
@@ -162,10 +166,11 @@ def _derive(registry: Registry, entry: dict[str, Any]) -> tuple[ModelInfo, Any]:
 
 def sync(registry: Registry, root: Path) -> None:
     """Make the registry list exactly the custom models in the file (idempotent; the worker calls it before every job)."""
-    wanted = {e["id"]: e for e in read_entries(root)}
-    for model_id in [i.id for i in registry.infos() if i.details.get("custom")]:
-        if model_id not in wanted:
-            registry.remove(model_id)
-    for model_id, entry in wanted.items():
-        if model_id not in registry.ids() and entry["base"] in registry.ids():
-            registry.add(*_derive(registry, entry))
+    with _LOCK:
+        wanted = {e["id"]: e for e in read_entries(root)}
+        for model_id in [i.id for i in registry.infos() if i.details.get("custom")]:
+            if model_id not in wanted:
+                registry.remove(model_id)
+        for model_id, entry in wanted.items():
+            if model_id not in registry.ids() and entry["base"] in registry.ids():
+                registry.add(*_derive(registry, entry))
