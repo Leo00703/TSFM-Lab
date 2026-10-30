@@ -482,6 +482,10 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
         devices = ["cuda:0" if d == "cuda" else d for d in body.devices]
         if not set(devices) <= valid:
             raise HTTPException(422, f"unavailable device(s): {sorted(set(devices) - valid)}")
+        info = registry.info(body.model)
+        unsupported = sorted(d for d in devices if d.split(":")[0] not in info.capabilities.device_kinds)
+        if unsupported:  # a benchmark is strict (it never measures the CPU under a GPU's name): say so now, not halfway through the job
+            raise HTTPException(422, f"{info.name} does not support {', '.join(unsupported)} (it supports: {', '.join(info.capabilities.device_kinds)})")
         payload = {"model": body.model, "devices": devices, "repeats": body.repeats, "scenarios": body.scenarios}
         return ok(jobs.submit("benchmark", f"Benchmark {registry.info(body.model).name} · {', '.join(devices)}",
                               lambda j: worker.call("benchmark", payload, lambda d, t, m: j.update(d, t, m),

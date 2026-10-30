@@ -45,7 +45,7 @@ export function NumberInput({ value, onChange, min, max, step = 1, placeholder }
 
 export function Check({ checked, onChange, children, hint, disabled }) {
   return html`<label class=${'flex items-start gap-3 min-h-10 py-1.5 cursor-pointer ' + (disabled ? 'opacity-50 pointer-events-none' : '')}>
-    <input type="checkbox" class="mt-1 size-4 shrink-0 accent-[var(--color-surface-brand)]" checked=${checked} onChange=${(e) => onChange(e.currentTarget.checked)} />
+    <input type="checkbox" class="mt-1 size-4 shrink-0 accent-[var(--color-surface-brand)]" checked=${checked} disabled=${disabled} onChange=${(e) => onChange(e.currentTarget.checked)} />
     <span class="text-body-large leading-6">${children}${hint && html`<span class="block text-body-small text-text-muted">${hint}</span>`}</span></label>`;
 }
 

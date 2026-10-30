@@ -272,3 +272,13 @@ def test_models_are_listed_by_family_and_from_largest_to_smallest_within_each(cl
         sizes = [m["params"] for m in models if m["family"] == family]
         assert sizes == sorted(sizes, reverse=True)
     assert all(m["license"] and m["capabilities"]["quantile_levels"] and "downloaded" in m["cache"] for m in models)
+
+
+def test_a_benchmark_refuses_a_device_the_model_does_not_support(client, monkeypatch) -> None:
+    """TimesFM 2.5 cannot run on the Apple GPU; the strict benchmark used to fail halfway through the job instead of at the request."""
+    from tsfm_lab.api import app as app_module
+    from tsfm_lab.models.base import DeviceInfo
+
+    monkeypatch.setattr(app_module, "list_devices", lambda: [DeviceInfo("cpu", "cpu", "CPU", None), DeviceInfo("mps", "mps", "Apple GPU", None)])
+    refused = client.post("/api/jobs/benchmark", json={"model": "timesfm-2-5", "devices": ["cpu", "mps"]})
+    assert refused.status_code == 422 and "does not support mps" in refused.json()["detail"] and "cpu, cuda" in refused.json()["detail"]

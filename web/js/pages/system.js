@@ -15,6 +15,9 @@ function Benchmark({ sys, models }) {
   const [devs, setDevs] = useState(['cpu', ...gpus.map((g) => g.id)]);
   const [repeats, setRepeats] = useState(15), [scen, setScen] = useState(['mistral', 'batch', 'context', 'horizon']);
   const [error, setError] = useState(null);
+  const kindsOf = (id) => { const m = models.find((x) => x.id === id); return (m && m.capabilities && m.capabilities.device_kinds) || null; };  // what the adapter can run on
+  const offered = (d) => d.supported && (!kindsOf(model) || kindsOf(model).includes(d.kind));
+  const pickModel = (id) => { setModel(id); const k = kindsOf(id); if (k) setDevs((cur) => cur.filter((x) => { const d = sys.devices.find((y) => y.id === x); return d && k.includes(d.kind); })); };
   const active = jobs.find((j) => j.kind === 'benchmark' && isActive(j));  // survives page changes and reloads
   const start = async () => {
     setError(null);
@@ -23,9 +26,9 @@ function Benchmark({ sys, models }) {
   };
   const opts = modelOptions(models);
   return html`<${Card}><div class="grid gap-5 md:grid-cols-2">
-    <div class="grid content-start gap-4"><${Field} label="Model"><${Select} value=${model} onChange=${setModel} options=${opts} /><//>
+    <div class="grid content-start gap-4"><${Field} label="Model"><${Select} value=${model} onChange=${pickModel} options=${opts} /><//>
       <div class="grid grid-cols-2 gap-3"><${Field} label="Timed repeats" hint="per scenario"><${NumberInput} value=${repeats} min=${1} max=${200} onChange=${(v) => setRepeats(v || 1)} /><//></div></div>
-    <div><span class="label">Devices to compare</span>${sys.devices.map((d) => html`<${Check} disabled=${!d.supported} checked=${devs.includes(d.id)} onChange=${(c) => setDevs(c ? [...devs, d.id] : devs.filter((x) => x !== d.id))} hint=${d.supported ? null : d.reason}>${d.id === 'cpu' ? 'CPU' : deviceLabel(d.id)} <span class="text-text-muted">· ${d.name.slice(0, 40)}</span><//>`)}
+    <div><span class="label">Devices to compare</span>${sys.devices.map((d) => html`<${Check} disabled=${!offered(d)} checked=${devs.includes(d.id)} onChange=${(c) => setDevs(c ? [...devs, d.id] : devs.filter((x) => x !== d.id))} hint=${!d.supported ? d.reason : offered(d) ? null : 'not supported by this model'}>${d.id === 'cpu' ? 'CPU' : deviceLabel(d.id)} <span class="text-text-muted">· ${d.name.slice(0, 40)}</span><//>`)}
       <span class="label mt-3">Scenarios</span>${SCEN.map(([v, l]) => html`<${Check} checked=${scen.includes(v)} onChange=${(c) => setScen(c ? [...scen, v] : scen.filter((x) => x !== v))}>${l}<//>`)}</div></div>
     <div class="mt-5 flex flex-wrap items-center gap-4 border-t border-border-primary pt-5"><${Button} kind="brand" disabled=${!!active || !devs.length || !scen.length} onClick=${start}>${active ? 'Measuring…' : 'Run benchmark'}<//>
       ${active && html`<${Button} kind="danger" onClick=${() => stopJob(active.id)}>Stop<//>`}

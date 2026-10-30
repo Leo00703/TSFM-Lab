@@ -18,7 +18,7 @@ import pytest
 
 pytest.importorskip("playwright.sync_api")
 from playwright.sync_api import Error as PlaywrightError
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 from tsfm_lab.api.app import create_app
 
@@ -174,6 +174,45 @@ def test_the_menus_open_and_close_and_the_phone_menu_lists_every_page(live, brow
         names = {page.get_by_role("link", name=n).first.inner_text().strip() for n in ("Showcase", "Models", "Datasets", "Playground", "Experiments", "Leaderboard", "Runs", "System", "About")}
         assert len(names) == 9
         assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"), "the page scrolls sideways on a phone"
+        assert problems == [], problems[:3]
+    finally:
+        page.close()
+
+
+def test_the_benchmark_form_does_not_offer_a_device_the_model_cannot_run_on(live, browser) -> None:
+    """TimesFM 2.5 cannot use the Apple GPU: the form shows it switched off for that model (the machine here has none, so one is simulated)."""
+    import re
+
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    try:
+        problems = _problems(page)
+
+        def with_apple_gpu(route):
+            data = route.fetch().json()
+            data["devices"].append({"id": "mps", "kind": "mps", "name": "Apple M5 (simulated)", "memory_gb": None, "supported": True, "reason": None})
+            route.fulfill(json=data)
+
+        def all_downloaded(route):
+            data = route.fetch().json()
+            for model in data:
+                if "cache" in model:  # the baselines have no weights
+                    model["cache"]["downloaded"] = True
+            route.fulfill(json=data)
+
+        page.route("**/api/system", with_apple_gpu)
+        page.route("**/api/models", all_downloaded)
+        _open(page, live["base"], "system", "main h1", problems)
+        apple = page.get_by_role("checkbox", name=re.compile("MPS"))
+        refusal = page.get_by_text("not supported by this model")
+        expect(apple).to_be_enabled()
+        page.get_by_role("combobox").filter(has_text="Timestral-5M").click()
+        page.get_by_role("option", name=re.compile("TimesFM 2.5")).click()
+        expect(apple).to_be_disabled()
+        expect(refusal).to_be_visible()
+        page.get_by_role("combobox").filter(has_text="TimesFM 2.5").click()
+        page.get_by_role("option", name=re.compile("TimesFM 3.0")).click()
+        expect(apple).to_be_enabled()
+        expect(refusal).to_have_count(0)
         assert problems == [], problems[:3]
     finally:
         page.close()
