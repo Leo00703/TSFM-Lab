@@ -80,6 +80,8 @@ python scripts/bootstrap.py
 .venv\Scripts\python -m tsfm_lab serve
 ```
 
+Or, next time, double-click or run `scripts\serve.bat` (it starts the server in a terminal and passes your options on).
+
 **macOS** (install a supported Python first if needed: `brew install python@3.13`; the system `python` command does not exist, use `python3.13`)
 
 ```bash
@@ -197,7 +199,7 @@ Dark by default with a light theme switch, responsive down to phone width, Engli
 process, so a PyTorch/CUDA/Metal crash cannot take the server down. The UI is built with Tailwind (standalone CLI installed by
 `bootstrap.py`) and plain JavaScript, with Preact and ECharts vendored.
 
-**From your other devices (Tailscale):** `python -m tsfm_lab serve --tailscale` listens on loopback and your tailnet address
+**From your other devices (Tailscale):** `python -m tsfm_lab serve --tailscale` (on Windows: `scripts\serve-tailscale.bat`) listens on loopback and your tailnet address
 only. There is no login, so anyone on your tailnet can use it.
 
 ### Online benchmarks
