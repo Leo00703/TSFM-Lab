@@ -199,6 +199,12 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     async def key_error(_: Request, error: KeyError):
         return JSONResponse({"detail": str(error.args[0])}, status_code=404)
 
+    @app.exception_handler(FileNotFoundError)
+    async def not_downloaded(_: Request, error: FileNotFoundError):
+        # our own "download it first" messages carry no file name; an operating-system error does, and its path stays out of the answer
+        detail = str(error) if error.filename is None else "a file this request needs is missing"
+        return JSONResponse({"detail": detail}, status_code=409)
+
     @app.exception_handler(WorkerCrashed)
     async def worker_crashed(_: Request, error: WorkerCrashed):
         return JSONResponse({"detail": str(error)}, status_code=503)
