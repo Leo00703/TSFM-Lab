@@ -18,7 +18,7 @@ import pandas as pd
 from tsfm_lab.data.schema import Dataset, Series, seasonal_period_for
 
 READERS = {".csv": pd.read_csv, ".tsv": lambda p: pd.read_csv(p, sep="\t"), ".txt": pd.read_csv,
-           ".parquet": pd.read_parquet, ".xlsx": pd.read_excel, ".xls": pd.read_excel}
+           ".parquet": pd.read_parquet, ".xlsx": pd.read_excel}  # no legacy .xls: reading it needs xlrd, which is not a dependency
 
 
 @dataclass
