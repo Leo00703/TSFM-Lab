@@ -19,16 +19,12 @@ answer as soon as the maintainer reads it; this is a one-person project, so ther
 
 ## Dependencies
 
-GitHub's Dependabot alerts are on, and the pinned versions in `uv.lock` were also checked against the OSV database with `pip-audit` on
-29 October 2026. Open advisories, none of which the app can reach:
-
-- `setuptools` 81.0.0 (GHSA-xmj3-9gf7-h52w, GHSA-h35f-9h28-mq5c and PYSEC-2026-3447, fixed in 83 and 84.1). PyTorch 2.11 requires
-  `setuptools<82`, and the macOS build is still on 2.11 (PyTorch 2.13 has no such limit), so the lock file cannot move it yet. The advisories
-  concern converting an untrusted legacy wheel on Windows and building a source distribution on macOS, which the app never does (it does not
-  call `setuptools` at all; it is only a dependency of PyTorch).
-- `torch` 2.11.0 (GHSA-rrmf-rvhw-rf47, low, fixed in 2.13.0): memory corruption through `torch.jit.script`. The app never calls it. Windows and
-  Linux (CPU and CUDA 13.0) are on 2.13.0 since 30 October 2026; macOS stays on 2.11.0 until the Apple GPU path has been re-checked with 2.13 on a Mac.
-  The alert stays open for as long as `uv.lock` holds the macOS build.
+GitHub's Dependabot alerts are on, and the pinned versions in `uv.lock` are also checked against the OSV database with `pip-audit`
+(last on 30 October 2026, for the CPU, CUDA and macOS configurations): **no known vulnerability is open.** On that date the lock file moved
+every platform to PyTorch 2.13.0 and `setuptools` 84.2.1, which closed GHSA-rrmf-rvhw-rf47 (torch, `torch.jit.script` memory corruption, fixed in
+2.13.0) and GHSA-xmj3-9gf7-h52w, GHSA-h35f-9h28-mq5c and PYSEC-2026-3447 (`setuptools`, fixed in 83 and 84.1). The app used none of the affected
+parts. `pip-audit` cannot look up the local builds `torch 2.13.0+cpu` and `+cu130` (they are not on PyPI); it checks the same release on the
+macOS configuration and Dependabot reports all alerts as fixed.
 
 The OSV audit is not run automatically: repeat it after updating the lock file
 (`uv export --no-hashes -o requirements.txt`, then `uvx pip-audit -r requirements.txt --no-deps`).
