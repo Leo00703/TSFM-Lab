@@ -31,6 +31,7 @@ from tsfm_lab.isolation import find_root
 MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 PARAM_LIMITS = {"n_series": (1, 500), "length": (30, 200_000), "seed": (0, 2**31 - 1)}
 SAFE_NAME = re.compile(r"[^A-Za-z0-9._-]+")
+LOCAL_ID = re.compile(r"local-[0-9a-f]{16}")  # the only shape of id a registered dataset gets; anything else never reaches a path
 
 
 class DatasetCatalog:
@@ -165,7 +166,7 @@ class DatasetCatalog:
         return record
 
     def _load_local(self, dataset_id: str) -> Dataset:
-        if not re.fullmatch(r"local-[0-9a-f]{16}", dataset_id):
+        if not LOCAL_ID.fullmatch(dataset_id):
             raise KeyError(f"unknown local dataset '{dataset_id}'")
         meta = self.root / "datasets" / f"{dataset_id}.json"
         if not meta.is_file():
@@ -179,7 +180,7 @@ class DatasetCatalog:
         """Leaderboard entries for the user's own datasets, shaped like the online catalog's: one horizon for all of them."""
         entries = []
         for dataset_id in dict.fromkeys(dataset_ids):
-            if not re.fullmatch(r"local-[0-9a-f]{16}", dataset_id) or not (self.root / "datasets" / f"{dataset_id}.json").is_file():
+            if not LOCAL_ID.fullmatch(dataset_id) or not (self.root / "datasets" / f"{dataset_id}.json").is_file():
                 raise KeyError(f"unknown local dataset '{dataset_id}'")
             rec = json.loads((self.root / "datasets" / f"{dataset_id}.json").read_text(encoding="utf-8"))
             entries.append({"id": dataset_id, "title": rec["name"], "source": "mine", "local": True,
@@ -193,6 +194,8 @@ class DatasetCatalog:
                 del self._cache[key]
 
     def delete_local(self, dataset_id: str) -> None:
+        if not LOCAL_ID.fullmatch(dataset_id):
+            raise KeyError(f"unknown local dataset '{dataset_id}'")
         meta = self.root / "datasets" / f"{dataset_id}.json"
         if meta.is_file():
             meta.unlink()
