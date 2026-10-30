@@ -189,6 +189,7 @@ def test_the_benchmark_form_does_not_offer_a_device_the_model_cannot_run_on(live
 
         def with_apple_gpu(route):
             data = route.fetch().json()
+            data["devices"] = [d for d in data["devices"] if d["kind"] != "mps"]  # a Mac has a real one: the test brings its own
             data["devices"].append({"id": "mps", "kind": "mps", "name": "Apple M5 (simulated)", "memory_gb": None, "supported": True, "reason": None})
             route.fulfill(json=data)
 
