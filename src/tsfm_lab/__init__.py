@@ -8,4 +8,4 @@ from tsfm_lab import isolation as _isolation
 
 _isolation.apply()
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

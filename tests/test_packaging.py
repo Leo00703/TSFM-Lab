@@ -14,3 +14,11 @@ def test_every_data_file_in_the_package_is_shipped_in_the_wheel() -> None:
     assert data_files, "the package has data files (catalogues, manifests)"
     missing = [f for f in data_files if not any(fnmatch(f, pattern) for pattern in patterns)]
     assert not missing, f"not listed in [tool.setuptools.package-data]: {missing}"
+
+
+def test_the_version_in_the_code_is_the_one_in_pyproject() -> None:
+    """The version is written twice (pyproject.toml, which the wheel and the lock file use, and tsfm_lab.__version__, which doctor.py prints)."""
+    import tsfm_lab
+
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert tsfm_lab.__version__ == config["project"]["version"]
