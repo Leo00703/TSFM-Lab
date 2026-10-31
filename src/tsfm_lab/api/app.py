@@ -339,10 +339,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     def catalog_download(entry_id: str):
         from tsfm_lab.data import hub_catalog
 
-        try:
-            e = hub_catalog.entry(entry_id)
-        except KeyError as error:
-            raise HTTPException(404, str(error)) from error
+        e = hub_catalog.entry(entry_id)  # an unknown id is a KeyError: the handler above answers 404
         mb = e["size_bytes"] / 1e6
         name = f"{hub_catalog.title(e)} · {hub_catalog.freq_label(e['pandas_freq'])}"
         if e["source"] != "fev":
@@ -354,10 +351,7 @@ def create_app(registry: Registry | None = None, root: Path | None = None,
     def catalog_remove(entry_id: str):
         from tsfm_lab.data import hub_catalog
 
-        try:
-            e = hub_catalog.entry(entry_id)
-        except KeyError as error:
-            raise HTTPException(404, str(error)) from error
+        e = hub_catalog.entry(entry_id)
         refuse_while_busy("remove this dataset")
         removed = hub_catalog.remove(e)
         catalog.forget_hub(entry_id)

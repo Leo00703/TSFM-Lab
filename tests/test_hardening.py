@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,7 +11,7 @@ from fastapi.testclient import TestClient
 from tsfm_lab.api.app import CONTENT_SECURITY_POLICY, create_app, csv_cell
 from tsfm_lab.data import hub_catalog
 from tsfm_lab.data.catalog import MAX_UPLOAD_BYTES, DatasetCatalog
-from tsfm_lab.store.store import RunStore, SuiteStore
+from tsfm_lab.store.store import BenchmarkStore, RunStore, SuiteStore
 
 
 @pytest.fixture()
@@ -114,6 +115,36 @@ def test_a_leaderboard_run_that_is_still_going_cannot_be_deleted(tmp_path) -> No
         assert client.delete(f"/api/suites/{sid}").status_code == 200
     finally:
         app.state.worker.stop()
+
+
+def test_a_404_for_a_catalog_dataset_reads_as_a_sentence_not_as_a_quoted_string(client) -> None:
+    for answer in (client.delete("/api/catalog/does-not-exist"), client.post("/api/catalog/does-not-exist/download")):
+        assert answer.status_code == 404 and answer.json()["detail"] == "unknown catalog dataset 'does-not-exist'"
+
+
+def test_one_unreadable_result_file_does_not_take_the_models_page_or_the_lists_down(client, tmp_path) -> None:
+    bench = BenchmarkStore(tmp_path / "runs")
+    bench_id = bench.save({"model": "timestral-5m", "name": "Timestral-5M", "created": "2026-10-31T00:00:00+00:00", "devices": {}, "repeats": 3})
+    (tmp_path / "runs" / "benchmarks" / "99999999-999999-timestral-5m.json").write_text('{"id": "x", "mod', encoding="utf-8")  # a server stopped mid-write
+    (tmp_path / "runs" / "benchmarks" / "99999999-999998-timestral-5m.json").write_text('{"id": "y"}', encoding="utf-8")
+    suite_id = SuiteStore(tmp_path / "runs").save({"leaderboard": {"ranked": [], "common_datasets": 0, "total_datasets": 0, "overall": {}, "by_group": {}},
+                                                   "datasets": [], "device": "cpu", "elapsed_s": 1.0, "models": {}}, "x", None, "done")
+    (tmp_path / "runs" / "suites" / "99999999-999999-ffff.json").write_text("", encoding="utf-8")
+    assert client.get("/api/models").status_code == 200
+    assert [b["id"] for b in client.get("/api/benchmarks").json()] == [bench_id]
+    assert [s["id"] for s in client.get("/api/suites").json()] == [suite_id]
+
+
+def test_a_benchmark_is_written_whole_or_not_at_all(tmp_path, monkeypatch) -> None:
+    bench = BenchmarkStore(tmp_path)
+
+    def interrupted(self, *args, **kwargs):
+        raise OSError("server stopped")
+
+    monkeypatch.setattr(Path, "replace", interrupted)
+    with pytest.raises(OSError):
+        bench.save({"model": "m", "name": "M", "created": "x", "devices": {}, "repeats": 1})
+    assert list(bench.root.glob("*.json")) == [], "a half-written result must never look like a result"
 
 
 def test_text_that_a_spreadsheet_would_run_is_quoted_in_the_csv_export() -> None:
