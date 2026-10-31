@@ -2,7 +2,7 @@
 
 > Registro di lavoro in italiano, scritto durante lo sviluppo e conservato come documentazione. I risultati leggibili sono in inglese in [`RESULTS.md`](../RESULTS.md); il registro mantiene anche le decisioni e le correzioni, in ordine cronologico.
 
-Data: 2026-10-27 (ultimo aggiornamento: 2026-10-31, dopo la v0.2.2) · Stato: **vedi le ultime voci in fondo; il resto del documento è il registro cronologico**. Repository: `TSFM-Lab`
+Data: 2026-10-27 (ultimo aggiornamento: 2026-10-31, v0.2.3) · Stato: **vedi le ultime voci in fondo; il resto del documento è il registro cronologico**. Repository: `TSFM-Lab`
 
 Questo documento riassume requisiti, ricerca (modello + identità visiva Mistral), architettura proposta, rischi e piano di lavoro. Ogni dato è marcato come **verificato** (letto da fonte primaria o misurato), **dichiarato dal vendor** o **inferenza/proposta**.
 
@@ -841,3 +841,6 @@ Controllo di sola lettura di GitHub, documenti, struttura e interfaccia. **GitHu
 - **Calibrazione disegnata sotto le etichette sbagliate.** Il grafico di calibrazione di una run usava i livelli del modello principale (21 per Timestral) come asse per tutti; TimesFM risponde solo con 9 livelli (da 0,1 a 0,9), che finivano quindi sotto 0,01…0,4, e la sua curva sembrava molto troppo sicura di sé. Con l'asse giusto le due curve di TimesFM stanno sulla diagonale come le altre. Nessun testo pubblicato (README, `RESULTS.md`) si appoggiava a quel grafico; era solo un errore di disegno, non di calcolo (`calibration.levels` e `calibration.empirical` nel file della run erano corretti). Ora l'asse è l'unione dei livelli e un modello senza un livello ha un buco (la linea lo salta); `alignByLevel` in `charts.js` è provata dal browser con livelli di due modelli diversi.
 
 Non provato a mano sul Mac: lo copre solo il runner macOS della CI.
+
+### Versione 0.2.3 (2026-10-31)
+Porta in una release ciò che è venuto dopo la v0.2.2: l'app che segue il tema del sistema, l'icona rotta accanto al logo senza le risorse del marchio, il sottotitolo «bold line» del Playground e, soprattutto, il grafico di calibrazione che disegnava TimesFM sotto le etichette sbagliate; più le immagini del README, l'anteprima social e gli script che le rigenerano (`render_social_preview.py`, `readme_screenshots.py`). Versione cambiata in `pyproject.toml`, `__init__.py` e `uv.lock`; nessun cambio ai modelli o ai punteggi.
