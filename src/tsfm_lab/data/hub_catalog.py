@@ -129,7 +129,7 @@ def freq_label(pandas_freq: str) -> str:
         return pandas_freq
     adjective = {"second": "every second", "minute": "every minute", "hour": "hourly", "day": "daily", "week": "weekly",
                  "month": "monthly", "quarter": "quarterly", "year": "yearly"}[word]
-    return adjective if n == 1 and word not in ("minute", "second") else (f"every {n} {word}s" if n > 1 else adjective)
+    return f"every {n} {word}s" if n > 1 else adjective
 
 
 # How the lower-case names that fev-bench and the Monash archive use are written out (acronyms and proper names); other words are capitalised.

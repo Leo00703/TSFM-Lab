@@ -115,7 +115,7 @@ def do_forecast(svc: Services, body: dict[str, Any], progress) -> dict[str, Any]
     return {"series_id": s.id, "origin": origin, "horizon": horizon, "target_names": ds.target_names,
             "x_history": axis(s, origin - tail, origin), "x_future": axis(s, origin, end),
             "history": ctx[0][:, -tail:], "actual": actual, "models": outputs,
-            "known": None if known is None else known[0][:, -(tail + horizon):] if known.shape[2] >= tail + horizon else known[0],
+            "known": None if known is None else known[0][:, -(tail + horizon):],
             "known_names": ds.known_names, "freq": ds.freq, "seasonal_period": ds.seasonal_period,
             "context_used": int(ctx.shape[2])}
 
