@@ -1,11 +1,9 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/social-preview-dark.png">
-    <img alt="TSFM-Lab: run, compare and inspect forecasting models on your own machine" src="docs/images/social-preview-light.png" width="900">
-  </picture>
-</p>
+<h1 align="center">
+  <img alt="TSFM-Lab: run, compare and inspect forecasting models on your own machine" src="docs/images/banner.png" width="900">
+</h1>
 
 <p align="center">
+  <b>Run, compare and inspect time-series foundation models on your own machine.</b><br>
   Ten models from five families · 187 public benchmark datasets · your own data · CPU or GPU · nothing leaves your computer
 </p>
 
