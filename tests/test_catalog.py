@@ -155,6 +155,9 @@ def test_the_catalog_layer_resolves_hub_specs_and_rejects_bad_parameters(fake_hu
             cat.resolve({"source": "hub", "id": "toy_1D", "params": bad})
     cat.forget_hub("toy_1D")
     assert cat.resolve({"source": "hub", "id": "toy_1D", "params": {"max_series": 3}}) is not ds
+    again = cat.resolve({"source": "hub", "id": "toy_1D", "params": {"max_series": 3}})
+    cat.clear_cache()  # what the worker does after a download replaced a file
+    assert cat.resolve({"source": "hub", "id": "toy_1D", "params": {"max_series": 3}}) is not again
     with pytest.raises(KeyError):
         cat.resolve({"source": "hub", "id": "nope"})
 
