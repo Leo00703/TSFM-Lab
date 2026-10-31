@@ -146,6 +146,59 @@ def test_every_page_opens_without_a_script_error(live, browser, route, text) -> 
         page.close()
 
 
+def test_a_missing_brand_icon_leaves_one_mark_after_navigating(live, browser) -> None:
+    """The test server has no web/assets (git-ignored), so the Timestral icon 404s, as on a fresh clone: the fallback mark must stay the only one."""
+    page = browser.new_page(viewport={"width": 1280, "height": 800})
+    try:
+        problems = _problems(page)
+        _open(page, live["base"], "runs", "main h1, main h2", problems)  # not the Showcase: its forecast would keep the worker busy for the tests after this one
+        page.get_by_role("link", name="Models").first.click()
+        page.wait_for_selector("text=Model library")
+        page.wait_for_timeout(700)  # the icon fails to load a moment after the page draws it
+        assert page.locator("img[src*='/assets/mistral/']").count() == 0, "a broken icon is drawn next to the fallback mark"
+        assert page.locator("header span.bg-surface-brand, nav span.bg-surface-brand").count() >= 1
+        assert problems == [], problems[:3]
+    finally:
+        page.close()
+
+
+def test_curves_over_quantile_levels_are_drawn_under_their_own_levels(live, browser) -> None:
+    """TimesFM answers 0.1 to 0.9 and Timestral 21 levels: a calibration curve must not be drawn under another model's labels."""
+    page = browser.new_page(viewport={"width": 1280, "height": 800})
+    try:
+        problems = _problems(page)
+        _open(page, live["base"], "runs", "main h1, main h2", problems)
+        aligned = page.evaluate(
+            """async () => { const { alignByLevel } = await import('/js/charts.js');
+              return alignByLevel([{ levels: [0.01, 0.1, 0.5, 0.9], values: [1, 2, 3, 4] }, { levels: [0.1, 0.30000000000000004, 0.9], values: [20, 30, 40] }]); }"""
+        )
+        assert aligned["x"] == [0.01, 0.1, 0.3, 0.5, 0.9]
+        assert aligned["data"] == [[1, 2, None, 3, 4], [None, 20, 30, None, 40]]
+        assert problems == [], problems[:3]
+    finally:
+        page.close()
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_the_theme_follows_the_system_until_one_is_chosen(live, browser, scheme) -> None:
+    context = browser.new_context(color_scheme=scheme, viewport={"width": 1280, "height": 800})
+    page = context.new_page()
+    try:
+        problems = _problems(page)
+        is_dark = "document.documentElement.classList.contains('dark')"
+        _open(page, live["base"], "models", "main h1, main h2", problems)
+        assert page.evaluate(is_dark) is (scheme == "dark"), "a first visit must show the theme of the operating system"
+        other = "Light theme" if scheme == "dark" else "Dark theme"
+        page.get_by_role("button", name=other).click()
+        page.wait_for_function(f"{is_dark} === {str(scheme != 'dark').lower()}")
+        page.reload()
+        page.wait_for_selector("main h1, main h2")
+        assert page.evaluate(is_dark) is (scheme != "dark"), "a theme chosen by hand must beat the system one after a reload"
+        assert problems == [], problems[:3]
+    finally:
+        context.close()
+
+
 def test_the_menus_open_and_close_and_the_phone_menu_lists_every_page(live, browser) -> None:
     page = browser.new_page(viewport={"width": 1280, "height": 800})
     try:
@@ -165,9 +218,10 @@ def test_the_menus_open_and_close_and_the_phone_menu_lists_every_page(live, brow
             raise AssertionError("Escape did not close the Evaluate menu")
         page.get_by_role("link", name="Models").first.click()
         page.wait_for_selector("text=Model library")
-        page.get_by_role("button", name="Light theme").click()
-        page.wait_for_function("!document.documentElement.className.includes('dark')")  # the theme class is set by the page a moment after the click
         page.get_by_role("button", name="Dark theme").click()
+        page.wait_for_function("document.documentElement.className.includes('dark')")  # the theme class is set by the page a moment after the click
+        page.get_by_role("button", name="Light theme").click()
+        page.wait_for_function("!document.documentElement.className.includes('dark')")
         page.set_viewport_size({"width": 390, "height": 844})
         page.get_by_role("button", name="Open menu").click()
         page.wait_for_timeout(350)  # the menu grows open over 200 ms

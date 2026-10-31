@@ -2,7 +2,7 @@
 
 > Registro di lavoro in italiano, scritto durante lo sviluppo e conservato come documentazione. I risultati leggibili sono in inglese in [`RESULTS.md`](../RESULTS.md); il registro mantiene anche le decisioni e le correzioni, in ordine cronologico.
 
-Data: 2026-10-27 (ultimo aggiornamento: 2026-10-31, v0.2.2) · Stato: **vedi le ultime voci in fondo; il resto del documento è il registro cronologico**. Repository: `TSFM-Lab`
+Data: 2026-10-27 (ultimo aggiornamento: 2026-10-31, dopo la v0.2.2) · Stato: **vedi le ultime voci in fondo; il resto del documento è il registro cronologico**. Repository: `TSFM-Lab`
 
 Questo documento riassume requisiti, ricerca (modello + identità visiva Mistral), architettura proposta, rischi e piano di lavoro. Ogni dato è marcato come **verificato** (letto da fonte primaria o misurato), **dichiarato dal vendor** o **inferenza/proposta**.
 
@@ -829,3 +829,15 @@ Controllo di sola lettura di GitHub, documenti, struttura e interfaccia. **GitHu
 - **Pulizia di `.cache`** (209 MB): i 28 file `.node`, l'alias inutilizzato `datasets--monash_tsf` (40 MB; il catalogo usa `Monash-University/monash_tsf`) e `catalog_probe`. `research/` resta (le mie evidenze del 27-28 ottobre, 13 MB).
 
 **Questo file resta in italiano e con questo nome.** Il lettore inglese ha `RESULTS.md` (la parte che conta, in inglese), il README lo dice chiaramente, e il registro è lungo (148 KB) e pieno di cifre verificate una per una: tradurlo rischierebbe di introdurre errori in un documento il cui valore è l'esattezza, e rinominarlo romperebbe i rimandi.
+
+### Immagini del README, tema di sistema e tre difetti dell'interfaccia (2026-10-31)
+**Immagini.** L'immagine di anteprima social (PR n. 8) esiste in versione chiara e scura, con il sorgente HTML e `scripts/render_social_preview.py`; hai caricato la chiara nelle impostazioni di GitHub (non c'è un'API per farlo). In cima al README c'è un banner chiaro con gli angoli stondati e un filo di bordo (`render_social_preview.py --banner`, PNG a doppia risoluzione con angoli trasparenti, perché GitHub toglie gli stili dall'HTML), dentro un `<h1>` con il testo alternativo e con la frase in grassetto lasciata come testo sotto, per le parole chiave. Le schermate (Showcase, Leaderboard, Playground, calibrazione di una run) vengono da `scripts/readme_screenshots.py`, che guida un'app in esecuzione con Chrome o Edge, in tema chiaro e scuro, a 1920 px; le risorse del marchio sotto `web/assets/mistral` sono bloccate nel browser, quindi mostrano ciò che vede chi clona la repository. Il Playground è una serie sintetica e la didascalia lo dice; la pagina intera di una run, a mezza larghezza, era illeggibile e l'ho sostituita con il solo grafico di calibrazione.
+
+**Tema.** L'app segue ora l'impostazione chiaro/scuro del sistema operativo finché non se ne sceglie uno a mano (prima era scuro); una scelta già salvata nel browser resta. Un test lo verifica con un browser chiaro e uno scuro e controlla che la scelta manuale prevalga dopo un ricaricamento; fallisce con il vecchio codice. Anche il vecchio controllo del tema nel test dei menù partiva dallo scuro, quindi il primo clic su «chiaro» non verificava niente.
+
+**Tre difetti trovati preparando le immagini.**
+- **Icona rotta accanto al logo.** Senza le risorse del marchio (ogni clone nuovo) compariva, dopo il primo cambio di pagina, l'icona di un'immagine rotta accanto al quadratino arancione: il componente `Logo` sostituiva l'immagine a mano e Preact ridisegnava quella fallita al giro dopo. Ora l'errore sta nello stato del componente. Riprodotto con un test, che fallisce senza la correzione.
+- **«black line» nel tema scuro.** Il sottotitolo del Playground diceva «black line = what actually happened», ma nel tema scuro la linea è bianca: ora dice «bold line».
+- **Calibrazione disegnata sotto le etichette sbagliate.** Il grafico di calibrazione di una run usava i livelli del modello principale (21 per Timestral) come asse per tutti; TimesFM risponde solo con 9 livelli (da 0,1 a 0,9), che finivano quindi sotto 0,01…0,4, e la sua curva sembrava molto troppo sicura di sé. Con l'asse giusto le due curve di TimesFM stanno sulla diagonale come le altre. Nessun testo pubblicato (README, `RESULTS.md`) si appoggiava a quel grafico; era solo un errore di disegno, non di calcolo (`calibration.levels` e `calibration.empirical` nel file della run erano corretti). Ora l'asse è l'unione dei livelli e un modello senza un livello ha un buco (la linea lo salta); `alignByLevel` in `charts.js` è provata dal browser con livelli di due modelli diversi.
+
+Non provato a mano sul Mac: lo copre solo il runner macOS della CI.

@@ -143,9 +143,17 @@ export function linesOption(p, { x, series, xName, yName, yMin, yLog, xType = 'c
     legend: legend ? { top: 0, data: series.map((s) => s.label), textStyle: { color: p.text, fontSize: 12 }, icon: 'roundRect', itemWidth: 14, itemHeight: 4 } : { show: false },
     xAxis: { type: xType, data: xType === 'category' ? x : undefined, name: xName, nameLocation: 'middle', nameGap: 30, nameTextStyle: { color: p.muted }, boundaryGap: xType === 'category' ? false : undefined, ...axisStyle(p, { splitLine: { show: false } }), ...(xType === 'log' ? { logBase: 2 } : {}) },
     yAxis: { type: yLog ? 'log' : 'value', name: yName, nameTextStyle: { color: p.muted, align: 'left' }, min: yMin, ...axisStyle(p) },
-    series: [...series.map((s) => ({ name: s.label, type: 'line', data: s.data, smooth, showSymbol: s.data.length < 60, symbolSize: 6, lineStyle: { width: s.id === focus ? 2.4 : 1.6, color: s.color || colors[s.id], type: s.dashed ? 'dashed' : 'solid' }, itemStyle: { color: s.color || colors[s.id] } })),
+    series: [...series.map((s) => ({ name: s.label, type: 'line', data: s.data, smooth, connectNulls: !!s.connectNulls, showSymbol: s.data.length < 60, symbolSize: 6, lineStyle: { width: s.id === focus ? 2.4 : 1.6, color: s.color || colors[s.id], type: s.dashed ? 'dashed' : 'solid' }, itemStyle: { color: s.color || colors[s.id] } })),
       ...(diagonal ? [{ name: 'ideal', type: 'line', data: diagonal, showSymbol: false, lineStyle: { color: p.axis, type: 'dashed', width: 1 }, tooltip: { show: false } }] : [])],
   };
+}
+
+// Curves over quantile levels from models that do not share their levels (TimesFM answers 0.1 to 0.9, Timestral 21 levels) on one axis:
+// the union of the levels, and a gap where a model has no value, so each point sits under its own level.
+export function alignByLevel(curves) {
+  const key = (q) => Math.round(q * 1e6);
+  const keys = [...new Set(curves.flatMap((c) => c.levels.map(key)))].sort((a, b) => a - b);
+  return { x: keys.map((k) => k / 1e6), data: curves.map((c) => { const at = new Map(c.levels.map((q, i) => [key(q), c.values[i]])); return keys.map((k) => (at.has(k) ? at.get(k) : null)); }) };
 }
 
 export function quantileStats(values) {

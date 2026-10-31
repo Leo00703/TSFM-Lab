@@ -1,4 +1,6 @@
-<h1 align="center">TSFM-Lab</h1>
+<h1 align="center">
+  <img alt="TSFM-Lab: run, compare and inspect forecasting models on your own machine" src="docs/images/banner.png" width="900">
+</h1>
 
 <p align="center">
   <b>Run, compare and inspect time-series foundation models on your own machine.</b><br>
@@ -14,8 +16,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/showcase-light.png">
-    <img alt="The Showcase page: a forecast of daily store sales with its likely range, the scenario tabs and the model menu" src="docs/images/showcase-dark.png" width="900">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/showcase-dark.png">
+    <img alt="The Showcase page: a forecast of daily store sales with its likely range, the scenario tabs and the model menu" src="docs/images/showcase-light.png" width="900">
   </picture>
 </p>
 
@@ -43,10 +45,24 @@ result is shown with the measurements and configuration needed to judge it hones
 - **Keep it contained.** Everything the project installs or caches lives inside its folder; the server answers to local hosts only; weights are
   loaded from `safetensors` files only, never pickle.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/leaderboard-dark.png">
+    <img alt="The Leaderboard: ten models ranked on 125 datasets (the one that TimesFM 2.5 lists as training data is left out) with skill against seasonal naive" src="docs/images/leaderboard-light.png" width="800">
+  </picture><br>
+  <sub><b>Leaderboard.</b> Ten models on the same windows of 125 public datasets, scored against seasonal naive (a dataset the models' authors list as training data is left out, with a button to count it).</sub>
+</p>
+
 <table>
   <tr>
-    <td width="50%"><img alt="The Leaderboard: ten models ranked on 125 datasets (the one that TimesFM 2.5 lists as training data is left out) with skill against seasonal naive" src="docs/images/leaderboard-dark.png"><br><sub><b>Leaderboard.</b> Ten models on the same windows of 125 public datasets, scored against seasonal naive (a dataset the models' authors list as training data is left out, with a button to count it).</sub></td>
-    <td width="50%"><img alt="A run page: the summary table of five models and its metrics" src="docs/images/run-dark.png"><br><sub><b>A run.</b> Every metric, the calibration of the uncertainty ranges, the error by forecast step, and the configuration needed to reproduce it.</sub></td>
+    <td width="50%" valign="top"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/playground-dark.png">
+        <img alt="The Playground: one forecast with the history, the real values that followed, nested uncertainty ranges and five models side by side" src="docs/images/playground-light.png">
+      </picture><br><sub><b>Playground.</b> One forecast with every quantile and the models you tick, side by side, here on a synthetic series.</sub></td>
+    <td width="50%" valign="top"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/calibration-dark.png">
+        <img alt="The calibration chart of a run: for each predicted quantile, the share of actual values that fell below it, for five models, against the dashed perfect line" src="docs/images/calibration-light.png">
+      </picture><br><sub><b>A run.</b> Every metric, the error by forecast step and the configuration needed to reproduce it; here the calibration of the uncertainty ranges (how often the real value fell below each predicted quantile), on a synthetic dataset.</sub></td>
   </tr>
 </table>
 
@@ -195,7 +211,7 @@ a whole benchmark), Runs (every metric, calibration, per-step error, reproducibi
 disk use), About (licences, definitions). Long jobs (experiments, benchmarks, downloads,
 measurements) run in the background, survive navigation and reloads, and can be stopped from the Activity panel.
 
-Dark by default with a light theme switch, responsive down to phone width, English only. Inference runs in a separate worker
+Follows your system's light or dark setting (with a switch to choose one), responsive down to phone width, English only. Inference runs in a separate worker
 process, so a PyTorch/CUDA/Metal crash cannot take the server down. The UI is built with Tailwind (standalone CLI installed by
 `bootstrap.py`) and plain JavaScript, with Preact and ECharts vendored.
 
