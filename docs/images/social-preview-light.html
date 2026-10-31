@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TSFM-Lab social preview (light, interface colours)</title>
+<!-- Source of docs/images/social-preview-light.png (1280x640). Colours are the interface's light theme;
+     fonts are the OFL ones the app vendors. The chart is an illustration drawn from a made-up curve.
+     Regenerate with: python scripts/render_social_preview.py docs/images/social-preview-light.html -->
+<style>
+  @font-face { font-family: Inter; src: url(../../web/fonts/Inter-VariableFont.woff2) format("woff2-variations"); font-weight: 100 900; }
+  @font-face { font-family: "Space Mono"; src: url(../../web/fonts/SpaceMono-Regular.woff2) format("woff2"); font-weight: 400; }
+  :root {
+    --bg: #fbfbf8; --panel: #f5f4ef; --panel2: #ebe9e0; --line: #e4e3de; --axis: #c9c9c4;
+    --text: #18181b; --body: #3f3f46; --muted: #71717a; --brand: #ff5229; --ink: #09090b;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1280px; height: 640px; background: var(--bg); overflow: hidden; }
+  body { position: relative; font-family: Inter, system-ui, sans-serif; color: var(--text); }
+  .left { position: absolute; left: 64px; top: 64px; bottom: 64px; width: 540px; display: flex; flex-direction: column; }
+  .eyebrow { display: flex; align-items: center; gap: 14px; font-family: "Space Mono", monospace; font-size: 15px; letter-spacing: .16em; color: var(--muted); text-transform: uppercase; }
+  .mark { width: 22px; height: 22px; background: var(--brand); flex: none; }
+  h1 { margin-top: 22px; font-size: 112px; line-height: 1; font-weight: 600; letter-spacing: -.04em; color: var(--text); }
+  h1 span { color: var(--brand); }
+  .tag { margin-top: 28px; font-size: 31px; line-height: 1.32; font-weight: 400; color: var(--body); letter-spacing: -.01em; }
+  .stats { margin-top: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+  .stat { font-family: "Space Mono", monospace; font-size: 15px; padding: 8px 13px; border: 1px solid var(--axis); border-radius: 8px; background: var(--panel); color: var(--text); }
+  .stat b { font-weight: 400; color: var(--brand); }
+  .foot { margin-top: 22px; font-family: "Space Mono", monospace; font-size: 14px; color: var(--muted); letter-spacing: .02em; }
+  .card { position: absolute; left: 664px; top: 64px; width: 552px; height: 512px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); overflow: hidden; }
+  .card svg { position: absolute; inset: 0; }
+  .cap { position: absolute; left: 26px; top: 22px; font-family: "Space Mono", monospace; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .cap2 { position: absolute; right: 26px; bottom: 18px; font-family: "Space Mono", monospace; font-size: 12px; color: #8b8879; }
+</style>
+</head>
+<body>
+
+<div class="left">
+  <div class="eyebrow"><span class="mark"></span>Time-series foundation models</div>
+  <h1>TSFM<span>-</span>Lab</h1>
+  <p class="tag">Run, compare and inspect forecasting models on your own machine.</p>
+  <div class="stats">
+    <div class="stat"><b>10</b> models</div>
+    <div class="stat"><b>187</b> datasets</div>
+    <div class="stat">CPU <b>or</b> GPU</div>
+    <div class="stat">100% <b>local</b></div>
+  </div>
+  <div class="foot">Unofficial · Apache-2.0 · Leo00703/TSFM-Lab</div>
+</div>
+
+<div class="card">
+  <div class="cap">Forecast · likely range</div>
+  <svg id="chart" viewBox="0 0 552 512" width="552" height="512"></svg>
+  <div class="cap2">illustration, not a measured result</div>
+</div>
+
+<script>
+  // A made-up daily-seasonal curve with a slow trend; deterministic, no data from any model.
+  const W = 552, H = 512, X0 = 28, X1 = W - 28, Y0 = 96, Y1 = H - 84;
+  const N = 96, SPLIT = 58;
+  const rnd = (i) => { const s = Math.sin(i * 12.9898 + 4.1414) * 43758.5453; return s - Math.floor(s) - 0.5; };
+  const truth = (i) => 0.52 + 0.0016 * i + 0.17 * Math.sin(i / 96 * Math.PI * 2 * 4.0) + 0.06 * Math.sin(i / 96 * Math.PI * 2 * 12.0 + 1.2);
+  const x = (i) => X0 + (X1 - X0) * i / (N - 1);
+  const y = (v) => Y1 - (Y1 - Y0) * v;
+  const pt = (p) => x(p[0]).toFixed(1) + " " + y(p[1]).toFixed(1);
+  const path = (pts) => pts.map((p, k) => (k ? "L" : "M") + pt(p)).join(" ");
+  const svg = (s) => document.getElementById("chart").insertAdjacentHTML("beforeend", s);
+
+  for (let k = 0; k <= 4; k++) {
+    const gy = Y0 + (Y1 - Y0) * k / 4;
+    svg(`<line x1="${X0}" x2="${X1}" y1="${gy}" y2="${gy}" stroke="#e4e3de" stroke-width="1"/>`);
+  }
+
+  const hist = [], actual = [], med = [], lo1 = [], hi1 = [], lo2 = [], hi2 = [];
+  for (let i = 0; i < SPLIT; i++) hist.push([i, truth(i) + 0.022 * rnd(i)]);
+  for (let i = SPLIT - 1; i < N; i++) {
+    const d = i - (SPLIT - 1), w = 0.012 + 0.0032 * d;
+    const m = truth(i) + (d ? 0.012 * Math.sin(i / 4.2) * Math.min(d, 12) / 12 : 0);
+    actual.push([i, i === SPLIT - 1 ? hist[SPLIT - 1][1] : truth(i) + 0.03 * rnd(i + 3)]);
+    med.push([i, i === SPLIT - 1 ? hist[SPLIT - 1][1] : m]);
+    lo1.push([i, m - w * 0.7]); hi1.push([i, m + w * 0.7]);
+    lo2.push([i, m - w * 1.9]); hi2.push([i, m + w * 1.9]);
+  }
+  const band = (lo, hi) => path(lo) + " L" + hi.slice().reverse().map(pt).join(" L") + " Z";
+  const sx = x(SPLIT - 1);
+
+  svg(`<rect x="${sx}" y="${Y0 - 14}" width="${X1 - sx}" height="${Y1 - Y0 + 28}" fill="rgba(255,82,41,.06)"/>`);
+  svg(`<path d="${band(lo2, hi2)}" fill="rgba(255,82,41,.16)"/>`);
+  svg(`<path d="${band(lo1, hi1)}" fill="rgba(255,82,41,.28)"/>`);
+  svg(`<path d="${path(actual)}" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`);
+  svg(`<path d="${path(med)}" fill="none" stroke="#ff5229" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`);
+  svg(`<path d="${path(hist)}" fill="none" stroke="#18181b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`);
+
+  // the draggable handle of the Showcase page
+  svg(`<line x1="${sx}" x2="${sx}" y1="${Y0 - 6}" y2="${Y1 + 14}" stroke="#18181b" stroke-width="1.5" opacity=".7"/>`);
+  svg(`<rect x="${sx - 11}" y="${Y0 - 36}" width="22" height="30" rx="6" fill="#09090b"/><rect x="${sx - 1.5}" y="${Y0 - 28}" width="3" height="14" rx="1.5" fill="#fafafa"/>`);
+  svg(`<text x="${sx + 20}" y="${Y0 - 15}" font-family="Inter" font-size="15" font-weight="500" fill="#ff5229">Forecast</text>`);
+
+  svg(`<text x="${sx - 12}" y="${Y1 + 30}" text-anchor="end" font-family="Space Mono" font-size="13" fill="#71717a">history</text>`);
+  svg(`<text x="${sx + 12}" y="${Y1 + 30}" font-family="Space Mono" font-size="13" fill="#71717a">forecast</text>`);
+</script>
+</body>
+</html>
