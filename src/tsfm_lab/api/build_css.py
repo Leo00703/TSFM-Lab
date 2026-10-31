@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import contextlib
+import os
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
 
 from tsfm_lab.isolation import find_root
 
@@ -15,11 +14,6 @@ def tailwind_binary():
     tools = find_root() / ".cache" / "tools"
     found = sorted(tools.glob("tailwindcss-*")) if tools.exists() else []
     return found[0] if found else None
-
-
-def _native_leftovers() -> set[Path]:
-    """The standalone CLI unpacks a ~9 MB native module into the temp folder on every run and never removes it."""
-    return set(Path(tempfile.gettempdir()).glob(".*.node"))
 
 
 def ensure_css(force: bool = False) -> bool:
@@ -33,12 +27,14 @@ def ensure_css(force: bool = False) -> bool:
         print("Tailwind CLI not found: run scripts/bootstrap.py", file=sys.stderr)
         return out.exists()
     out.parent.mkdir(parents=True, exist_ok=True)
-    before = _native_leftovers()
-    result = subprocess.run([str(binary), "-i", str(src), "-o", str(out), "--minify"], cwd=root / "web",
-                            capture_output=True, text=True, check=False)
-    for leftover in _native_leftovers() - before:  # only what this run left; one still in use by another run stays
-        with contextlib.suppress(OSError):
-            leftover.unlink()
+    scratch_root = root / ".cache" / "tmp"
+    scratch_root.mkdir(parents=True, exist_ok=True)
+    # The standalone CLI unpacks a ~9 MB native module into its temp folder on every run and never removes it: it gets a folder of its own,
+    # named in its environment (not guessed from tempfile, which pytest fixes before the isolation applies), that goes away with the run.
+    with tempfile.TemporaryDirectory(prefix="tailwind-", dir=scratch_root, ignore_cleanup_errors=True) as scratch:
+        env = {**os.environ, "TEMP": scratch, "TMP": scratch, "TMPDIR": scratch}
+        result = subprocess.run([str(binary), "-i", str(src), "-o", str(out), "--minify"], cwd=root / "web",
+                                capture_output=True, text=True, check=False, env=env)
     if result.returncode != 0:
         print(result.stderr, file=sys.stderr)
         return False
