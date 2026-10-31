@@ -60,9 +60,9 @@ result is shown with the measurements and configuration needed to judge it hones
         <img alt="The Playground: one forecast with the history, the real values that followed, nested uncertainty ranges and five models side by side" src="docs/images/playground-light.png">
       </picture><br><sub><b>Playground.</b> One forecast with every quantile and the models you tick, side by side, here on a synthetic series.</sub></td>
     <td width="50%" valign="top"><picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/images/run-dark.png">
-        <img alt="A run page: the summary table of five models and its accuracy chart" src="docs/images/run-light.png">
-      </picture><br><sub><b>A run.</b> Every metric, the calibration of the uncertainty ranges, the error by forecast step, and the configuration needed to reproduce it.</sub></td>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/calibration-dark.png">
+        <img alt="The calibration chart of a run: for each predicted quantile, the share of actual values that fell below it, for five models, against the dashed perfect line" src="docs/images/calibration-light.png">
+      </picture><br><sub><b>A run.</b> Every metric, the error by forecast step and the configuration needed to reproduce it; here the calibration of the uncertainty ranges (how often the real value fell below each predicted quantile), on a synthetic dataset.</sub></td>
   </tr>
 </table>
 

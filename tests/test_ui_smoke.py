@@ -162,6 +162,23 @@ def test_a_missing_brand_icon_leaves_one_mark_after_navigating(live, browser) ->
         page.close()
 
 
+def test_curves_over_quantile_levels_are_drawn_under_their_own_levels(live, browser) -> None:
+    """TimesFM answers 0.1 to 0.9 and Timestral 21 levels: a calibration curve must not be drawn under another model's labels."""
+    page = browser.new_page(viewport={"width": 1280, "height": 800})
+    try:
+        problems = _problems(page)
+        _open(page, live["base"], "runs", "main h1, main h2", problems)
+        aligned = page.evaluate(
+            """async () => { const { alignByLevel } = await import('/js/charts.js');
+              return alignByLevel([{ levels: [0.01, 0.1, 0.5, 0.9], values: [1, 2, 3, 4] }, { levels: [0.1, 0.30000000000000004, 0.9], values: [20, 30, 40] }]); }"""
+        )
+        assert aligned["x"] == [0.01, 0.1, 0.3, 0.5, 0.9]
+        assert aligned["data"] == [[1, 2, None, 3, 4], [None, 20, 30, None, 40]]
+        assert problems == [], problems[:3]
+    finally:
+        page.close()
+
+
 @pytest.mark.parametrize("scheme", ["light", "dark"])
 def test_the_theme_follows_the_system_until_one_is_chosen(live, browser, scheme) -> None:
     context = browser.new_context(color_scheme=scheme, viewport={"width": 1280, "height": 800})

@@ -91,14 +91,18 @@ def leaderboard(page: Page, base: str, out: Path, theme: str, suite: str) -> Non
     shot(page, out / f"leaderboard-{theme}.png", bottom(page, "Skill is measured against") + PAD)
 
 
-def run_page(page: Page, base: str, out: Path, theme: str, run: str) -> None:
+def calibration(page: Page, base: str, out: Path, theme: str, run: str) -> None:
+    """The calibration chart of a run page: small enough to stay readable next to the Playground chart in the README."""
     page.goto(f"{base}/#/runs/{run}")
-    page.wait_for_selector("text=Bars start at zero")
-    page.wait_for_timeout(1000)
-    card = page.get_by_text("Bars start at zero").first.locator("xpath=ancestor::figure[1]").bounding_box()  # end on the chart card's own edge
-    if card is None:
-        raise SystemExit("the accuracy chart did not render")
-    shot(page, out / f"run-{theme}.png", card["y"] + card["height"] + PAD)
+    page.wait_for_selector("text=Share of actuals below each predicted quantile")
+    page.wait_for_timeout(1500)
+    box = page.get_by_text("Share of actuals below each predicted quantile").first.locator("xpath=ancestor::figure[1]").bounding_box()
+    if box is None:
+        raise SystemExit("the calibration chart did not render")
+    top = box["y"] + page.evaluate("window.scrollY")
+    path = out / f"calibration-{theme}.png"
+    page.screenshot(path=str(path), full_page=True, clip={"x": box["x"] - 8, "y": top - 8, "width": box["width"] + 16, "height": box["height"] + 16})
+    print(f"{path.name}: {path.stat().st_size / 1024:.0f} KB")
 
 
 def main() -> None:
@@ -126,7 +130,7 @@ def main() -> None:
             showcase(page, args.base, args.out, theme)
             playground(page, args.base, args.out, theme)
             leaderboard(page, args.base, args.out, theme, suite)
-            run_page(page, args.base, args.out, theme, run)
+            calibration(page, args.base, args.out, theme, run)
             context.close()
         browser.close()
 

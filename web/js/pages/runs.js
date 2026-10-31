@@ -2,7 +2,7 @@ import { html, useState } from '/vendor/htm-preact.js';
 import { api, useAsync, go, num, pct, pct0, ms, when, int } from '../core.js';
 import { Card, PageHeader, Section, Button, Tabs, Select, Field, Spinner, ErrorBox, Notice, Table, KV, Collapse, Tag, Eyebrow, download, PageError } from '../ui.js';
 import { confirmDialog } from '../dialog.js';
-import { Figure, barOption, linesOption, fanOption, baseOption, axisStyle, modelColors, quantileStats, isNarrow } from '../charts.js';
+import { Figure, barOption, linesOption, fanOption, baseOption, axisStyle, modelColors, quantileStats, isNarrow, alignByLevel } from '../charts.js';
 
 const METRICS = { mase: 'MASE', sql: 'SQL', wql: 'WQL' };
 
@@ -77,8 +77,9 @@ function RunDetail({ id }) {
   const barBuild = (p) => barOption(p, ids.map((i) => ({ id: i, label: names[i], value: S(i, metric) })), { focus, digits: 3 });
   const horizonBuild = (p) => linesOption(p, { x: Array.from({ length: horizonLen }, (_, k) => k + 1), xName: 'steps ahead', yName: hm.startsWith('coverage') ? 'share inside' : METRICS[hm] || hm, yMin: hm === 'bias' ? undefined : 0, focus,
     series: ids.map((i) => ({ id: i, label: names[i], data: meta.models[i].horizon[hm] })), ...(hm.startsWith('coverage') ? { diagonal: Array(horizonLen).fill(Number(hm.split('_')[1]) / 100) } : {}) });
-  const calBuild = (p) => ({ ...linesOption(p, { x: meta.models[focus].levels.map(String), xName: 'predicted quantile', yName: 'share of actuals below', yMin: 0, focus, diagonal: meta.models[focus].levels,
-    series: ids.map((i) => ({ id: i, label: names[i], data: meta.models[i].calibration.empirical })) }) });
+  const calBuild = (p) => { const al = alignByLevel(ids.map((i) => ({ levels: meta.models[i].calibration.levels, values: meta.models[i].calibration.empirical })));
+    return linesOption(p, { x: al.x.map(String), xName: 'predicted quantile', yName: 'share of actuals below', yMin: 0, focus, diagonal: al.x,
+      series: ids.map((i, k) => ({ id: i, label: names[i], data: al.data[k], connectNulls: true })) }); };
   const covBuild = (p) => linesOption(p, { x: ['50%', '80%', '90%', '98%'], xName: 'nominal interval', yName: 'share inside', yMin: 0, focus, diagonal: [0.5, 0.8, 0.9, 0.98],
     series: ids.map((i) => ({ id: i, label: names[i], data: [S(i, 'coverage_50'), S(i, 'coverage_80'), S(i, 'coverage_90'), S(i, 'coverage_98')] })) });
   const scatterBuild = (p) => { const s = an.data.scatter, lo = Math.min(...s.actual, ...s.predicted), hi = Math.max(...s.actual, ...s.predicted);
