@@ -120,7 +120,7 @@ function App() {
     <${Footer} /><${ActivityPanel} /><${DialogHost} /></div>`;
 }
 
-applyTheme(localStorage.getItem('tsfm-theme') || 'dark');
+applyTheme(localStorage.getItem('tsfm-theme') || 'system');
 // Tab icon: the Timestral icon when present locally (git-ignored asset); the built-in pixel mark otherwise.
 const probe = new Image();
 probe.onload = () => { const l = document.querySelector('link[rel=icon]'); l.type = 'image/svg+xml'; l.href = probe.src; };

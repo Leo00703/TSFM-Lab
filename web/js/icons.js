@@ -1,6 +1,6 @@
 // Pixel icons drawn for this project in the spirit of Mistral's block motif (not copies of their artwork).
 // Each icon is an 8x8 bitmap rendered as crisp SVG squares in currentColor.
-import { html } from '/vendor/htm-preact.js';
+import { html, useState } from '/vendor/htm-preact.js';
 
 const BITMAPS = {
   home: ['...##...', '..####..', '.######.', '########', '.##..##.', '.##..##.', '.##..##.', '.##..##.'],
@@ -37,6 +37,8 @@ export function Icon({ name, size = 16, class: cls = '' }) {
 
 // Brand mark: the official Timestral icon when present locally (git-ignored asset), else a neutral pixel mark.
 export function Logo({ size = 28 }) {
+  const [missing, setMissing] = useState(false); // state, not a hand-made DOM swap: Preact would draw the broken <img> again on the next render
+  if (missing) return html`<span class="inline-block bg-surface-brand" style=${`width:${size * 0.75}px;height:${size * 0.75}px`}></span>`;
   return html`<img src="/assets/mistral/logos/timestral-icon-model.svg" width=${size} height=${size} alt="" class="shrink-0 [image-rendering:pixelated]"
-    onError=${(e) => { e.currentTarget.replaceWith(Object.assign(document.createElement('span'), { className: 'inline-block bg-surface-brand', style: `width:${size * 0.75}px;height:${size * 0.75}px` })); }} />`;
+    onError=${() => setMissing(true)} />`;
 }

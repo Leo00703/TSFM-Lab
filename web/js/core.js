@@ -2,9 +2,9 @@
 import { useState, useEffect } from '/vendor/htm-preact.js';
 
 // ---------------------------------------------------------------- store
-const state = { device: 'cpu', theme: 'dark', devices: [], busy: false, jobs: [], jobsLoaded: false };
+const state = { device: 'cpu', theme: 'system', devices: [], busy: false, jobs: [], jobsLoaded: false };
 const subs = new Set();
-try { state.device = localStorage.getItem('tsfm-device') || 'cpu'; state.theme = localStorage.getItem('tsfm-theme') || 'dark'; } catch (e) {}
+try { state.device = localStorage.getItem('tsfm-device') || 'cpu'; state.theme = localStorage.getItem('tsfm-theme') || 'system'; } catch (e) {}
 export function setState(patch) { Object.assign(state, patch); subs.forEach((f) => f()); }
 export function useStore() {
   const [, tick] = useState(0);
@@ -12,7 +12,7 @@ export function useStore() {
   return state;
 }
 
-// ---------------------------------------------------------------- theme (System / Light / Dark, default Dark)
+// ---------------------------------------------------------------- theme (System / Light / Dark, default System)
 export function applyTheme(choice) {
   const dark = choice === 'dark' || (choice === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.classList.toggle('dark', dark);
