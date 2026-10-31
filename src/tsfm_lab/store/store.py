@@ -43,6 +43,13 @@ def to_jsonable(obj: Any) -> Any:
 RUN_ID = re.compile(r"\d{8}-\d{6}-[0-9a-f]{4}")
 
 
+def write_json(path: Path, data: Any) -> None:
+    """Write a result file so that a reader, or a server stopped half way, never sees a partial one."""
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=1), encoding="utf-8")
+    tmp.replace(path)
+
+
 class RunStore:
     def __init__(self, root: Path | None = None) -> None:
         self.root = Path(root) if root else find_root() / "runs"
@@ -121,7 +128,10 @@ class RunStore:
             return {k: data[k] for k in data.files}
 
     def delete(self, run_id: str) -> None:
-        shutil.rmtree(self._folder(run_id), ignore_errors=True)
+        folder = self._folder(run_id)
+        shutil.rmtree(folder, ignore_errors=True)
+        if folder.exists():  # the run is still readable from its folder: keep it listed rather than hide it
+            raise ValueError(f"could not delete run {run_id}: some of its files are in use. Close whatever has them open and try again")
         with sqlite3.connect(self.db) as con:
             con.execute("DELETE FROM runs WHERE id = ?", (run_id,))
 
@@ -136,15 +146,18 @@ class BenchmarkStore:
     def save(self, result: dict[str, Any]) -> str:
         bench_id = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + result["model"]
         result = {**result, "id": bench_id}
-        (self.root / f"{bench_id}.json").write_text(json.dumps(to_jsonable(result), indent=1), encoding="utf-8")
+        write_json(self.root / f"{bench_id}.json", to_jsonable(result))
         return bench_id
 
     def list(self) -> list[dict[str, Any]]:
         out = []
         for path in sorted(self.root.glob("*.json"), reverse=True):
-            d = json.loads(path.read_text(encoding="utf-8"))
-            out.append({"id": d["id"], "model": d["model"], "name": d["name"], "created": d["created"],
-                        "devices": list(d["devices"]), "repeats": d["repeats"]})
+            try:
+                d = json.loads(path.read_text(encoding="utf-8"))
+                out.append({"id": d["id"], "model": d["model"], "name": d["name"], "created": d["created"],
+                            "devices": list(d["devices"]), "repeats": d["repeats"]})
+            except (ValueError, KeyError, TypeError, OSError):  # one damaged file must not hide the rest, nor break the models page
+                continue
         return out
 
     def get(self, bench_id: str) -> dict[str, Any]:
@@ -173,9 +186,7 @@ class SuiteStore:
         path = self.root / f"{Path(suite_id).name}.json"
         created = json.loads(path.read_text(encoding="utf-8"))["created"] if path.is_file() else datetime.now(UTC).isoformat(timespec="seconds")
         result = {**result, "id": suite_id, "label": label, "created": created, "status": status}
-        tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(to_jsonable(result), indent=1), encoding="utf-8")
-        tmp.replace(path)  # a reader never sees half a file
+        write_json(path, to_jsonable(result))
         return suite_id
 
     def finish(self, suite_id: str, status: str) -> None:
@@ -186,9 +197,7 @@ class SuiteStore:
         d = json.loads(path.read_text(encoding="utf-8"))
         if d.get("status") == "running":
             d["status"] = status
-            tmp = path.with_suffix(".tmp")
-            tmp.write_text(json.dumps(d, indent=1), encoding="utf-8")
-            tmp.replace(path)
+            write_json(path, d)
 
     @staticmethod
     def _rescored(d: dict[str, Any]) -> dict[str, Any]:
@@ -212,14 +221,17 @@ class SuiteStore:
     def list(self) -> list[dict[str, Any]]:
         out = []
         for path in sorted(self.root.glob("*.json"), reverse=True):
-            d = self._rescored(json.loads(path.read_text(encoding="utf-8")))
-            board = d.get("leaderboard_trusted") or d["leaderboard"]
-            best = max(board["ranked"], key=lambda m: (board["overall"][m]["sql_skill"] is not None, board["overall"][m]["sql_skill"] or 0),
-                       default=None) if board["common_datasets"] else None
-            out.append({"id": d["id"], "created": d["created"], "label": d.get("label"), "models": board["ranked"], "device": d["device"],
-                        "status": d.get("status", "done"), "planned": d.get("planned", board["total_datasets"]),
-                        "datasets": d["leaderboard"]["total_datasets"], "common": board["common_datasets"], "best": best,
-                        "best_skill": None if best is None else board["overall"][best]["sql_skill"], "elapsed_s": d["elapsed_s"]})
+            try:
+                d = self._rescored(json.loads(path.read_text(encoding="utf-8")))
+                board = d.get("leaderboard_trusted") or d["leaderboard"]
+                best = max(board["ranked"], key=lambda m: (board["overall"][m]["sql_skill"] is not None, board["overall"][m]["sql_skill"] or 0),
+                           default=None) if board["common_datasets"] else None
+                out.append({"id": d["id"], "created": d["created"], "label": d.get("label"), "models": board["ranked"], "device": d["device"],
+                            "status": d.get("status", "done"), "planned": d.get("planned", board["total_datasets"]),
+                            "datasets": d["leaderboard"]["total_datasets"], "common": board["common_datasets"], "best": best,
+                            "best_skill": None if best is None else board["overall"][best]["sql_skill"], "elapsed_s": d["elapsed_s"]})
+            except (ValueError, KeyError, TypeError, OSError):  # one damaged file must not hide the other runs
+                continue
         return out
 
     def get(self, suite_id: str) -> dict[str, Any]:

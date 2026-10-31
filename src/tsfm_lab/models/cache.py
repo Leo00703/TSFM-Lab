@@ -49,10 +49,12 @@ def download(repo: str, revision: str | None = None) -> dict[str, Any]:
 
 def remove(repo: str) -> bool:
     root = repo_dir(repo)
-    if root.exists():
-        shutil.rmtree(root, ignore_errors=True)
-        return True
-    return False
+    if not root.exists():
+        return False
+    shutil.rmtree(root, ignore_errors=True)
+    if root.exists():  # on Windows a file that is open cannot be deleted: say so rather than report weights as gone
+        raise ValueError(f"could not remove all the files of {repo}: some are in use. Close whatever has them open and try again")
+    return True
 
 
 def read_config(repo: str) -> dict[str, Any]:

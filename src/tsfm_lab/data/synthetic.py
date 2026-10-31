@@ -136,7 +136,7 @@ def cross_series_dependence(n_series=4, length=720, seed=0, freq="h") -> Dataset
                  target_names=["leader", "follower"])
 
 
-def covariate_response(n_series=8, length=720, seed=0, freq="D", horizon_extra=0) -> Dataset:
+def covariate_response(n_series=8, length=720, seed=0, freq="D") -> Dataset:
     """Demand driven by a known-future promo flag and price; includes the promo effect in the test horizon."""
     rng = np.random.default_rng(seed)
     t = np.arange(length)
