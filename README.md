@@ -242,8 +242,9 @@ exploits a bug in `pandas`, `pyarrow` or `openpyxl`) and why: **[`docs/SECURITY-
 ## Development
 
 ```bash
-.venv/bin/python -m pytest        # Windows: .venv\Scripts\python -m pytest   (no model weights needed; about a minute on a laptop CPU)
-.venv/bin/ruff check .            # Windows: .venv\Scripts\ruff check .      (clean; the code is not auto-formatted, so do not run `ruff format`)
+.venv/bin/python -m pytest -m "not model and not online"   # Windows: .venv\Scripts\python -m pytest ...   (no weights, no network; about two minutes)
+.venv/bin/python -m pytest                                  # everything: also loads the real Timestral-5M (a 21 MB download the first time) and a tiny public dataset
+.venv/bin/ruff check .                                      # Windows: .venv\Scripts\ruff check .      (clean; the code is not auto-formatted, so do not run `ruff format`)
 ```
 
 Set `CUDA_VISIBLE_DEVICES=""` to keep the tests off the GPU. `tests/test_ui_smoke.py` opens every page of the interface in a real browser (an installed

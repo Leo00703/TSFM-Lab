@@ -15,7 +15,8 @@ Thanks for looking. This is a one-person project, so the process is light: open 
 
 ```bash
 python scripts/bootstrap.py                 # creates .venv, installs everything inside the project folder (python3 on Linux and macOS)
-.venv/bin/python -m pytest                  # Windows: .venv\Scripts\python -m pytest   (no model weights needed)
+.venv/bin/python -m pytest -m "not model and not online"   # Windows: .venv\Scripts\python -m pytest ...   (no weights, no network; about two minutes)
+.venv/bin/python -m pytest                                  # everything: also loads the real Timestral-5M (a 21 MB download the first time)
 .venv/bin/ruff check .                      # Windows: .venv\Scripts\ruff check .
 ```
 
