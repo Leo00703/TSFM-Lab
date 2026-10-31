@@ -11,6 +11,9 @@ from tsfm_lab.isolation import find_root
 
 
 def hub_dir() -> Path:
+    """Where huggingface_hub keeps the downloads: HF_HUB_CACHE if set, else HF_HOME/hub (the isolation sets both inside the project)."""
+    if os.environ.get("HF_HUB_CACHE"):
+        return Path(os.environ["HF_HUB_CACHE"])
     return Path(os.environ.get("HF_HOME", find_root() / ".cache" / "huggingface")) / "hub"
 
 

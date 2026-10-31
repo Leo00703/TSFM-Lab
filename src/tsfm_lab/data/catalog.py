@@ -187,6 +187,11 @@ class DatasetCatalog:
                             "pandas_freq": rec["summary"].get("freq") or "", "task": {"horizon": horizon, "num_windows": windows}})
         return entries
 
+    def clear_cache(self) -> None:
+        """Drop every in-memory dataset (after a download replaced a file that one of them was read from)."""
+        with self._lock:
+            self._cache.clear()
+
     def forget_hub(self, entry_id: str) -> None:
         """Drop in-memory copies of a catalog dataset (after its file was removed)."""
         with self._lock:

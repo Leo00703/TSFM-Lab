@@ -193,7 +193,7 @@ def do_showcase_prepare(svc: Services, a: dict[str, Any], progress) -> dict[str,
     sc = engine.scenario(a["scenario"])
     progress(0, 0, f"downloading {sc.name} ({sc.size_mb} MB)…")
     download(sc.name, sc.freq)
-    engine._CACHE.pop(sc.id, None)
+    engine.forget(sc)
     return {"ready": True}
 
 
@@ -204,7 +204,7 @@ def do_catalog_download(svc: Services, a: dict[str, Any], progress) -> dict[str,
     what = e["files"][0]["path"] if len(e["files"]) == 1 else f"{len(e['files'])} files"
     progress(0, 0, f"downloading {what} ({e['size_bytes'] / 1e6:.1f} MB) and checking the SHA-256…")
     hub_catalog.download(e)
-    svc.catalog._cache.clear()  # a dataset resolved earlier must not outlive a re-download
+    svc.catalog.clear_cache()  # a dataset resolved earlier must not outlive a re-download
     return {"downloaded": True}
 
 

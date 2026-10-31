@@ -43,6 +43,11 @@ def is_ready(sc: Scenario) -> bool:
     return cached_path(sc.name, sc.freq) is not None
 
 
+def forget(sc: Scenario) -> None:
+    """Drop the in-memory copy of a scenario's dataset (after its file was downloaded again)."""
+    _CACHE.pop(sc.id, None)
+
+
 def dataset_for(sc: Scenario) -> Dataset:
     if sc.id not in _CACHE:
         ids = list(sc.series)

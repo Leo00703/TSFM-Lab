@@ -166,9 +166,9 @@ def title(e: dict[str, Any]) -> str:
 
 # ---------------------------------------------------------------------------- files
 def _cache_dir(e: dict[str, Any]) -> Path:
-    from huggingface_hub import constants
+    from tsfm_lab.models import cache
 
-    return Path(constants.HF_HUB_CACHE) / f"datasets--{e['repo'].replace('/', '--')}" / "snapshots" / e["revision"]
+    return cache.hub_dir() / f"datasets--{e['repo'].replace('/', '--')}" / "snapshots" / e["revision"]
 
 
 def file_paths(e: dict[str, Any]) -> list[Path] | None:
