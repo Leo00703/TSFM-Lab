@@ -34,6 +34,7 @@ def cache_env(root: Path) -> dict[str, str]:
         "TSFM_LAB_ROOT": str(root),
         # Hugging Face (weights, datasets) and telemetry
         "HF_HOME": str(c / "huggingface"),
+        "HF_HUB_CACHE": str(c / "huggingface" / "hub"),  # beats HF_HOME inside huggingface_hub: one set outside the project would take the weights with it
         "HF_HUB_DISABLE_TELEMETRY": "1",
         "HF_HUB_DISABLE_SYMLINKS_WARNING": "1",
         # PyTorch / CUDA / compilers
@@ -73,7 +74,7 @@ def apply(root: Path | None = None, environ: dict[str, str] | None = None) -> di
         mapping["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
     for key, value in mapping.items():
         env[key] = value
-    for key in ("HF_HOME", "TORCH_HOME", "TRITON_CACHE_DIR", "CUDA_CACHE_PATH", "XDG_CACHE_HOME",
+    for key in ("HF_HOME", "HF_HUB_CACHE", "TORCH_HOME", "TRITON_CACHE_DIR", "CUDA_CACHE_PATH", "XDG_CACHE_HOME",
                 "MPLCONFIGDIR", "NUMBA_CACHE_DIR", "PYTHONPYCACHEPREFIX", "TEMP"):
         Path(mapping[key]).mkdir(parents=True, exist_ok=True)
     if environ is None:
